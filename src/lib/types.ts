@@ -64,7 +64,7 @@ export interface QualifyingResult {
   Q3?: string;
 }
 
-export interface SprintResult extends RaceResult {}
+export type SprintResult = RaceResult;
 
 export interface Race {
   season: string;

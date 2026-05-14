@@ -1,18 +1,8 @@
-"use client";
-
-import { useQuery } from "@tanstack/react-query";
 import type { Race } from "@/lib/types";
+import { getSchedule } from "@/lib/api/jolpica";
 import { format, parseISO, isPast } from "date-fns";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
-
-async function fetchSchedule() {
-  const res = await fetch("/api/schedule");
-  if (!res.ok) throw new Error("Failed to fetch schedule");
-  const data = await res.json();
-  return data.races as Race[];
-}
 
 const FLAG_MAP: Record<string, string> = {
   Australia: "🇦🇺",
@@ -46,28 +36,18 @@ function getFlag(country: string) {
   return FLAG_MAP[country] ?? "🏁";
 }
 
-export default function SchedulePage() {
-  const { data: races, isLoading } = useQuery({
-    queryKey: ["schedule"],
-    queryFn: fetchSchedule,
-    staleTime: 60 * 60 * 1000,
-  });
+export default async function SchedulePage() {
+  const races = await getSchedule();
 
   return (
     <div>
       <h1 className="text-2xl font-bold mb-6">2026 Race Calendar</h1>
 
-      {isLoading && (
+      {!races.length ? (
+        <p className="text-zinc-500">No schedule data available.</p>
+      ) : (
         <div className="space-y-2">
-          {Array.from({ length: 24 }).map((_, i) => (
-            <Skeleton key={i} className="h-14 w-full bg-zinc-800" />
-          ))}
-        </div>
-      )}
-
-      {races && (
-        <div className="space-y-2">
-          {races.map((race) => {
+          {races.map((race: Race) => {
             const raceDate = parseISO(race.date);
             const past = isPast(raceDate);
             const isSprint = Boolean(race.Sprint);

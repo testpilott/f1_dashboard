@@ -128,7 +128,6 @@ export function runProjections(
   const remainingRaces = schedule.filter((r) => parseInt(r.round, 10) > completedRound);
 
   const driverStats = buildDriverStats(standings, completedRaces);
-  const numDrivers = driverStats.length;
 
   // Accumulators over all simulations
   const pointsSum = new Map<string, number[]>();

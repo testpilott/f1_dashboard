@@ -31,11 +31,18 @@ function Countdown({ dateStr }: { dateStr: string }) {
   );
 }
 
-export default function NextRaceCard() {
+export default function NextRaceCard({
+  initialRace,
+  initialWeather,
+}: {
+  initialRace?: Race | null;
+  initialWeather?: WeatherForecast | null;
+}) {
   const { data: race, isLoading } = useQuery({
     queryKey: ["next-race"],
     queryFn: fetchNextRace,
     staleTime: 5 * 60 * 1000,
+    initialData: initialRace,
   });
 
   const country = race?.Circuit?.Location?.country ?? "";
@@ -44,6 +51,7 @@ export default function NextRaceCard() {
     queryFn: () => fetchWeatherForRace(country),
     enabled: !!country,
     staleTime: 60 * 60 * 1000,
+    initialData: initialWeather ?? undefined,
   });
 
   if (isLoading) {

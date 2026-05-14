@@ -2,7 +2,6 @@
 
 import { useQuery } from "@tanstack/react-query";
 import type { DriverStanding, ConstructorStanding } from "@/lib/types";
-import { getTeamColor } from "@/lib/constants";
 import {
   Table,
   TableBody,
@@ -14,6 +13,12 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import TeamLogo from "@/components/ui/TeamLogo";
+
+type StandingsData = {
+  drivers: DriverStanding[];
+  constructors: ConstructorStanding[];
+};
 
 async function fetchStandings(season = "current") {
   const res = await fetch(`/api/standings?season=${season}`);
@@ -28,16 +33,6 @@ function PositionBadge({ pos }: { pos: number }) {
   return <span className="text-zinc-400 font-mono text-sm w-7 inline-flex justify-center">{pos}</span>;
 }
 
-function TeamDot({ team }: { team: string }) {
-  const color = getTeamColor(team);
-  return (
-    <span
-      className="inline-block w-2.5 h-2.5 rounded-full mr-2 shrink-0"
-      style={{ backgroundColor: color }}
-    />
-  );
-}
-
 function StandingsSkeleton() {
   return (
     <div className="space-y-2">
@@ -48,10 +43,17 @@ function StandingsSkeleton() {
   );
 }
 
-export default function StandingsTables({ season = "current" }: { season?: string }) {
+export default function StandingsTables({
+  season = "current",
+  initialData,
+}: {
+  season?: string;
+  initialData?: StandingsData;
+}) {
   const { data, isLoading, isError } = useQuery({
     queryKey: ["standings", season],
     queryFn: () => fetchStandings(season),
+    initialData,
   });
 
   return (
@@ -68,6 +70,9 @@ export default function StandingsTables({ season = "current" }: { season?: strin
       <TabsContent value="drivers">
         {isLoading && <StandingsSkeleton />}
         {isError && <p className="text-zinc-500 text-sm">Failed to load standings.</p>}
+        {!isLoading && !isError && !data?.drivers.length && (
+          <p className="text-zinc-500 text-sm">No standings available yet.</p>
+        )}
         {data && (
           <Table>
             <TableHeader>
@@ -90,7 +95,7 @@ export default function StandingsTables({ season = "current" }: { season?: strin
                     </TableCell>
                     <TableCell className="py-2.5">
                       <div className="flex items-center gap-2">
-                        <TeamDot team={team} />
+                        <TeamLogo team={team} />
                         <span className="font-mono text-xs text-zinc-500 w-8 shrink-0">{d.Driver.code}</span>
                         <span className="text-sm font-medium">
                           {d.Driver.givenName} {d.Driver.familyName}
@@ -111,6 +116,9 @@ export default function StandingsTables({ season = "current" }: { season?: strin
       <TabsContent value="constructors">
         {isLoading && <StandingsSkeleton />}
         {isError && <p className="text-zinc-500 text-sm">Failed to load standings.</p>}
+        {!isLoading && !isError && !data?.constructors.length && (
+          <p className="text-zinc-500 text-sm">No constructor standings available yet.</p>
+        )}
         {data && (
           <Table>
             <TableHeader>
@@ -131,7 +139,7 @@ export default function StandingsTables({ season = "current" }: { season?: strin
                     </TableCell>
                     <TableCell className="py-2.5">
                       <div className="flex items-center gap-2">
-                        <TeamDot team={c.Constructor.name} />
+                        <TeamLogo team={c.Constructor.name} />
                         <span className="text-sm font-medium">{c.Constructor.name}</span>
                       </div>
                     </TableCell>

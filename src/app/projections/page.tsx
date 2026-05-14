@@ -2,10 +2,9 @@
 
 import { useQuery } from "@tanstack/react-query";
 import type { ChampionshipProjection, DriverProjection } from "@/lib/types";
-import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+
 
 async function fetchProjections() {
   const res = await fetch("/api/projections");
@@ -36,9 +35,10 @@ function ProjectionRow({ driver, maxWinProb }: { driver: DriverProjection; maxWi
       </div>
 
       {/* Point range bar */}
-      <Tooltip>
-        <TooltipTrigger>
-          <div className="relative h-2 rounded bg-zinc-800 overflow-hidden cursor-help">
+      <div
+        className="relative h-2 rounded bg-zinc-800 overflow-hidden cursor-help"
+        title={`P10: ${Math.round(driver.projectedPoints.p10)} pts · P50: ${Math.round(driver.projectedPoints.p50)} pts · P90: ${Math.round(driver.projectedPoints.p90)} pts`}
+      >
             {/* p10–p90 range */}
             <div
               className="absolute top-0 bottom-0 rounded opacity-30"
@@ -56,48 +56,28 @@ function ProjectionRow({ driver, maxWinProb }: { driver: DriverProjection; maxWi
                 backgroundColor: driver.teamColour,
               }}
             />
-          </div>
-        </TooltipTrigger>
-        <TooltipContent className="bg-zinc-900 border-zinc-700 text-xs">
-          <p>10th percentile: {Math.round(driver.projectedPoints.p10)} pts</p>
-          <p>Median (P50): {Math.round(driver.projectedPoints.p50)} pts</p>
-          <p>90th percentile: {Math.round(driver.projectedPoints.p90)} pts</p>
-        </TooltipContent>
-      </Tooltip>
+        </div>
 
       {/* Probabilities */}
       <div className="grid grid-cols-3 gap-3">
-        <div>
-          <div className="flex justify-between text-[10px] mb-1">
-            <span className="text-zinc-500">Win title</span>
-            <span className="font-mono">{driver.winProbability.toFixed(1)}%</span>
+        {[
+          { label: "Win title", value: Math.min((driver.winProbability / maxWinProb) * 100, 100), display: `${driver.winProbability.toFixed(1)}%` },
+          { label: "Podium finish", value: Math.min(driver.podiumProbability, 100), display: `${driver.podiumProbability.toFixed(1)}%` },
+          { label: "Top 5", value: Math.min(driver.top5Probability, 100), display: `${driver.top5Probability.toFixed(1)}%` },
+        ].map(({ label, value, display }) => (
+          <div key={label}>
+            <div className="flex justify-between text-[10px] mb-1">
+              <span className="text-zinc-500">{label}</span>
+              <span className="font-mono">{display}</span>
+            </div>
+            <div className="relative h-1.5 rounded-full bg-zinc-800 overflow-hidden">
+              <div
+                className="absolute inset-y-0 left-0 rounded-full transition-all"
+                style={{ width: `${value}%`, backgroundColor: driver.teamColour }}
+              />
+            </div>
           </div>
-          <Progress
-            value={Math.min((driver.winProbability / maxWinProb) * 100, 100)}
-            className="h-1.5 bg-zinc-800"
-            style={{ "--progress-foreground": driver.teamColour } as React.CSSProperties}
-          />
-        </div>
-        <div>
-          <div className="flex justify-between text-[10px] mb-1">
-            <span className="text-zinc-500">Podium finish</span>
-            <span className="font-mono">{driver.podiumProbability.toFixed(1)}%</span>
-          </div>
-          <Progress
-            value={Math.min(driver.podiumProbability, 100)}
-            className="h-1.5 bg-zinc-800"
-          />
-        </div>
-        <div>
-          <div className="flex justify-between text-[10px] mb-1">
-            <span className="text-zinc-500">Top 5</span>
-            <span className="font-mono">{driver.top5Probability.toFixed(1)}%</span>
-          </div>
-          <Progress
-            value={Math.min(driver.top5Probability, 100)}
-            className="h-1.5 bg-zinc-800"
-          />
-        </div>
+        ))}
       </div>
     </div>
   );

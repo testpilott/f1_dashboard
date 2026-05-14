@@ -30,10 +30,15 @@ export default function Navbar() {
     <>
       {/* Desktop sidebar */}
       <aside className="hidden lg:flex lg:flex-col lg:w-56 lg:fixed lg:inset-y-0 lg:z-50 bg-zinc-950 border-r border-zinc-800">
-        <div className="flex h-16 items-center px-6 border-b border-zinc-800">
-          <Link href="/" className="flex items-center gap-2">
-            <span className="text-red-500 font-black text-2xl tracking-tight">F1</span>
-            <span className="text-white font-semibold text-lg tracking-tight">Dashboard</span>
+        <div className="flex h-16 items-center px-4 border-b border-zinc-800">
+          <Link href="/" className="flex flex-col gap-0.5">
+            <img
+              src="https://upload.wikimedia.org/wikipedia/commons/f/f2/Formula_1_logo.svg"
+              alt="Formula 1"
+              className="h-5 w-auto"
+              style={{ filter: "brightness(0) invert(1)" }}
+            />
+            <span className="text-zinc-500 text-[9px] tracking-[0.25em] uppercase">Dashboard</span>
           </Link>
         </div>
         <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
@@ -60,9 +65,14 @@ export default function Navbar() {
 
       {/* Mobile top bar */}
       <header className="lg:hidden fixed top-0 inset-x-0 z-50 h-14 bg-zinc-950 border-b border-zinc-800 flex items-center px-4 gap-3">
-        <Link href="/" className="flex items-center gap-1.5">
-          <span className="text-red-500 font-black text-xl tracking-tight">F1</span>
-          <span className="text-white font-semibold tracking-tight">Dashboard</span>
+        <Link href="/" className="flex items-center gap-2">
+          <img
+            src="https://upload.wikimedia.org/wikipedia/commons/f/f2/Formula_1_logo.svg"
+            alt="Formula 1"
+            className="h-4 w-auto"
+            style={{ filter: "brightness(0) invert(1)" }}
+          />
+          <span className="text-zinc-400 text-xs tracking-widest uppercase">Dashboard</span>
         </Link>
       </header>
 

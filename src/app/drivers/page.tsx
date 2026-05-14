@@ -5,7 +5,7 @@ import type { DriverStanding } from "@/lib/types";
 import { getTeamColor } from "@/lib/constants";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import Link from "next/link";
+import TeamLogo from "@/components/ui/TeamLogo";
 
 async function fetchStandings() {
   const res = await fetch("/api/standings?season=current");
@@ -49,7 +49,8 @@ export default function DriversPage() {
                   {pos}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 mb-1">
+                    <TeamLogo team={team} />
                     <span className="font-mono text-xs font-bold" style={{ color }}>{d.Driver.code}</span>
                     {d.wins !== "0" && (
                       <Badge className="bg-yellow-900/40 text-yellow-400 border-yellow-900 text-[10px] px-1">

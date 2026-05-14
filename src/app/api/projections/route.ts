@@ -21,10 +21,6 @@ export async function GET(req: Request) {
 
     // Determine how many rounds have been completed by checking the last round
     // that has results in the standings table
-    const standingsRound = parseInt(
-      (schedule.find((r) => r.Results?.length) ? "0" : "0"),
-      10
-    );
     // Use a reasonable default: find the last race in the schedule before today
     const now = new Date();
     const lastCompleted = schedule

@@ -92,6 +92,20 @@ export async function getSeasonResults(season: string): Promise<Race[]> {
 
 // ─── Next race helper ─────────────────────────────────────────────────────────
 
+export async function getRaceResultsAtCircuit(season: string, circuitId: string): Promise<RaceResult[]> {
+  const data = await jolpicaFetch<{
+    MRData: { RaceTable: { Races: { Results: RaceResult[] }[] } };
+  }>(`/${season}/circuits/${circuitId}/results.json?limit=25`);
+  return data.MRData.RaceTable.Races[0]?.Results ?? [];
+}
+
+export async function getQualifyingResultsAtCircuit(season: string, circuitId: string): Promise<QualifyingResult[]> {
+  const data = await jolpicaFetch<{
+    MRData: { RaceTable: { Races: { QualifyingResults: QualifyingResult[] }[] } };
+  }>(`/${season}/circuits/${circuitId}/qualifying.json?limit=25`);
+  return data.MRData.RaceTable.Races[0]?.QualifyingResults ?? [];
+}
+
 export async function getNextRace(): Promise<Race | null> {
   const data = await jolpicaFetch<{
     MRData: { RaceTable: { Races: Race[] } };

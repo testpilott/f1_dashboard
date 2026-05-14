@@ -1,12 +1,23 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Titillium_Web, Exo_2, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/providers";
 import Navbar from "@/components/layout/Navbar";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// Primary body font — closest free alternative to Formula1 Display
+const titilliumWeb = Titillium_Web({
+  variable: "--font-sans",
   subsets: ["latin"],
+  weight: ["300", "400", "600", "700", "900"],
+  display: "swap",
+});
+
+// Display/heading font — slightly more condensed, F1 Display "Wide" feel
+const exo2 = Exo_2({
+  variable: "--font-heading",
+  subsets: ["latin"],
+  weight: ["400", "600", "700", "900"],
+  display: "swap",
 });
 
 const geistMono = Geist_Mono({
@@ -27,7 +38,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased dark`}
+      className={`${titilliumWeb.variable} ${exo2.variable} ${geistMono.variable} h-full antialiased dark`}
     >
       <body className="min-h-full flex flex-col bg-zinc-950 text-zinc-100">
         <Providers>

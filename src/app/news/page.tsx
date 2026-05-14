@@ -41,7 +41,7 @@ function sourceFromLink(link: string): string {
 export default function NewsPage() {
   const [filter, setFilter] = useState("");
 
-  const { data: items, isLoading } = useQuery({
+  const { data: items, isLoading, isError } = useQuery({
     queryKey: ["news", filter],
     queryFn: () => fetchNews(filter || undefined),
     staleTime: 15 * 60 * 1000,
@@ -76,6 +76,12 @@ export default function NewsPage() {
         </div>
       )}
 
+      {isError && (
+        <p className="text-zinc-500 text-sm py-8 text-center">
+          Failed to load news. Please refresh to try again.
+        </p>
+      )}
+
       {items && (
         <div className="space-y-2">
           {items.map((item, i) => (
@@ -91,11 +97,17 @@ export default function NewsPage() {
                   <Badge className="bg-zinc-800 text-zinc-400 border-zinc-700 text-[10px] px-1.5 py-0">
                     {sourceFromLink(item.link)}
                   </Badge>
-                  {item.pubDate && (
-                    <span className="text-[10px] text-zinc-600">
-                      {formatDistanceToNow(new Date(item.pubDate), { addSuffix: true })}
-                    </span>
-                  )}
+                  {item.pubDate && (() => {
+                    try {
+                      return (
+                        <span className="text-[10px] text-zinc-600">
+                          {formatDistanceToNow(new Date(item.pubDate), { addSuffix: true })}
+                        </span>
+                      );
+                    } catch {
+                      return null;
+                    }
+                  })()}
                 </div>
                 <p className="text-sm font-medium line-clamp-2 group-hover:text-white transition-colors">
                   {item.title}
