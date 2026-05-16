@@ -10,7 +10,7 @@ import TeamLogo from "@/components/ui/TeamLogo";
 async function fetchStandings() {
   const res = await fetch("/api/standings?season=current");
   if (!res.ok) throw new Error("Failed");
-  return res.json().then((d) => d.drivers as DriverStanding[]);
+  return res.json().then((d) => (Array.isArray(d.drivers) ? d.drivers : []) as DriverStanding[]);
 }
 
 export default function DriversPage() {
