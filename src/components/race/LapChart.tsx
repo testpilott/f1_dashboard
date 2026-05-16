@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
 import type { OpenF1Lap, OpenF1Driver } from "@/lib/types";
 import { getTeamColor } from "@/lib/constants";
 import {
@@ -72,41 +73,40 @@ export default function LapChart({ sessionKey }: { sessionKey: number }) {
   if (lapsLoading) return <Skeleton className="h-72 w-full bg-zinc-800" />;
   if (!laps?.length) return <p className="text-zinc-500 text-sm">No lap data available.</p>;
 
-  const driverMap = new Map(drivers?.map((d) => [d.driver_number, d]) ?? []);
+  // Build chart data and filter outliers — memoized to avoid O(n²) work on every render.
+  const { lapData, driverNumbers, driverMap } = useMemo(() => {
+    const map = new Map(drivers?.map((d) => [d.driver_number, d]) ?? []);
+    const dNums = [...new Set(laps.map((l) => l.driver_number))];
+    const maxLap = Math.max(...laps.map((l) => l.lap_number));
 
-  // Group laps by lap number, keyed by driver code
-  const driverNumbers = [...new Set(laps.map((l) => l.driver_number))];
-  const maxLap = Math.max(...laps.map((l) => l.lap_number));
-
-  // Build chart data
-  const lapData: ChartPoint[] = [];
-  for (let lap = 1; lap <= maxLap; lap++) {
-    const point: ChartPoint = { lap };
-    for (const dNum of driverNumbers) {
-      const lapEntry = laps.find((l) => l.lap_number === lap && l.driver_number === dNum);
-      const d = driverMap.get(dNum);
-      const code = d?.name_acronym ?? `#${dNum}`;
-      const secs = lapTimeToSeconds(lapEntry?.lap_duration);
-      // Filter out outliers (pit laps, safety car, etc.) — anything > 200% of median is excluded
-      point[code] = secs;
+    // Group laps by lap number, keyed by driver code
+    const data: ChartPoint[] = [];
+    for (let lap = 1; lap <= maxLap; lap++) {
+      const point: ChartPoint = { lap };
+      for (const dNum of dNums) {
+        const lapEntry = laps.find((l) => l.lap_number === lap && l.driver_number === dNum);
+        const d = map.get(dNum);
+        const code = d?.name_acronym ?? `#${dNum}`;
+        point[code] = lapTimeToSeconds(lapEntry?.lap_duration);
+      }
+      data.push(point);
     }
-    lapData.push(point);
-  }
 
-  // Filter outlier lap times per driver (remove anything > 1.5× the driver median)
-  const driverCodes = driverNumbers.map(
-    (n) => driverMap.get(n)?.name_acronym ?? `#${n}`
-  );
-  for (const code of driverCodes) {
-    const times = lapData.map((p) => p[code]).filter((v): v is number => v != null);
-    if (!times.length) continue;
-    times.sort((a, b) => a - b);
-    const median = times[Math.floor(times.length / 2)];
-    lapData.forEach((p) => {
-      const v = p[code];
-      if (v != null && v > median * 1.5) p[code] = null;
-    });
-  }
+    // Filter outlier lap times per driver (remove anything > 1.5× the driver median)
+    const codes = dNums.map((n) => map.get(n)?.name_acronym ?? `#${n}`);
+    for (const code of codes) {
+      const times = data.map((p) => p[code]).filter((v): v is number => v != null);
+      if (!times.length) continue;
+      times.sort((a, b) => a - b);
+      const median = times[Math.floor(times.length / 2)];
+      data.forEach((p) => {
+        const v = p[code];
+        if (v != null && v > median * 1.5) p[code] = null;
+      });
+    }
+
+    return { lapData: data, driverNumbers: dNums, driverMap: map };
+  }, [laps, drivers]);
 
   return (
     <div className="w-full h-72">

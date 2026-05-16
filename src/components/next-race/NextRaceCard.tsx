@@ -109,9 +109,12 @@ export default function NextRaceCard({
   const raceWeatherIdx = weather?.hourly?.time?.findIndex((t) => {
     return t.startsWith(race.date);
   }) ?? -1;
-  const raceTemp = raceWeatherIdx >= 0 ? weather?.hourly?.temperature_2m[raceWeatherIdx] : null;
-  const raceCode = raceWeatherIdx >= 0 ? weather?.hourly?.weather_code[raceWeatherIdx] : null;
-  const rainProb = raceWeatherIdx >= 0 ? weather?.hourly?.precipitation_probability[raceWeatherIdx] : null;
+  const temps = weather?.hourly?.temperature_2m;
+  const codes = weather?.hourly?.weather_code;
+  const probs = weather?.hourly?.precipitation_probability;
+  const raceTemp = raceWeatherIdx >= 0 && temps && raceWeatherIdx < temps.length ? temps[raceWeatherIdx] : null;
+  const raceCode = raceWeatherIdx >= 0 && codes && raceWeatherIdx < codes.length ? codes[raceWeatherIdx] : null;
+  const rainProb = raceWeatherIdx >= 0 && probs && raceWeatherIdx < probs.length ? probs[raceWeatherIdx] : null;
 
   const coords = CIRCUIT_COORDS[country];
 

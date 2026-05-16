@@ -3,7 +3,6 @@
 import type { Race, QualifyingResult, RaceResult } from "@/lib/types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import TeamLogo from "@/components/ui/TeamLogo";
 import { getStatusLabel, getStatusTooltip } from "@/lib/constants";
@@ -35,12 +34,10 @@ function ResultTable({
   initialData?: ResultData;
 }) {
   const data = initialData;
-  const isLoading = false;
-  const isError = false;
 
-  if (isLoading) return <Skeleton className="h-64 w-full bg-zinc-800 mt-4" />;
-  if (isError) return <p className="text-zinc-500 text-sm mt-4">Failed to load {title.toLowerCase()}.</p>;
-  if (!data?.length) return <p className="text-zinc-500 text-sm mt-4">No {title.toLowerCase()} available.</p>;
+  if (!data || !Array.isArray(data) || data.length === 0) {
+    return <p className="text-zinc-500 text-sm mt-4">No {title.toLowerCase()} available.</p>;
+  }
 
   return (
     <div className="overflow-x-auto -mx-4 px-4">
