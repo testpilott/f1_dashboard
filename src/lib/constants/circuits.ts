@@ -28,36 +28,39 @@ export const CIRCUIT_COORDS: Record<string, { lat: number; lng: number; timezone
 };
 
 // ─── Circuit track outline images (F1 CDN) ────────────────────────────────────
+// Keys are Jolpica circuitId values (unique per circuit, returned by /current.json).
+// Using circuitId instead of country avoids collisions where multiple races share
+// a country (e.g. USA → Miami/Austin/Las Vegas, Spain → Barcelona/Madrid).
 
-const CIRCUIT_IMAGE_NAMES: Record<string, string> = {
-  Bahrain: "Bahrain",
-  "Saudi Arabia": "Saudi_Arabia",
-  Australia: "Australia",
-  Japan: "Japan",
-  China: "China",
-  Miami: "Miami",
-  "Emilia Romagna": "Emilia_Romagna",
-  Monaco: "Monaco",
-  Canada: "Canada",
-  Spain: "Spain",
-  Austria: "Austria",
-  "Great Britain": "Great_Britain",
-  Hungary: "Hungary",
-  Belgium: "Belgium",
-  Netherlands: "Netherlands",
-  Italy: "Italy",
-  Azerbaijan: "Azerbaijan",
-  Singapore: "Singapore",
-  "United States": "USA",
-  Mexico: "Mexico",
-  Brazil: "Brazil",
-  "Las Vegas": "Las_Vegas",
-  Qatar: "Qatar",
-  "Abu Dhabi": "Abu_Dhabi",
+const CDN_BASE = "https://media.formula1.com/image/upload/common/f1/2026/track";
+
+const CIRCUIT_IMAGE_SLUGS: Record<string, string> = {
+  albert_park: "melbourne",      // Australian GP
+  shanghai: "shanghai",          // Chinese GP
+  suzuka: "suzuka",              // Japanese GP
+  miami: "miami",                // Miami GP
+  villeneuve: "montreal",        // Canadian GP
+  monaco: "montecarlo",          // Monaco GP
+  catalunya: "catalunya",        // Barcelona GP
+  red_bull_ring: "spielberg",    // Austrian GP
+  silverstone: "silverstone",    // British GP
+  spa: "spafrancorchamps",       // Belgian GP
+  hungaroring: "hungaroring",    // Hungarian GP
+  zandvoort: "zandvoort",        // Dutch GP
+  monza: "monza",                // Italian GP
+  madring: "madring",            // Spanish GP (Madrid)
+  baku: "baku",                  // Azerbaijan GP
+  marina_bay: "singapore",       // Singapore GP
+  americas: "austin",            // US GP
+  rodriguez: "mexicocity",       // Mexico City GP
+  interlagos: "interlagos",      // Brazilian GP
+  vegas: "lasvegas",             // Las Vegas GP
+  losail: "lusail",              // Qatar GP
+  yas_marina: "yasmarina",       // Abu Dhabi GP
 };
 
-export function getCircuitImageUrl(country: string): string | null {
-  const name = CIRCUIT_IMAGE_NAMES[country];
-  if (!name) return null;
-  return `https://media.formula1.com/image/upload/f_auto/q_auto/v0/fom-website/2018-redesign-assets/Track%20icons%20%281x1%29/${name}_Circuit.png`;
+export function getCircuitImageUrl(circuitId: string): string | null {
+  const slug = CIRCUIT_IMAGE_SLUGS[circuitId];
+  if (!slug) return null;
+  return `${CDN_BASE}/2026track${slug}blackoutline.svg`;
 }

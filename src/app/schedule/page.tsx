@@ -22,7 +22,7 @@ export default async function SchedulePage() {
             const raceDate = parseISO(race.date);
             const past = isPast(raceDate);
             const isSprint = Boolean(race.Sprint);
-            const circuitImgUrl = getCircuitImageUrl(race.Circuit.Location.country);
+            const circuitImgUrl = getCircuitImageUrl(race.Circuit.circuitId);
 
             return (
               <Link
