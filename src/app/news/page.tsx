@@ -15,28 +15,24 @@ async function fetchNews(filter?: string) {
   return res.json().then((d) => (Array.isArray(d.items) ? d.items : []) as NewsItem[]);
 }
 
-const FILTERS = ["", "upgrade", "tyre", "hamilton", "norris", "verstappen", "crash"];
+const FILTERS = [
+  "", "verstappen", "norris", "leclerc", "piastri", "russell",
+  "hamilton", "sainz", "alonso", "upgrade", "tyre", "crash",
+];
 const FILTER_LABELS: Record<string, string> = {
   "": "All",
+  verstappen: "Verstappen",
+  norris: "Norris",
+  leclerc: "Leclerc",
+  piastri: "Piastri",
+  russell: "Russell",
+  hamilton: "Hamilton",
+  sainz: "Sainz",
+  alonso: "Alonso",
   upgrade: "Upgrades",
   tyre: "Tyres",
-  hamilton: "Hamilton",
-  norris: "Norris",
-  verstappen: "Verstappen",
   crash: "Incidents",
 };
-
-function sourceFromLink(link: string): string {
-  try {
-    const hostname = new URL(link).hostname.replace("www.", "");
-    if (hostname.includes("autosport")) return "Autosport";
-    if (hostname.includes("motorsport")) return "Motorsport.com";
-    if (hostname.includes("therace")) return "The Race";
-    return hostname;
-  } catch {
-    return "F1 News";
-  }
-}
 
 export default function NewsPage() {
   const [filter, setFilter] = useState("");
@@ -95,7 +91,7 @@ export default function NewsPage() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1 flex-wrap">
                   <Badge className="bg-zinc-800 text-zinc-400 border-zinc-700 text-[10px] px-1.5 py-0">
-                    {sourceFromLink(item.link)}
+                    {item.source}
                   </Badge>
                   {item.pubDate && (() => {
                     try {

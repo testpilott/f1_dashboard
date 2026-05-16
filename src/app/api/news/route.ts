@@ -13,7 +13,9 @@ export async function GET(req: Request) {
   const filter = searchParams.get("filter")?.toLowerCase().slice(0, 100);
 
   try {
-    let items = await fetchNewsFeeds(20);
+    // When filtering by a specific term (e.g. driver name), fetch more items per feed
+    // so there's a larger pool to search through before the per-term articles are found.
+    let items = await fetchNewsFeeds(filter ? 30 : 20);
     if (filter) {
       items = items.filter(
         (item) =>

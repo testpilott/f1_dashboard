@@ -31,8 +31,18 @@ export async function fetchNewsFeeds(maxPerFeed = 15): Promise<NewsItem[]> {
     }
   }
 
-  // Sort by date descending
-  return items.sort(
-    (a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime()
-  );
+  // Deduplicate by URL — the same story can be syndicated across multiple feeds
+  const seen = new Set<string>();
+  const unique = items.filter((item) => {
+    if (seen.has(item.link)) return false;
+    seen.add(item.link);
+    return true;
+  });
+
+  // Sort by date descending — guard against unparseable pubDate values
+  return unique.sort((a, b) => {
+    const aTime = new Date(a.pubDate).getTime();
+    const bTime = new Date(b.pubDate).getTime();
+    return (isNaN(bTime) ? 0 : bTime) - (isNaN(aTime) ? 0 : aTime);
+  });
 }

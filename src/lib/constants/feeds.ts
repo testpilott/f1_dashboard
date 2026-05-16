@@ -9,4 +9,9 @@ export const NEWS_FEEDS = [
   { name: "Crash.net", url: "https://www.crash.net/rss/f1", category: "f1" },
   { name: "GPFans", url: "https://www.gpfans.com/en/rss/", category: "f1" },
   { name: "PlanetF1", url: "https://www.planetf1.com/feed/", category: "f1" },
+  { name: "RaceFans", url: "https://www.racefans.net/feed/", category: "f1" },
+  { name: "WTF1", url: "https://wtf1.com/feed", category: "f1" },
+  { name: "MotorSport Magazine", url: "https://www.motorsportmagazine.com/feed/", category: "f1" },
+  { name: "Racer", url: "https://racer.com/feed/", category: "f1" },
+  { name: "F1 Chronicle", url: "https://f1chronicle.com/feed/", category: "f1" },
 ];
