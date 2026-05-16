@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { checkRateLimit, getClientIp } from "@/lib/ratelimit";
+import { checkRateLimit, getClientIp, flushStaleEntries, getStoreSize } from "@/lib/ratelimit";
 
 // Each test uses a unique key so they don't share the in-memory store.
 let keyCounter = 0;
@@ -92,5 +92,42 @@ describe("getClientIp()", () => {
   it("trims whitespace from x-forwarded-for values", () => {
     const req = makeRequest({ "x-forwarded-for": "  203.0.113.5  , 10.0.0.1" });
     expect(getClientIp(req)).toBe("203.0.113.5");
+  });
+});
+
+// ─── flushStaleEntries (memory leak fix) ───────────────────────────────────────────────
+
+describe("flushStaleEntries()", () => {
+  it("removes keys whose most recent timestamp has expired", async () => {
+    const key = uniqueKey("gc-stale");
+    checkRateLimit(key, 20, 5); // 20 ms window
+
+    await new Promise((r) => setTimeout(r, 30)); // wait for window to expire
+
+    const sizeBefore = getStoreSize();
+    flushStaleEntries(20);
+    expect(getStoreSize()).toBeLessThan(sizeBefore);
+  });
+
+  it("leaves keys with recent timestamps intact", () => {
+    const key = uniqueKey("gc-fresh");
+    checkRateLimit(key, 60_000, 5);
+
+    const sizeBefore = getStoreSize();
+    // Only flush entries older than 60 s — our fresh entry should survive
+    flushStaleEntries(60_000);
+    expect(getStoreSize()).toBe(sizeBefore);
+  });
+
+  it("is idempotent: calling twice does not shrink further than once", async () => {
+    const key = uniqueKey("gc-idempotent");
+    checkRateLimit(key, 20, 5);
+
+    await new Promise((r) => setTimeout(r, 30));
+
+    flushStaleEntries(20);
+    const sizeAfterFirst = getStoreSize();
+    flushStaleEntries(20);
+    expect(getStoreSize()).toBe(sizeAfterFirst);
   });
 });

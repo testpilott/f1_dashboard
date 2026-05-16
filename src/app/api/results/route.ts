@@ -1,18 +1,13 @@
 import { NextResponse } from "next/server";
 import { getRaceResults, getQualifyingResults, getSprintResults } from "@/lib/api/jolpica";
-import { checkRateLimit, getClientIp } from "@/lib/ratelimit";
+import { rateLimited } from "@/lib/api/withRateLimit";
+import { VALID_SEASON, VALID_ROUND, VALID_TYPE } from "@/lib/validators";
 
 export const revalidate = 3600;
 
-const VALID_SEASON = /^(\d{4}|current)$/;
-const VALID_ROUND = /^([1-9]|[1-2][0-9]|30)$/;
-const VALID_TYPE = new Set(["race", "qualifying", "sprint"]);
-
 export async function GET(req: Request) {
-  const ip = getClientIp(req);
-  if (!checkRateLimit(`results:${ip}`, 60_000, 60)) {
-    return NextResponse.json({ error: "Too many requests" }, { status: 429, headers: { "Retry-After": "60" } });
-  }
+  const blocked = rateLimited(req, "results");
+  if (blocked) return blocked;
 
   const { searchParams } = new URL(req.url);
   const season = searchParams.get("season");

@@ -1,20 +1,16 @@
 import { NextResponse } from "next/server";
 import { getRaceResultsAtCircuit, getQualifyingResultsAtCircuit } from "@/lib/api/jolpica";
-import { checkRateLimit, getClientIp } from "@/lib/ratelimit";
+import { rateLimited } from "@/lib/api/withRateLimit";
+import { VALID_ID } from "@/lib/validators";
 
 export const revalidate = 300; // 5 min
 
 const CURRENT_YEAR = new Date().getFullYear();
 const HISTORY_YEARS = [CURRENT_YEAR, CURRENT_YEAR - 1, CURRENT_YEAR - 2, CURRENT_YEAR - 3];
 
-// Safe identifier pattern: lowercase letters, digits, hyphens only (Ergast format)
-const VALID_ID = /^[a-z0-9_-]{1,40}$/;
-
 export async function GET(req: Request) {
-  const ip = getClientIp(req);
-  if (!checkRateLimit(`compare:${ip}`, 60_000, 60)) {
-    return NextResponse.json({ error: "Too many requests" }, { status: 429, headers: { "Retry-After": "60" } });
-  }
+  const blocked = rateLimited(req, "compare");
+  if (blocked) return blocked;
 
   const { searchParams } = new URL(req.url);
   const driverA = searchParams.get("driverA");

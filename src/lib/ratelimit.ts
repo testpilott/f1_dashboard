@@ -3,7 +3,42 @@
  * Suitable for single-process deployments. For multi-instance/edge, use Redis.
  */
 
+// Longest rate-limit window used in any route (60 s). Entries whose most recent
+// timestamp is older than this are guaranteed to be fully expired.
+const MAX_WINDOW_MS = 5 * 60 * 1000; // 5 minutes — conservative upper bound
+
 const store = new Map<string, number[]>();
+
+/**
+ * Remove entries from the store where every timestamp has expired.
+ * Called automatically by the periodic GC interval and available for
+ * testing without fake timers.
+ *
+ * @param maxAgeMs  Maximum age (ms) of the most recent timestamp before an
+ *                  entry is considered stale. Defaults to MAX_WINDOW_MS.
+ */
+export function flushStaleEntries(maxAgeMs = MAX_WINDOW_MS): void {
+  const cutoff = Date.now() - maxAgeMs;
+  for (const [key, timestamps] of store.entries()) {
+    // timestamps are insertion-ordered; last element is most recent.
+    if (timestamps.length === 0 || timestamps[timestamps.length - 1] <= cutoff) {
+      store.delete(key);
+    }
+  }
+}
+
+/** Returns the number of currently tracked keys. Exported for testing only. */
+export function getStoreSize(): number {
+  return store.size;
+}
+
+// Periodic GC: prevent unbounded Map growth from unique IPs that never make
+// a second request. Runs every MAX_WINDOW_MS. .unref() ensures this interval
+// does not keep the Node.js process alive (important in test environments).
+const _gcInterval = setInterval(flushStaleEntries, MAX_WINDOW_MS);
+if (typeof _gcInterval === "object" && typeof (_gcInterval as NodeJS.Timeout).unref === "function") {
+  (_gcInterval as NodeJS.Timeout).unref();
+}
 
 /**
  * Check whether the given key is within the rate limit.

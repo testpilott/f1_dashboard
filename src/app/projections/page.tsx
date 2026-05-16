@@ -21,6 +21,10 @@ function ProjectionRow({ driver, maxWinProb }: { driver: DriverProjection; maxWi
     return () => cancelAnimationFrame(id);
   }, []);
 
+  // Guard against division-by-zero when all drivers have p90 = 0 or
+  // when the season just started and no projections exist yet.
+  const p90Scaled = Math.max(driver.projectedPoints.p90 * 1.1, 1);
+
   return (
     <div className="rounded-lg bg-gradient-to-br from-zinc-900 to-zinc-950 border border-zinc-800 p-4 space-y-3 hover:border-zinc-700 transition-colors">
       {/* Header */}
@@ -51,8 +55,8 @@ function ProjectionRow({ driver, maxWinProb }: { driver: DriverProjection; maxWi
             <div
               className="absolute top-0 bottom-0 rounded opacity-30"
               style={{
-                left: `${(driver.projectedPoints.p10 / (driver.projectedPoints.p90 * 1.1)) * 100}%`,
-                right: `${100 - (driver.projectedPoints.p90 / (driver.projectedPoints.p90 * 1.1)) * 100}%`,
+                left: `${(driver.projectedPoints.p10 / p90Scaled) * 100}%`,
+                right: `${100 - (driver.projectedPoints.p90 / p90Scaled) * 100}%`,
                 backgroundColor: driver.teamColour,
               }}
             />
@@ -60,7 +64,7 @@ function ProjectionRow({ driver, maxWinProb }: { driver: DriverProjection; maxWi
             <div
               className="absolute top-0 bottom-0 w-0.5 rounded"
               style={{
-                left: `${(driver.projectedPoints.p50 / (driver.projectedPoints.p90 * 1.1)) * 100}%`,
+                left: `${(driver.projectedPoints.p50 / p90Scaled) * 100}%`,
                 backgroundColor: driver.teamColour,
               }}
             />
@@ -102,7 +106,9 @@ export default function ProjectionsPage() {
     staleTime: 60 * 60 * 1000, // 1 hour
   });
 
-  const maxWinProb = data?.drivers[0]?.winProbability ?? 100;
+  // Guard against division-by-zero: if every driver has 0% win probability
+  // (e.g. season not started), use 1 so bars render at 0% rather than NaN.
+  const maxWinProb = Math.max(data?.drivers[0]?.winProbability ?? 0, 1);
 
   return (
     <div>

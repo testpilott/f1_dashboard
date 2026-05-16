@@ -23,8 +23,16 @@ export async function GET(req: Request) {
     longitude = coords.lng;
     timezone = coords.timezone;
   } else if (lat && lng) {
-    latitude = parseFloat(lat);
-    longitude = parseFloat(lng);
+    const parsedLat = parseFloat(lat);
+    const parsedLng = parseFloat(lng);
+    if (isNaN(parsedLat) || isNaN(parsedLng)) {
+      return NextResponse.json(
+        { error: "Invalid coordinates: lat and lng must be valid numbers" },
+        { status: 400 }
+      );
+    }
+    latitude = parsedLat;
+    longitude = parsedLng;
   } else {
     return NextResponse.json({ error: "country or lat/lng required" }, { status: 400 });
   }

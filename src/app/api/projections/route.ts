@@ -1,18 +1,15 @@
 import { NextResponse } from "next/server";
 import { getDriverStandings, getSchedule, getSeasonResults } from "@/lib/api/jolpica";
 import { runProjections } from "@/lib/projections/montecarlo";
-import { checkRateLimit, getClientIp } from "@/lib/ratelimit";
+import { rateLimited } from "@/lib/api/withRateLimit";
+import { VALID_SEASON } from "@/lib/validators";
 
 export const revalidate = 3600; // 1 hour
 
-const VALID_SEASON = /^(\d{4}|current)$/;
-
 export async function GET(req: Request) {
   // Stricter limit — projections run 10k Monte Carlo simulations
-  const ip = getClientIp(req);
-  if (!checkRateLimit(`projections:${ip}`, 60_000, 10)) {
-    return NextResponse.json({ error: "Too many requests" }, { status: 429, headers: { "Retry-After": "60" } });
-  }
+  const blocked = rateLimited(req, "projections", { max: 10 });
+  if (blocked) return blocked;
 
   const { searchParams } = new URL(req.url);
   const season = searchParams.get("season") ?? "current";

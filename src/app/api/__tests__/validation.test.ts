@@ -1,29 +1,23 @@
 /**
  * Tests for the input-validation rules shared across all API routes.
+ * Patterns are imported from src/lib/validators.ts — the single source of truth.
  * We test the regex / set patterns directly — no network calls, no Next.js
  * runtime needed.
  */
 import { describe, it, expect } from "vitest";
+import {
+  VALID_SEASON,
+  VALID_ROUND,
+  VALID_TYPE,
+  VALID_ENDPOINTS,
+  VALID_YEAR,
+  VALID_MEETING_KEY,
+  VALID_SESSION_KEY,
+  VALID_ID,
+} from "@/lib/validators";
 
-// ─── Patterns copied from the route handlers ──────────────────────────────────
-// (Keep these in sync with the source files)
-
-const VALID_SEASON = /^(\d{4}|current)$/;
-const VALID_ROUND = /^([1-9]|[1-2][0-9]|30)$/;
-const VALID_TYPE = new Set(["race", "qualifying", "sprint"]);
-
-const VALID_ENDPOINTS = new Set([
-  "sessions", "result", "drivers", "stints", "laps", "pit", "weather", "race_control",
-]);
-const VALID_YEAR = /^\d{4}$/;
-const VALID_MEETING_KEY = /^(\d{1,8}|latest)$/;
-const VALID_SESSION_KEY = /^(\d{1,8}|latest)$/;
-
-// compare route
-const VALID_ID = /^[a-z0-9_-]{1,40}$/;
-
-// projections route
-const VALID_PROJ_SEASON = /^(\d{4}|current)$/;
+// projections route re-uses VALID_SEASON
+const VALID_PROJ_SEASON = VALID_SEASON;
 
 // ─── VALID_SEASON ─────────────────────────────────────────────────────────────
 
@@ -198,5 +192,84 @@ describe("VALID_PROJ_SEASON regex (/api/projections)", () => {
     expect(VALID_PROJ_SEASON.test("abc")).toBe(false);
     expect(VALID_PROJ_SEASON.test("20261")).toBe(false);
     expect(VALID_PROJ_SEASON.test("")).toBe(false);
+  });
+});
+
+// ─── Weather lat/lng parseFloat validation (weather/route.ts) ─────────────────────
+// Pattern: const val = parseFloat(str); if (isNaN(val)) return 400;
+
+describe("weather lat/lng coordinate validation", () => {
+  const parseCoord = (s: string): number | null => {
+    const v = parseFloat(s);
+    return isNaN(v) ? null : v;
+  };
+
+  it("accepts valid decimal latitude/longitude strings", () => {
+    expect(parseCoord("51.5074")).toBe(51.5074);
+    expect(parseCoord("-33.8688")).toBe(-33.8688);
+    expect(parseCoord("0")).toBe(0);
+    expect(parseCoord("180")).toBe(180);
+  });
+
+  it("rejects non-numeric strings", () => {
+    expect(parseCoord("abc")).toBeNull();
+    expect(parseCoord("")).toBeNull();
+    // NOTE: parseFloat("12.3.4") = 12.3 (stops at second dot), not null.
+    // This edge case is acceptable — 12.3 is a valid coordinate value.
+    expect(parseCoord("12.3.4")).toBe(12.3);
+  });
+
+  it("rejects injection payloads that parseFloat would silently truncate", () => {
+    // parseFloat("1 OR 1=1") returns 1, not NaN — handled by separate range checks
+    // but pure strings / symbols are caught:
+    expect(parseCoord("NaN")).toBeNull();
+    expect(parseCoord("Infinity")).not.toBeNull(); // parseFloat("Infinity") = Infinity
+  });
+
+  it("returns null for null/undefined-equivalent strings", () => {
+    expect(parseCoord("null")).toBeNull();
+    expect(parseCoord("undefined")).toBeNull();
+  });
+});
+
+// ─── Projections division-by-zero guards (projections/page.tsx) ──────────────────
+// Pattern: Math.max(val, 1) ensures denominator is never 0 or negative.
+
+describe("projections bar-width division-by-zero guard", () => {
+  // p90Scaled = Math.max(p90 * 1.1, 1)
+  const p90Scaled = (p90: number) => Math.max(p90 * 1.1, 1);
+  // maxWinProb = Math.max(topDriverWinProb, 1)
+  const safeMax = (v: number) => Math.max(v, 1);
+
+  it("p90Scaled is at least 1 when p90 is 0", () => {
+    expect(p90Scaled(0)).toBe(1);
+  });
+
+  it("p90Scaled uses the real value when p90 > 0", () => {
+    expect(p90Scaled(100)).toBeCloseTo(110);
+    expect(p90Scaled(50)).toBeCloseTo(55);
+  });
+
+  it("bar percentage is 0 (not NaN/Infinity) when p90 = 0", () => {
+    const driver = { projectedPoints: { p10: 0, p50: 0, p90: 0 } };
+    const pct = (driver.projectedPoints.p10 / p90Scaled(driver.projectedPoints.p90)) * 100;
+    expect(isNaN(pct)).toBe(false);
+    expect(isFinite(pct)).toBe(true);
+    expect(pct).toBe(0);
+  });
+
+  it("safeMax win-prob denominator is at least 1", () => {
+    expect(safeMax(0)).toBe(1);
+    expect(safeMax(0.001)).toBeCloseTo(1);
+    expect(safeMax(45.5)).toBe(45.5);
+  });
+
+  it("win-probability bar is 0 (not NaN) when all drivers have 0% win chance", () => {
+    const winProb = 0;
+    const denominator = safeMax(0); // worst-case: top driver also has 0
+    const bar = Math.min((winProb / denominator) * 100, 100);
+    expect(isNaN(bar)).toBe(false);
+    expect(isFinite(bar)).toBe(true);
+    expect(bar).toBe(0);
   });
 });

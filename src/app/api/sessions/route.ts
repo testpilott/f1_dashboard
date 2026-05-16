@@ -1,19 +1,13 @@
 import { NextResponse } from "next/server";
 import { getSessions, getSessionResult, getStints, getLaps, getPitStops, getTrackWeather, getRaceControl, getDriversForSession } from "@/lib/api/openf1";
-import { checkRateLimit, getClientIp } from "@/lib/ratelimit";
+import { rateLimited } from "@/lib/api/withRateLimit";
+import { VALID_ENDPOINTS, VALID_YEAR, VALID_MEETING_KEY, VALID_SESSION_KEY } from "@/lib/validators";
 
 export const revalidate = 60;
 
-const VALID_ENDPOINTS = new Set(["sessions", "result", "drivers", "stints", "laps", "pit", "weather", "race_control"]);
-const VALID_YEAR = /^\d{4}$/;
-const VALID_MEETING_KEY = /^(\d{1,8}|latest)$/;
-const VALID_SESSION_KEY = /^(\d{1,8}|latest)$/;
-
 export async function GET(req: Request) {
-  const ip = getClientIp(req);
-  if (!checkRateLimit(`sessions:${ip}`, 60_000, 60)) {
-    return NextResponse.json({ error: "Too many requests" }, { status: 429, headers: { "Retry-After": "60" } });
-  }
+  const blocked = rateLimited(req, "sessions");
+  if (blocked) return blocked;
 
   const { searchParams } = new URL(req.url);
   const sessionKey = searchParams.get("session_key");
