@@ -58,8 +58,6 @@ export default function TeamLogo({ team, size = 40 }: TeamLogoProps) {
             height: "100%",
             objectFit: "contain",
             display: "block",
-            // White glow in dark mode, subtle shadow in light mode — follows alpha channel
-            filter: "var(--logo-img-filter)",
           }}
           onError={() => setFailed(true)}
         />

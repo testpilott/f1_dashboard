@@ -35,12 +35,15 @@ function CountdownSegment({ value, label }: { value: number; label: string }) {
 }
 
 function Countdown({ dateStr }: { dateStr: string }) {
-  const [now, setNow] = useState(() => Date.now());
+  const [now, setNow] = useState(0);
 
   useEffect(() => {
+    setNow(Date.now());
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
   }, []);
+
+  if (now === 0) return null;
 
   const target = parseISO(dateStr).getTime();
   const diff = target - now;
