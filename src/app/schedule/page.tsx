@@ -4,6 +4,8 @@ import { format, parseISO, isPast } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { getFlag } from "@/lib/constants";
+import { getCircuitImageUrl } from "@/lib/constants";
+import CircuitThumb from "@/components/schedule/CircuitThumb";
 
 export default async function SchedulePage() {
   const races = await getSchedule();
@@ -20,6 +22,7 @@ export default async function SchedulePage() {
             const raceDate = parseISO(race.date);
             const past = isPast(raceDate);
             const isSprint = Boolean(race.Sprint);
+            const circuitImgUrl = getCircuitImageUrl(race.Circuit.Location.country);
 
             return (
               <Link
@@ -34,6 +37,11 @@ export default async function SchedulePage() {
                 <span className="font-mono text-sm text-zinc-500 w-6 shrink-0">
                   {race.round}
                 </span>
+                {circuitImgUrl ? (
+                  <CircuitThumb url={circuitImgUrl} country={race.Circuit.Location.country} />
+                ) : (
+                  <div className="w-14 h-14 shrink-0" />
+                )}
                 <span className="text-xl shrink-0">
                   {getFlag(race.Circuit.Location.country)}
                 </span>

@@ -3,6 +3,7 @@ import type { NewsItem } from "@/lib/types";
 import { NEWS_FEEDS } from "@/lib/constants";
 
 const parser = new Parser({
+  timeout: 5000,
   customFields: {
     item: ["media:content", "media:thumbnail", "enclosure"],
   },

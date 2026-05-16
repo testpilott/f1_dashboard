@@ -26,3 +26,38 @@ export const CIRCUIT_COORDS: Record<string, { lat: number; lng: number; timezone
   Qatar: { lat: 25.49, lng: 51.454, timezone: "Asia/Qatar" },
   "Abu Dhabi": { lat: 24.467, lng: 54.603, timezone: "Asia/Dubai" },
 };
+
+// ─── Circuit track outline images (F1 CDN) ────────────────────────────────────
+
+const CIRCUIT_IMAGE_NAMES: Record<string, string> = {
+  Bahrain: "Bahrain",
+  "Saudi Arabia": "Saudi_Arabia",
+  Australia: "Australia",
+  Japan: "Japan",
+  China: "China",
+  Miami: "Miami",
+  "Emilia Romagna": "Emilia_Romagna",
+  Monaco: "Monaco",
+  Canada: "Canada",
+  Spain: "Spain",
+  Austria: "Austria",
+  "Great Britain": "Great_Britain",
+  Hungary: "Hungary",
+  Belgium: "Belgium",
+  Netherlands: "Netherlands",
+  Italy: "Italy",
+  Azerbaijan: "Azerbaijan",
+  Singapore: "Singapore",
+  "United States": "USA",
+  Mexico: "Mexico",
+  Brazil: "Brazil",
+  "Las Vegas": "Las_Vegas",
+  Qatar: "Qatar",
+  "Abu Dhabi": "Abu_Dhabi",
+};
+
+export function getCircuitImageUrl(country: string): string | null {
+  const name = CIRCUIT_IMAGE_NAMES[country];
+  if (!name) return null;
+  return `https://media.formula1.com/image/upload/f_auto/q_auto/v0/fom-website/2018-redesign-assets/Track%20icons%20(1x1)/${name}_Circuit.png`;
+}

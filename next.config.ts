@@ -8,6 +8,10 @@ const nextConfig: NextConfig = {
         hostname: "upload.wikimedia.org",
         pathname: "/wikipedia/**",
       },
+      {
+        protocol: "https",
+        hostname: "media.formula1.com",
+      },
     ],
   },
 
@@ -35,8 +39,8 @@ const nextConfig: NextConfig = {
               // Next.js requires unsafe-inline for its inline scripts/styles
               "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
               "style-src 'self' 'unsafe-inline'",
-              // Local static files + wikimedia for F1 logo (via next/image)
-              "img-src 'self' data: blob: https://upload.wikimedia.org",
+              // Local static files + wikimedia for F1 logo (via next/image) + F1 CDN circuit images
+              "img-src 'self' data: blob: https://upload.wikimedia.org https://media.formula1.com",
               // Fonts are served locally via next/font
               "font-src 'self'",
               // All external API calls go through our own /api/* routes

@@ -238,6 +238,9 @@ function DriverDetailPanel({
             >
               &ldquo;{staticData.radioMessage}&rdquo;
             </blockquote>
+            <p className="text-[10px] text-zinc-500 pl-3 mt-1">
+              — {staticData.radioSource.race} &middot; {staticData.radioSource.year}
+            </p>
           </div>
         )}
 
@@ -261,7 +264,7 @@ function DriverDetailPanel({
 
           {news && news.length > 0 && (
             <ul className="space-y-3">
-              {news.slice(0, 5).map((item, i) => (
+              {news.slice(0, 10).map((item, i) => (
                 <li key={i}>
                   <a
                     href={item.link}

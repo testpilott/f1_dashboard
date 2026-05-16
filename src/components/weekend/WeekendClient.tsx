@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import TeamLogo from "@/components/ui/TeamLogo";
+import RaceCalendar from "@/components/weekend/RaceCalendar";
 import {
   Table,
   TableBody,
@@ -217,28 +218,11 @@ export default function WeekendClient({
     <div>
       {/* Meeting selector */}
       {allMeetings.length > 0 && (
-        <div className="flex items-center gap-3 mb-6 flex-wrap">
-          <span className="text-xs text-zinc-500 uppercase tracking-wider shrink-0">Weekend</span>
-          <div className="flex flex-wrap gap-1.5">
-            {allMeetings.map((m) => {
-              const isActive = m.meeting_key === activeMeetingKey ||
-                (activeMeetingKey === null && m.meeting_key === latestMeetingKey);
-              return (
-                <button
-                  key={m.meeting_key}
-                  onClick={() => setActiveMeetingKey(m.meeting_key)}
-                  className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
-                    isActive
-                      ? "bg-red-600 text-white"
-                      : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200"
-                  }`}
-                >
-                  {m.country_name}
-                </button>
-              );
-            })}
-          </div>
-        </div>
+        <RaceCalendar
+          meetings={allMeetings}
+          activeMeetingKey={activeMeetingKey ?? latestMeetingKey}
+          onSelect={setActiveMeetingKey}
+        />
       )}
 
       <div className="mb-6">
