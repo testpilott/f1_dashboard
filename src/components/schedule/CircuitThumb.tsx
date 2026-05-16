@@ -12,7 +12,8 @@ export default function CircuitThumb({ url, country }: { url: string; country: s
       alt={`${country} circuit`}
       width={56}
       height={56}
-      className="object-contain shrink-0 opacity-60 dark:invert dark:opacity-70"
+      unoptimized
+      className="circuit-thumb object-contain shrink-0"
       onError={() => setErr(true)}
     />
   );

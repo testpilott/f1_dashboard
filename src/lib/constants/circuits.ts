@@ -59,5 +59,5 @@ const CIRCUIT_IMAGE_NAMES: Record<string, string> = {
 export function getCircuitImageUrl(country: string): string | null {
   const name = CIRCUIT_IMAGE_NAMES[country];
   if (!name) return null;
-  return `https://media.formula1.com/image/upload/f_auto/q_auto/v0/fom-website/2018-redesign-assets/Track%20icons%20(1x1)/${name}_Circuit.png`;
+  return `https://media.formula1.com/image/upload/f_auto/q_auto/v0/fom-website/2018-redesign-assets/Track%20icons%20%281x1%29/${name}_Circuit.png`;
 }

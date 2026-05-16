@@ -163,3 +163,13 @@
     transition: background-color 200ms ease, border-color 200ms ease, color 150ms ease !important;
   }
 }
+
+/* Circuit track outline images — invert to match colour scheme */
+.circuit-thumb {
+  opacity: 0.65;
+  filter: none;
+}
+.dark .circuit-thumb {
+  filter: invert(1);
+  opacity: 0.75;
+}
