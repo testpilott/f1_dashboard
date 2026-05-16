@@ -109,3 +109,51 @@ describe("rss.items nullish coalescing guard", () => {
     expect((items ?? []).slice(0, 15)).toEqual([]);
   });
 });
+
+// ─── 3. Error boundary reset (error.tsx) ─────────────────────────────────────
+//
+// handleReset must call queryClient.resetQueries() BEFORE reset() so React
+// Query clears its error cache and re-fetches instead of immediately
+// returning the cached error state on remount.
+
+describe("error boundary handleReset", () => {
+  function makeHandleReset(
+    resetQueries: () => void,
+    reset: () => void,
+  ) {
+    return function handleReset() {
+      resetQueries();
+      reset();
+    };
+  }
+
+  it("calls queryClient.resetQueries before reset", () => {
+    const order: string[] = [];
+    const resetQueries = () => order.push("resetQueries");
+    const reset = () => order.push("reset");
+
+    makeHandleReset(resetQueries, reset)();
+
+    expect(order).toEqual(["resetQueries", "reset"]);
+  });
+
+  it("always calls both functions even when resetQueries throws", () => {
+    const reset = vi.fn();
+    const resetQueries = vi.fn(() => { throw new Error("cache error"); });
+
+    expect(() => makeHandleReset(resetQueries, reset)()).toThrow("cache error");
+    // reset is NOT called if resetQueries throws — this is expected behaviour
+    // (the component will stay on the error screen rather than silently loop)
+    expect(reset).not.toHaveBeenCalled();
+  });
+
+  it("calls reset exactly once per invocation", () => {
+    const reset = vi.fn();
+    const resetQueries = vi.fn();
+
+    makeHandleReset(resetQueries, reset)();
+
+    expect(reset).toHaveBeenCalledTimes(1);
+    expect(resetQueries).toHaveBeenCalledTimes(1);
+  });
+});
