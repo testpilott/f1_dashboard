@@ -12,7 +12,7 @@ export async function fetchNewsFeeds(maxPerFeed = 15): Promise<NewsItem[]> {
   const results = await Promise.allSettled(
     NEWS_FEEDS.map(async (feed) => {
       const rss = await parser.parseURL(feed.url);
-      return rss.items.slice(0, maxPerFeed).map((item): NewsItem => ({
+      return (rss.items ?? []).slice(0, maxPerFeed).map((item): NewsItem => ({
         title: item.title ?? "Untitled",
         link: item.link ?? "#",
         pubDate: item.pubDate ?? new Date().toISOString(),

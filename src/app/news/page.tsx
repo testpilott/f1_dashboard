@@ -12,7 +12,7 @@ async function fetchNews(filter?: string) {
   const url = filter ? `/api/news?filter=${encodeURIComponent(filter)}` : "/api/news";
   const res = await fetch(url);
   if (!res.ok) throw new Error("Failed");
-  return res.json().then((d) => d.items as NewsItem[]);
+  return res.json().then((d) => (Array.isArray(d.items) ? d.items : []) as NewsItem[]);
 }
 
 const FILTERS = ["", "upgrade", "tyre", "hamilton", "norris", "verstappen", "crash"];

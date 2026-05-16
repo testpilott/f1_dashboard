@@ -29,13 +29,13 @@ interface CompareData { circuitId: string; history: CircuitYearRow[] }
 async function fetchStandings(): Promise<DriverStanding[]> {
   const res = await fetch("/api/standings?season=current");
   if (!res.ok) throw new Error("Failed to load standings");
-  return res.json().then((d) => d.drivers as DriverStanding[]);
+  return res.json().then((d) => Array.isArray(d.drivers) ? d.drivers : []);
 }
 
 async function fetchSchedule(): Promise<Race[]> {
   const res = await fetch("/api/schedule?season=current");
   if (!res.ok) throw new Error("Failed to load schedule");
-  return res.json().then((d) => d.races as Race[]);
+  return res.json().then((d) => Array.isArray(d.races) ? d.races : []);
 }
 
 async function fetchCompare(dA: string, dB: string, cId: string): Promise<CompareData> {

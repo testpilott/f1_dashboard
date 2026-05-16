@@ -18,13 +18,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 async function fetchLaps(sessionKey: number) {
   const res = await fetch(`/api/sessions?endpoint=laps&session_key=${sessionKey}`);
   if (!res.ok) throw new Error("Failed");
-  return res.json().then((d) => d.laps as OpenF1Lap[]);
+  return res.json().then((d) => (Array.isArray(d.laps) ? d.laps : []) as OpenF1Lap[]);
 }
 
 async function fetchDrivers(sessionKey: number) {
   const res = await fetch(`/api/sessions?endpoint=drivers&session_key=${sessionKey}`);
   if (!res.ok) throw new Error("Failed");
-  return res.json().then((d) => d.drivers as OpenF1Driver[]);
+  return res.json().then((d) => (Array.isArray(d.drivers) ? d.drivers : []) as OpenF1Driver[]);
 }
 
 function lapTimeToSeconds(ms: number | null | undefined): number | null {
