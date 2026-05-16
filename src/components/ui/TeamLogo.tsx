@@ -29,8 +29,8 @@ export default function TeamLogo({ team, size = 40 }: TeamLogoProps) {
         width: size,
         height: size,
         borderRadius: "50%",
-        // Dark background so white/light logos are always legible
-        backgroundColor: "#18181b",
+        // Theme-aware: CSS vars switch between light (#f4f4f5) and dark (#27272a)
+        backgroundColor: "var(--logo-badge-bg)",
         boxShadow: `0 0 0 2px ${color}`,
         overflow: "hidden",
         padding: !logoPath || failed ? 0 : pad,
@@ -58,6 +58,8 @@ export default function TeamLogo({ team, size = 40 }: TeamLogoProps) {
             height: "100%",
             objectFit: "contain",
             display: "block",
+            // White glow in dark mode, subtle shadow in light mode — follows alpha channel
+            filter: "var(--logo-img-filter)",
           }}
           onError={() => setFailed(true)}
         />

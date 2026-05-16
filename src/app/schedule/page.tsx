@@ -25,10 +25,10 @@ export default async function SchedulePage() {
               <Link
                 key={race.round}
                 href={`/race/${race.season}/${race.round}`}
-                className={`flex items-center gap-4 px-4 py-3 rounded-lg border transition-colors ${
+                className={`flex items-center gap-4 px-4 py-3 rounded-lg border transition-all hover:scale-[1.01] hover:shadow-md ${
                   past
                     ? "border-zinc-800 bg-zinc-900/50 opacity-60 hover:opacity-80"
-                    : "border-zinc-700 bg-zinc-900 hover:border-zinc-600"
+                    : "border-zinc-700 bg-gradient-to-r from-zinc-900 to-zinc-950 hover:border-zinc-500 hover:from-zinc-800"
                 }`}
               >
                 <span className="font-mono text-sm text-zinc-500 w-6 shrink-0">

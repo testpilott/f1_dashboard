@@ -1,13 +1,14 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
 import type { Race, WeatherForecast } from "@/lib/types";
 import { CIRCUIT_COORDS, getWeatherIcon, getWeatherLabel } from "@/lib/constants";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MapPin, Clock, Cloud } from "lucide-react";
-import { formatDistanceToNow, format, parseISO } from "date-fns";
+import { format, parseISO } from "date-fns";
 
 async function fetchNextRace() {
   const res = await fetch("/api/schedule?view=next");
@@ -22,12 +23,44 @@ async function fetchWeatherForRace(country: string) {
   return res.json() as Promise<WeatherForecast>;
 }
 
-function Countdown({ dateStr }: { dateStr: string }) {
-  const d = parseISO(dateStr);
+function CountdownSegment({ value, label }: { value: number; label: string }) {
   return (
-    <p className="text-sm text-zinc-400">
-      {formatDistanceToNow(d, { addSuffix: true })}
-    </p>
+    <span className="inline-flex items-baseline gap-0.5">
+      <span className="font-mono tabular-nums text-sm font-semibold text-zinc-100">
+        {String(value).padStart(2, "0")}
+      </span>
+      <span className="text-zinc-500 text-xs">{label}</span>
+    </span>
+  );
+}
+
+function Countdown({ dateStr }: { dateStr: string }) {
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const target = parseISO(dateStr).getTime();
+  const diff = target - now;
+
+  if (diff <= 0) {
+    return <p className="text-sm text-red-400 font-medium">Race underway</p>;
+  }
+
+  const d = Math.floor(diff / 86_400_000);
+  const h = Math.floor((diff % 86_400_000) / 3_600_000);
+  const m = Math.floor((diff % 3_600_000) / 60_000);
+  const s = Math.floor((diff % 60_000) / 1_000);
+
+  return (
+    <div className="flex items-center gap-2">
+      {d > 0 && <CountdownSegment value={d} label="d" />}
+      <CountdownSegment value={h} label="h" />
+      <CountdownSegment value={m} label="m" />
+      <CountdownSegment value={s} label="s" />
+    </div>
   );
 }
 

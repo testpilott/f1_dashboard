@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import type { ChampionshipProjection, DriverProjection } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -13,8 +14,15 @@ async function fetchProjections() {
 }
 
 function ProjectionRow({ driver, maxWinProb }: { driver: DriverProjection; maxWinProb: number }) {
+  // Animate bars from 0 → actual width on first render
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setReady(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
+
   return (
-    <div className="rounded-lg bg-zinc-900 border border-zinc-800 p-4 space-y-3">
+    <div className="rounded-lg bg-gradient-to-br from-zinc-900 to-zinc-950 border border-zinc-800 p-4 space-y-3 hover:border-zinc-700 transition-colors">
       {/* Header */}
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-2">
@@ -72,8 +80,12 @@ function ProjectionRow({ driver, maxWinProb }: { driver: DriverProjection; maxWi
             </div>
             <div className="relative h-1.5 rounded-full bg-zinc-800 overflow-hidden">
               <div
-                className="absolute inset-y-0 left-0 rounded-full transition-all"
-                style={{ width: `${value}%`, backgroundColor: driver.teamColour }}
+                className="absolute inset-y-0 left-0 rounded-full"
+                style={{
+                  width: ready ? `${value}%` : "0%",
+                  backgroundColor: driver.teamColour,
+                  transition: "width 0.7s ease-out",
+                }}
               />
             </div>
           </div>

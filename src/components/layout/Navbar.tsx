@@ -14,6 +14,7 @@ import {
   GitCompare,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import ThemeToggle from "@/components/ui/ThemeToggle";
 
 const NAV_ITEMS = [
   { href: "/", label: "Standings", icon: BarChart2 },
@@ -42,8 +43,8 @@ export default function Navbar() {
   return (
     <>
       {/* Desktop sidebar */}
-      <aside className="hidden lg:flex lg:flex-col lg:w-56 lg:fixed lg:inset-y-0 lg:z-50 bg-zinc-950 border-r border-zinc-800">
-        <div className="flex h-16 items-center px-4 border-b border-zinc-800">
+      <aside className="hidden lg:flex lg:flex-col lg:w-56 lg:fixed lg:inset-y-0 lg:z-50 bg-white dark:bg-zinc-950 border-r border-zinc-200 dark:border-zinc-800">
+        <div className="flex h-16 items-center px-4 border-b border-zinc-200 dark:border-zinc-800">
           <Link href="/" className="flex flex-col gap-0.5">
             <Image
               src="https://upload.wikimedia.org/wikipedia/commons/f/f2/Formula_1_logo.svg"
@@ -51,7 +52,7 @@ export default function Navbar() {
               width={80}
               height={20}
               className="h-5 w-auto"
-              style={{ filter: "brightness(0) invert(1)" }}
+              style={{ filter: "var(--f1-logo-filter)" }}
               unoptimized
             />
             <span className="text-zinc-500 text-[9px] tracking-[0.25em] uppercase">Dashboard</span>
@@ -66,7 +67,7 @@ export default function Navbar() {
                 "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
                 pathname === href
                   ? "bg-red-600 text-white"
-                  : "text-zinc-400 hover:text-white hover:bg-zinc-800"
+                  : "text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-zinc-800"
               )}
             >
               <Icon className="w-4 h-4 shrink-0" />
@@ -74,32 +75,34 @@ export default function Navbar() {
             </Link>
           ))}
         </nav>
-        <div className="px-4 py-3 border-t border-zinc-800 text-zinc-600 text-xs">
-          Data: OpenF1 · Jolpica · Open-Meteo
+        <div className="px-4 py-3 border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
+          <span className="text-zinc-500 dark:text-zinc-600 text-xs">OpenF1 · Jolpica · Open-Meteo</span>
+          <ThemeToggle />
         </div>
       </aside>
 
       {/* Mobile top bar */}
-      <header className="lg:hidden fixed top-0 inset-x-0 z-50 h-14 bg-zinc-950 border-b border-zinc-800 flex items-center px-4 gap-3">
-        <Link href="/" className="flex items-center gap-2">
-            <Image
-              src="https://upload.wikimedia.org/wikipedia/commons/f/f2/Formula_1_logo.svg"
-              alt="Formula 1"
-              width={64}
-              height={16}
-              className="h-4 w-auto"
-              style={{ filter: "brightness(0) invert(1)" }}
-              unoptimized
-            />
-            <span className="text-zinc-400 text-xs tracking-widest uppercase">Dashboard</span>
-          </Link>
+      <header className="lg:hidden fixed top-0 inset-x-0 z-50 h-14 bg-white dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-800 flex items-center px-4 gap-3">
+        <Link href="/" className="flex items-center gap-2 flex-1">
+          <Image
+            src="https://upload.wikimedia.org/wikipedia/commons/f/f2/Formula_1_logo.svg"
+            alt="Formula 1"
+            width={64}
+            height={16}
+            className="h-4 w-auto"
+            style={{ filter: "var(--f1-logo-filter)" }}
+            unoptimized
+          />
+          <span className="text-zinc-500 text-xs tracking-widest uppercase">Dashboard</span>
+        </Link>
+        <ThemeToggle />
       </header>
 
       {/* Mobile bottom nav — horizontally scrollable so all items are reachable */}
       <nav
         ref={navRef}
         aria-label="Main navigation"
-        className="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-zinc-950 border-t border-zinc-800 flex overflow-x-auto scrollbar-none snap-x snap-mandatory"
+        className="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-white dark:bg-zinc-950 border-t border-zinc-200 dark:border-zinc-800 flex overflow-x-auto scrollbar-none snap-x snap-mandatory"
       >
         {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
           const active = pathname === href;
@@ -110,7 +113,9 @@ export default function Navbar() {
               data-active={active}
               className={cn(
                 "flex flex-col items-center gap-1 shrink-0 min-w-[4.5rem] py-2 px-1 text-[10px] font-medium transition-colors snap-start",
-                active ? "text-red-500" : "text-zinc-500 hover:text-zinc-300"
+                active
+                  ? "text-red-500"
+                  : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
               )}
             >
               <Icon className="w-5 h-5" aria-hidden="true" />

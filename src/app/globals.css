@@ -49,6 +49,11 @@
 }
 
 :root {
+  /* Theme-aware logo rendering */
+  --logo-badge-bg: #f4f4f5;          /* light bg — dark logos are visible */
+  --logo-img-filter: drop-shadow(0 0 1.5px rgba(0, 0, 0, 0.25));
+  --f1-logo-filter: brightness(0);   /* black F1 logo in light mode */
+
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -84,6 +89,11 @@
 }
 
 .dark {
+  /* Theme-aware logo rendering */
+  --logo-badge-bg: #27272a;          /* dark bg — light logos are visible */
+  --logo-img-filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.55));
+  --f1-logo-filter: brightness(0) invert(1); /* white F1 logo in dark mode */
+
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
@@ -145,5 +155,13 @@
   /* Keyboard focus ring for interactive elements */
   :focus-visible {
     @apply outline-2 outline-offset-2 outline-red-500;
+  }
+}
+
+@layer utilities {
+  /* Smooth theme transitions — excludes color-scheme to avoid FOUC */
+  .theme-transition,
+  .theme-transition * {
+    transition: background-color 200ms ease, border-color 200ms ease, color 150ms ease !important;
   }
 }
