@@ -131,3 +131,19 @@
     font-family: var(--font-heading);
   }
 }
+
+@layer utilities {
+  /* Hide scrollbar while preserving scroll functionality */
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Keyboard focus ring for interactive elements */
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-red-500;
+  }
+}

@@ -3,38 +3,7 @@ import { getSchedule } from "@/lib/api/jolpica";
 import { format, parseISO, isPast } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
-
-const FLAG_MAP: Record<string, string> = {
-  Australia: "🇦🇺",
-  Bahrain: "🇧🇭",
-  "Saudi Arabia": "🇸🇦",
-  Japan: "🇯🇵",
-  China: "🇨🇳",
-  USA: "🇺🇸",
-  "United States": "🇺🇸",
-  Italy: "🇮🇹",
-  Monaco: "🇲🇨",
-  Canada: "🇨🇦",
-  Spain: "🇪🇸",
-  Austria: "🇦🇹",
-  UK: "🇬🇧",
-  "United Kingdom": "🇬🇧",
-  Hungary: "🇭🇺",
-  Belgium: "🇧🇪",
-  Netherlands: "🇳🇱",
-  Azerbaijan: "🇦🇿",
-  Singapore: "🇸🇬",
-  Mexico: "🇲🇽",
-  Brazil: "🇧🇷",
-  UAE: "🇦🇪",
-  "United Arab Emirates": "🇦🇪",
-  Qatar: "🇶🇦",
-  "Las Vegas": "🇺🇸",
-};
-
-function getFlag(country: string) {
-  return FLAG_MAP[country] ?? "🏁";
-}
+import { getFlag } from "@/lib/constants";
 
 export default async function SchedulePage() {
   const races = await getSchedule();

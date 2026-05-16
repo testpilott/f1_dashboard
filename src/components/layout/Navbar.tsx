@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
+import { useEffect, useRef } from "react";
 import {
   BarChart2,
   Calendar,
@@ -25,6 +27,17 @@ const NAV_ITEMS = [
 
 export default function Navbar() {
   const pathname = usePathname();
+  const navRef = useRef<HTMLElement>(null);
+
+  // Keep active item scrolled into view on route changes
+  useEffect(() => {
+    const nav = navRef.current;
+    if (!nav) return;
+    const active = nav.querySelector("[data-active='true']") as HTMLElement | null;
+    if (active) {
+      active.scrollIntoView({ inline: "nearest", behavior: "smooth", block: "nearest" });
+    }
+  }, [pathname]);
 
   return (
     <>
@@ -32,11 +45,14 @@ export default function Navbar() {
       <aside className="hidden lg:flex lg:flex-col lg:w-56 lg:fixed lg:inset-y-0 lg:z-50 bg-zinc-950 border-r border-zinc-800">
         <div className="flex h-16 items-center px-4 border-b border-zinc-800">
           <Link href="/" className="flex flex-col gap-0.5">
-            <img
+            <Image
               src="https://upload.wikimedia.org/wikipedia/commons/f/f2/Formula_1_logo.svg"
               alt="Formula 1"
+              width={80}
+              height={20}
               className="h-5 w-auto"
               style={{ filter: "brightness(0) invert(1)" }}
+              unoptimized
             />
             <span className="text-zinc-500 text-[9px] tracking-[0.25em] uppercase">Dashboard</span>
           </Link>
@@ -66,31 +82,42 @@ export default function Navbar() {
       {/* Mobile top bar */}
       <header className="lg:hidden fixed top-0 inset-x-0 z-50 h-14 bg-zinc-950 border-b border-zinc-800 flex items-center px-4 gap-3">
         <Link href="/" className="flex items-center gap-2">
-          <img
-            src="https://upload.wikimedia.org/wikipedia/commons/f/f2/Formula_1_logo.svg"
-            alt="Formula 1"
-            className="h-4 w-auto"
-            style={{ filter: "brightness(0) invert(1)" }}
-          />
-          <span className="text-zinc-400 text-xs tracking-widest uppercase">Dashboard</span>
-        </Link>
+            <Image
+              src="https://upload.wikimedia.org/wikipedia/commons/f/f2/Formula_1_logo.svg"
+              alt="Formula 1"
+              width={64}
+              height={16}
+              className="h-4 w-auto"
+              style={{ filter: "brightness(0) invert(1)" }}
+              unoptimized
+            />
+            <span className="text-zinc-400 text-xs tracking-widest uppercase">Dashboard</span>
+          </Link>
       </header>
 
-      {/* Mobile bottom nav */}
-      <nav className="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-zinc-950 border-t border-zinc-800 flex">
-        {NAV_ITEMS.slice(0, 5).map(({ href, label, icon: Icon }) => (
-          <Link
-            key={href}
-            href={href}
-            className={cn(
-              "flex flex-col items-center gap-1 flex-1 py-2 text-[10px] font-medium transition-colors",
-              pathname === href ? "text-red-500" : "text-zinc-500 hover:text-zinc-300"
-            )}
-          >
-            <Icon className="w-5 h-5" />
-            {label}
-          </Link>
-        ))}
+      {/* Mobile bottom nav — horizontally scrollable so all items are reachable */}
+      <nav
+        ref={navRef}
+        aria-label="Main navigation"
+        className="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-zinc-950 border-t border-zinc-800 flex overflow-x-auto scrollbar-none snap-x snap-mandatory"
+      >
+        {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+          const active = pathname === href;
+          return (
+            <Link
+              key={href}
+              href={href}
+              data-active={active}
+              className={cn(
+                "flex flex-col items-center gap-1 shrink-0 min-w-[4.5rem] py-2 px-1 text-[10px] font-medium transition-colors snap-start",
+                active ? "text-red-500" : "text-zinc-500 hover:text-zinc-300"
+              )}
+            >
+              <Icon className="w-5 h-5" aria-hidden="true" />
+              {label}
+            </Link>
+          );
+        })}
       </nav>
     </>
   );

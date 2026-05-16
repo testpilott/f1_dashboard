@@ -4,7 +4,9 @@ import type { Race, QualifyingResult, RaceResult } from "@/lib/types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import TeamLogo from "@/components/ui/TeamLogo";
+import { getStatusLabel, getStatusTooltip } from "@/lib/constants";
 import {
   Table,
   TableBody,
@@ -41,6 +43,7 @@ function ResultTable({
   if (!data?.length) return <p className="text-zinc-500 text-sm mt-4">No {title.toLowerCase()} available.</p>;
 
   return (
+    <div className="overflow-x-auto -mx-4 px-4">
     <Table className="mt-2">
       <TableHeader>
         <TableRow className="border-zinc-800 hover:bg-transparent">
@@ -83,8 +86,13 @@ function ResultTable({
           : (data as RaceResult[]).map((r) => (
             <TableRow key={r.Driver.driverId} className="border-zinc-800 hover:bg-zinc-900/60">
               <TableCell className="py-2 font-mono text-sm">
-                {r.positionText === "R" ? (
-                  <Badge className="bg-red-900/50 text-red-400 border-red-900 text-xs px-1.5">DNF</Badge>
+                {r.positionText && /^[A-Z]$/.test(r.positionText) && r.positionText !== "1" ? (
+                  <Tooltip>
+                    <TooltipTrigger render={<Badge className="bg-red-900/50 text-red-400 border-red-900 text-xs px-1.5 cursor-help" />}>
+                      {getStatusLabel(r.positionText)}
+                    </TooltipTrigger>
+                    <TooltipContent>{getStatusTooltip(r.positionText)}</TooltipContent>
+                  </Tooltip>
                 ) : (
                   r.position
                 )}
@@ -114,6 +122,7 @@ function ResultTable({
           ))}
       </TableBody>
     </Table>
+    </div>
   );
 }
 

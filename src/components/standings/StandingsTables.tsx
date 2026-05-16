@@ -74,6 +74,7 @@ export default function StandingsTables({
           <p className="text-zinc-500 text-sm">No standings available yet.</p>
         )}
         {data && (
+          <div className="overflow-x-auto -mx-4 px-4">
           <Table>
             <TableHeader>
               <TableRow className="border-zinc-800 hover:bg-transparent">
@@ -110,6 +111,7 @@ export default function StandingsTables({
               })}
             </TableBody>
           </Table>
+          </div>
         )}
       </TabsContent>
 
@@ -120,6 +122,7 @@ export default function StandingsTables({
           <p className="text-zinc-500 text-sm">No constructor standings available yet.</p>
         )}
         {data && (
+          <div className="overflow-x-auto -mx-4 px-4">
           <Table>
             <TableHeader>
               <TableRow className="border-zinc-800 hover:bg-transparent">
@@ -150,6 +153,7 @@ export default function StandingsTables({
               })}
             </TableBody>
           </Table>
+          </div>
         )}
       </TabsContent>
     </Tabs>

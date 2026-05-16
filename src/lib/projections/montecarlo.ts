@@ -73,8 +73,13 @@ function buildDriverStats(
   });
 }
 
+// Base DNF probability per driver per race (~15% historical average in F1)
+const BASE_DNF_PROBABILITY = 0.15;
+
 /**
  * Simulate a single race for all drivers. Returns driver → points earned.
+ * Includes DNF probability (weighted toward backmarkers) and fastest lap
+ * awarded to the best-performing finisher in top 10.
  */
 function simulateRace(
   drivers: DriverSim[],
@@ -82,33 +87,51 @@ function simulateRace(
 ): Map<string, number> {
   const pointsTable = isSprintRace ? SPRINT_POINTS_SYSTEM : POINTS_SYSTEM;
 
-  // Assign each driver a simulated position based on their average + noise
-  const simulated = drivers.map((d) => ({
-    driverId: d.driverId,
-    score: Math.max(1, gaussianRandom(d.avgFinish, d.finishStdDev)),
-  }));
+  // Assign each driver a simulated score (lower = better) and apply DNF chance
+  // Backmarkers (higher avgFinish) get slightly more DNF risk
+  const simulated = drivers
+    .map((d) => {
+      const dnfScale = 1 + (d.avgFinish - 1) / (drivers.length * 2);
+      const dnfProb = Math.min(BASE_DNF_PROBABILITY * dnfScale, 0.35);
+      const dnf = Math.random() < dnfProb;
+      return {
+        driverId: d.driverId,
+        score: Math.max(1, gaussianRandom(d.avgFinish, d.finishStdDev)),
+        dnf,
+      };
+    });
 
-  // Sort ascending (lower score = better finish)
-  simulated.sort((a, b) => a.score - b.score);
-
-  const earned = new Map<string, number>();
-  let fastestLapDriver: string | null = null;
-
-  simulated.forEach(({ driverId }, index) => {
-    const pts = pointsTable[index] ?? 0;
-    earned.set(driverId, pts);
-    // Fastest lap bonus: random chance for top 10 drivers
-    if (index < 10 && !fastestLapDriver && Math.random() < 0.15) {
-      fastestLapDriver = driverId;
-    }
+  // Sort ascending (lower score = better finish); DNF drivers go to the back
+  simulated.sort((a, b) => {
+    if (a.dnf !== b.dnf) return a.dnf ? 1 : -1;
+    return a.score - b.score;
   });
 
-  // Award fastest lap bonus point if driver finishes in top 10
-  if (fastestLapDriver) {
-    const pos = simulated.findIndex((d) => d.driverId === fastestLapDriver);
-    if (pos < 10) {
-      earned.set(fastestLapDriver, (earned.get(fastestLapDriver) ?? 0) + FASTEST_LAP_POINT);
+  const earned = new Map<string, number>();
+  // Track the finishing position index excluding DNFs for fastest lap eligibility
+  let finishIndex = 0;
+  let fastestLapCandidateIdx = -1;
+  let bestScore = Infinity;
+
+  simulated.forEach(({ driverId, score, dnf }, index) => {
+    if (dnf) {
+      earned.set(driverId, 0);
+      return;
     }
+    const pts = pointsTable[finishIndex] ?? 0;
+    earned.set(driverId, pts);
+    // Fastest lap: best raw score (lowest) among finishers in effective top 10
+    if (finishIndex < 10 && score < bestScore) {
+      bestScore = score;
+      fastestLapCandidateIdx = index;
+    }
+    finishIndex++;
+  });
+
+  // Award fastest lap bonus to the best-performing top-10 finisher
+  if (fastestLapCandidateIdx >= 0) {
+    const fl = simulated[fastestLapCandidateIdx].driverId;
+    earned.set(fl, (earned.get(fl) ?? 0) + FASTEST_LAP_POINT);
   }
 
   return earned;

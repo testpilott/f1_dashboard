@@ -1,12 +1,21 @@
 import { NextResponse } from "next/server";
 import { getRaceResultsAtCircuit, getQualifyingResultsAtCircuit } from "@/lib/api/jolpica";
+import { checkRateLimit, getClientIp } from "@/lib/ratelimit";
 
 export const revalidate = 300; // 5 min
 
 const CURRENT_YEAR = new Date().getFullYear();
 const HISTORY_YEARS = [CURRENT_YEAR, CURRENT_YEAR - 1, CURRENT_YEAR - 2, CURRENT_YEAR - 3];
 
+// Safe identifier pattern: lowercase letters, digits, hyphens only (Ergast format)
+const VALID_ID = /^[a-z0-9_-]{1,40}$/;
+
 export async function GET(req: Request) {
+  const ip = getClientIp(req);
+  if (!checkRateLimit(`compare:${ip}`, 60_000, 60)) {
+    return NextResponse.json({ error: "Too many requests" }, { status: 429, headers: { "Retry-After": "60" } });
+  }
+
   const { searchParams } = new URL(req.url);
   const driverA = searchParams.get("driverA");
   const driverB = searchParams.get("driverB");
@@ -17,6 +26,12 @@ export async function GET(req: Request) {
       { error: "driverA, driverB, and circuitId are all required" },
       { status: 400 }
     );
+  }
+  if (!VALID_ID.test(driverA) || !VALID_ID.test(driverB)) {
+    return NextResponse.json({ error: "Invalid driver identifier" }, { status: 400 });
+  }
+  if (!VALID_ID.test(circuitId)) {
+    return NextResponse.json({ error: "Invalid circuit identifier" }, { status: 400 });
   }
 
   const yearResults = await Promise.all(
@@ -62,3 +77,4 @@ export async function GET(req: Request) {
 
   return NextResponse.json({ circuitId, driverA, driverB, history });
 }
+

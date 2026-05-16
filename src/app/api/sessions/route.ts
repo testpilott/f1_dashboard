@@ -1,14 +1,38 @@
 import { NextResponse } from "next/server";
 import { getSessions, getSessionResult, getStints, getLaps, getPitStops, getTrackWeather, getRaceControl, getDriversForSession } from "@/lib/api/openf1";
+import { checkRateLimit, getClientIp } from "@/lib/ratelimit";
 
 export const revalidate = 60;
 
+const VALID_ENDPOINTS = new Set(["sessions", "result", "drivers", "stints", "laps", "pit", "weather", "race_control"]);
+const VALID_YEAR = /^\d{4}$/;
+const VALID_MEETING_KEY = /^(\d{1,8}|latest)$/;
+const VALID_SESSION_KEY = /^(\d{1,8}|latest)$/;
+
 export async function GET(req: Request) {
+  const ip = getClientIp(req);
+  if (!checkRateLimit(`sessions:${ip}`, 60_000, 60)) {
+    return NextResponse.json({ error: "Too many requests" }, { status: 429, headers: { "Retry-After": "60" } });
+  }
+
   const { searchParams } = new URL(req.url);
   const sessionKey = searchParams.get("session_key");
   const endpoint = searchParams.get("endpoint") ?? "sessions";
   const year = searchParams.get("year");
   const meetingKey = searchParams.get("meeting_key");
+
+  if (!VALID_ENDPOINTS.has(endpoint)) {
+    return NextResponse.json({ error: "Invalid endpoint" }, { status: 400 });
+  }
+  if (year && !VALID_YEAR.test(year)) {
+    return NextResponse.json({ error: "Invalid year parameter" }, { status: 400 });
+  }
+  if (meetingKey && !VALID_MEETING_KEY.test(meetingKey)) {
+    return NextResponse.json({ error: "Invalid meeting_key parameter" }, { status: 400 });
+  }
+  if (sessionKey && !VALID_SESSION_KEY.test(sessionKey)) {
+    return NextResponse.json({ error: "Invalid session_key parameter" }, { status: 400 });
+  }
 
   try {
     if (endpoint === "sessions") {
@@ -56,9 +80,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json({ error: "Unknown endpoint" }, { status: 400 });
   } catch (err) {
-    return NextResponse.json(
-      { error: "OpenF1 request failed", detail: String(err) },
-      { status: 500 }
-    );
+    console.error("[/api/sessions] Error:", err);
+    return NextResponse.json({ error: "OpenF1 request failed" }, { status: 500 });
   }
 }

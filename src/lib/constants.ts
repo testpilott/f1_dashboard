@@ -137,6 +137,71 @@ export const SEGMENT_HEX: Record<SectorColorName, string> = {
   pitlane: "#374151",
 };
 
+// ─── Country flag emoji map ───────────────────────────────────────────────────
+
+export const FLAG_MAP: Record<string, string> = {
+  Australia: "🇦🇺",
+  Bahrain: "🇧🇭",
+  "Saudi Arabia": "🇸🇦",
+  Japan: "🇯🇵",
+  China: "🇨🇳",
+  USA: "🇺🇸",
+  "United States": "🇺🇸",
+  Italy: "🇮🇹",
+  Monaco: "🇲🇨",
+  Canada: "🇨🇦",
+  Spain: "🇪🇸",
+  Austria: "🇦🇹",
+  UK: "🇬🇧",
+  "United Kingdom": "🇬🇧",
+  "Great Britain": "🇬🇧",
+  Hungary: "🇭🇺",
+  Belgium: "🇧🇪",
+  Netherlands: "🇳🇱",
+  Azerbaijan: "🇦🇿",
+  Singapore: "🇸🇬",
+  Mexico: "🇲🇽",
+  Brazil: "🇧🇷",
+  UAE: "🇦🇪",
+  "United Arab Emirates": "🇦🇪",
+  "Abu Dhabi": "🇦🇪",
+  Qatar: "🇶🇦",
+  "Las Vegas": "🇺🇸",
+  Miami: "🇺🇸",
+};
+
+export function getFlag(country: string): string {
+  return FLAG_MAP[country] ?? "🏁";
+}
+
+// ─── Race status display labels (Jolpica positionText → label) ────────────────
+
+export const STATUS_MAP: Record<string, string> = {
+  R: "DNF",
+  D: "DSQ",
+  E: "EXC",
+  W: "WD",
+  F: "DNQ",
+  N: "NC",
+};
+
+export function getStatusLabel(positionText: string): string {
+  return STATUS_MAP[positionText] ?? positionText;
+}
+
+export const STATUS_TOOLTIP: Record<string, string> = {
+  R: "Did Not Finish",
+  D: "Disqualified",
+  E: "Excluded",
+  W: "Withdrew",
+  F: "Did Not Qualify",
+  N: "Not Classified",
+};
+
+export function getStatusTooltip(positionText: string): string {
+  return STATUS_TOOLTIP[positionText] ?? positionText;
+}
+
 // ─── News RSS feed sources ────────────────────────────────────────────────────
 
 export const NEWS_FEEDS = [

@@ -58,8 +58,8 @@ function formatDuration(ms: number | null | undefined): string {
   if (ms == null) return "–";
   const s = ms / 1000;
   const mins = Math.floor(s / 60);
-  const secs = (s % 60).toFixed(3);
-  return mins > 0 ? `${mins}:${secs.padStart(6, "0")}` : `${secs}`;
+  const secs = (s % 60).toFixed(3).padStart(6, "0");
+  return mins > 0 ? `${mins}:${secs}` : `${(s % 60).toFixed(3)}s`;
 }
 
 function SessionResults({
@@ -107,6 +107,7 @@ function SessionResults({
   }
 
   return (
+    <div className="overflow-x-auto -mx-4 px-4">
     <Table className="mt-2">
       <TableHeader>
         <TableRow className="border-zinc-800 hover:bg-transparent">
@@ -156,6 +157,7 @@ function SessionResults({
         })}
       </TableBody>
     </Table>
+    </div>
   );
 }
 
@@ -259,7 +261,8 @@ export default function WeekendClient({
 
       {!isLoading && sorted.length > 0 && (
         <Tabs defaultValue={defaultTab} key={activeMeetingKey ?? "latest"}>
-          <TabsList className="bg-zinc-900 flex-wrap h-auto gap-1 mb-4">
+          <div className="overflow-x-auto -mx-4 px-4">
+          <TabsList className="bg-zinc-900 flex-nowrap w-max min-w-full gap-1 mb-4">
             {sorted.map((s) => (
               <TabsTrigger
                 key={s.session_key}
@@ -275,6 +278,7 @@ export default function WeekendClient({
               </TabsTrigger>
             ))}
           </TabsList>
+          </div>
 
           {sorted.map((s) => (
             <TabsContent key={s.session_key} value={s.session_key.toString()}>

@@ -1,38 +1,60 @@
 import { NextResponse } from "next/server";
-import { getDriverStandings } from "@/lib/api/jolpica";
-import { getSchedule } from "@/lib/api/jolpica";
+import { getDriverStandings, getSchedule, getSeasonResults } from "@/lib/api/jolpica";
 import { runProjections } from "@/lib/projections/montecarlo";
+import { checkRateLimit, getClientIp } from "@/lib/ratelimit";
 
 export const revalidate = 3600; // 1 hour
 
+const VALID_SEASON = /^(\d{4}|current)$/;
+
 export async function GET(req: Request) {
+  // Stricter limit — projections run 10k Monte Carlo simulations
+  const ip = getClientIp(req);
+  if (!checkRateLimit(`projections:${ip}`, 60_000, 10)) {
+    return NextResponse.json({ error: "Too many requests" }, { status: 429, headers: { "Retry-After": "60" } });
+  }
+
   const { searchParams } = new URL(req.url);
   const season = searchParams.get("season") ?? "current";
 
+  if (!VALID_SEASON.test(season)) {
+    return NextResponse.json({ error: "Invalid season parameter" }, { status: 400 });
+  }
+  if (season !== "current") {
+    const yr = parseInt(season, 10);
+    if (yr < 2000 || yr > 2030) {
+      return NextResponse.json({ error: "Season out of range" }, { status: 400 });
+    }
+  }
+
   try {
-    const [standings, schedule] = await Promise.all([
+    const [standings, schedule, seasonRaces] = await Promise.all([
       getDriverStandings(season),
       getSchedule(season),
+      getSeasonResults(season),
     ]);
 
     if (!standings.length || !schedule.length) {
       return NextResponse.json({ error: "No data available" }, { status: 404 });
     }
 
-    // Determine how many rounds have been completed by checking the last round
-    // that has results in the standings table
-    // Use a reasonable default: find the last race in the schedule before today
-    const now = new Date();
-    const lastCompleted = schedule
-      .filter((r) => new Date(r.date) < now)
-      .sort((a, b) => parseInt(b.round, 10) - parseInt(a.round, 10))[0];
-    const completedRound = lastCompleted ? parseInt(lastCompleted.round, 10) : 0;
+    // Determine completed rounds from actual race result data (not date comparison).
+    // A round is considered completed only if it has result entries in the API.
+    const completedRoundsFromResults = new Set(
+      seasonRaces
+        .filter((r) => Array.isArray(r.Results) && r.Results.length > 0)
+        .map((r) => parseInt(r.round, 10))
+    );
+    const completedRound = completedRoundsFromResults.size > 0
+      ? Math.max(...completedRoundsFromResults)
+      : 0;
 
     const projections = runProjections(standings, schedule, completedRound);
     return NextResponse.json(projections);
   } catch (err) {
+    console.error("[/api/projections] Error:", err);
     return NextResponse.json(
-      { error: "Projection failed", detail: String(err) },
+      { error: "Projection failed" },
       { status: 500 }
     );
   }

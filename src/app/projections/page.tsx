@@ -23,8 +23,8 @@ function ProjectionRow({ driver, maxWinProb }: { driver: DriverProjection; maxWi
             style={{ backgroundColor: driver.teamColour }}
           />
           <span className="font-mono text-xs text-zinc-500 w-8">{driver.driverCode}</span>
-          <span className="font-semibold text-sm">{driver.fullName}</span>
-          <span className="text-xs text-zinc-500">{driver.teamName}</span>
+          <span className="font-semibold text-sm min-w-0 truncate">{driver.fullName}</span>
+          <span className="text-xs text-zinc-500 shrink-0">{driver.teamName}</span>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-zinc-400 text-sm font-mono">{Math.round(driver.currentPoints)} pts</span>
@@ -59,7 +59,7 @@ function ProjectionRow({ driver, maxWinProb }: { driver: DriverProjection; maxWi
         </div>
 
       {/* Probabilities */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {[
           { label: "Win title", value: Math.min((driver.winProbability / maxWinProb) * 100, 100), display: `${driver.winProbability.toFixed(1)}%` },
           { label: "Podium finish", value: Math.min(driver.podiumProbability, 100), display: `${driver.podiumProbability.toFixed(1)}%` },
