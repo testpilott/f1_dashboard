@@ -1,9 +1,47 @@
 import { NextResponse } from "next/server";
 import { getSessions, getSessionResult, getStints, getLaps, getPitStops, getTrackWeather, getRaceControl, getDriversForSession } from "@/lib/api/openf1";
 import { rateLimited } from "@/lib/api/withRateLimit";
-import { VALID_ENDPOINTS, VALID_YEAR, VALID_MEETING_KEY, VALID_SESSION_KEY } from "@/lib/validators";
+import { VALID_YEAR, VALID_MEETING_KEY, VALID_SESSION_KEY } from "@/lib/validators";
 
 export const revalidate = 60;
+
+// Dispatch map — TypeScript will error if a handler is missing when the key type changes.
+// Keeps VALID_ENDPOINTS and handlers in sync: add one here, it's automatically valid.
+type KeyedHandler = (key: number | "latest") => Promise<NextResponse>;
+
+const KEYED_HANDLERS: Record<string, KeyedHandler> = {
+  result: async (key) => {
+    const results = await getSessionResult(key);
+    return NextResponse.json({ results });
+  },
+  drivers: async (key) => {
+    const drivers = await getDriversForSession(key);
+    return NextResponse.json({ drivers });
+  },
+  stints: async (key) => {
+    const stints = await getStints(key as number);
+    return NextResponse.json({ stints });
+  },
+  laps: async (key) => {
+    const laps = await getLaps(key as number);
+    return NextResponse.json({ laps });
+  },
+  pit: async (key) => {
+    const pit = await getPitStops(key as number);
+    return NextResponse.json({ pit });
+  },
+  weather: async (key) => {
+    const weather = await getTrackWeather(key as number);
+    return NextResponse.json({ weather });
+  },
+  race_control: async (key) => {
+    const raceControl = await getRaceControl(key as number);
+    return NextResponse.json({ raceControl });
+  },
+};
+
+// All valid endpoints — the union of "sessions" + every key in KEYED_HANDLERS.
+const VALID_ENDPOINTS = new Set(["sessions", ...Object.keys(KEYED_HANDLERS)]);
 
 export async function GET(req: Request) {
   const blocked = rateLimited(req, "sessions");
@@ -41,38 +79,10 @@ export async function GET(req: Request) {
     if (!sessionKey) {
       return NextResponse.json({ error: "session_key required" }, { status: 400 });
     }
+
     const key = sessionKey === "latest" ? "latest" : parseInt(sessionKey, 10);
-
-    if (endpoint === "result") {
-      const results = await getSessionResult(key);
-      return NextResponse.json({ results });
-    }
-    if (endpoint === "drivers") {
-      const drivers = await getDriversForSession(key);
-      return NextResponse.json({ drivers });
-    }
-    if (endpoint === "stints") {
-      const stints = await getStints(key as number);
-      return NextResponse.json({ stints });
-    }
-    if (endpoint === "laps") {
-      const laps = await getLaps(key as number);
-      return NextResponse.json({ laps });
-    }
-    if (endpoint === "pit") {
-      const pit = await getPitStops(key as number);
-      return NextResponse.json({ pit });
-    }
-    if (endpoint === "weather") {
-      const weather = await getTrackWeather(key as number);
-      return NextResponse.json({ weather });
-    }
-    if (endpoint === "race_control") {
-      const raceControl = await getRaceControl(key as number);
-      return NextResponse.json({ raceControl });
-    }
-
-    return NextResponse.json({ error: "Unknown endpoint" }, { status: 400 });
+    const handler = KEYED_HANDLERS[endpoint];
+    return await handler(key);
   } catch (err) {
     console.error("[/api/sessions] Error:", err);
     return NextResponse.json({ error: "OpenF1 request failed" }, { status: 500 });

@@ -170,29 +170,22 @@ export default function WeekendClient({
   allMeetings?: OpenF1Meeting[];
 }) {
   const latestMeetingKey = initialData.sessions[0]?.meeting_key ?? null;
-  const [activeMeetingKey, setActiveMeetingKey] = useState<number | null>(latestMeetingKey);
+  const [activeMeetingKey, setActiveMeetingKey] = useState<number | null>(null);
 
-  // When a different meeting is selected, fetch its sessions
-  const isLatest = activeMeetingKey === latestMeetingKey || activeMeetingKey === null;
+  // Single query — key changes when a different meeting is selected.
+  // Uses server-prefetched initialData when viewing the latest meeting.
+  const effectiveMeetingKey = activeMeetingKey ?? latestMeetingKey;
 
-  const { data: remoteSessions, isLoading: sessionsLoading } = useQuery({
-    queryKey: ["sessions-meeting", activeMeetingKey],
-    queryFn: () => fetchSessionsForMeeting(activeMeetingKey!),
-    staleTime: 10 * 60 * 1000,
-    enabled: !isLatest && activeMeetingKey !== null,
-  });
-
-  // For the latest meeting, use the server-prefetched data
-  const { data: latestSessions, isLoading: latestLoading } = useQuery({
-    queryKey: ["sessions-latest"],
-    queryFn: () => fetchSessionsForMeeting(latestMeetingKey!),
+  const { data: rawSessions, isLoading } = useQuery({
+    queryKey: ["sessions-meeting", effectiveMeetingKey],
+    queryFn: () => fetchSessionsForMeeting(effectiveMeetingKey!),
     staleTime: 5 * 60 * 1000,
-    initialData: initialData.sessions.length ? initialData.sessions : undefined,
-    enabled: latestMeetingKey !== null,
+    initialData:
+      effectiveMeetingKey === latestMeetingKey && initialData.sessions.length
+        ? initialData.sessions
+        : undefined,
+    enabled: effectiveMeetingKey !== null,
   });
-
-  const rawSessions = isLatest ? latestSessions : remoteSessions;
-  const isLoading = isLatest ? latestLoading : sessionsLoading;
 
   const sorted = rawSessions
     ? [...rawSessions].sort(
@@ -275,8 +268,8 @@ export default function WeekendClient({
               <SessionResults
                 sessionKey={s.session_key}
                 sessionType={s.session_name}
-                initialResults={isLatest ? initialData.resultsBySession[s.session_key] : undefined}
-                initialDrivers={isLatest ? initialData.driversBySession[s.session_key] : undefined}
+                initialResults={effectiveMeetingKey === latestMeetingKey ? initialData.resultsBySession[s.session_key] : undefined}
+                initialDrivers={effectiveMeetingKey === latestMeetingKey ? initialData.driversBySession[s.session_key] : undefined}
               />
             </TabsContent>
           ))}

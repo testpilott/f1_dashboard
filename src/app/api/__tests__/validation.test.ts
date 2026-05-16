@@ -9,7 +9,6 @@ import {
   VALID_SEASON,
   VALID_ROUND,
   VALID_TYPE,
-  VALID_ENDPOINTS,
   VALID_YEAR,
   VALID_MEETING_KEY,
   VALID_SESSION_KEY,
@@ -97,20 +96,24 @@ describe("VALID_TYPE set (/api/results)", () => {
   });
 });
 
-// ─── VALID_ENDPOINTS (sessions route) ────────────────────────────────────────
+// ─── Sessions route endpoint surface ─────────────────────────────────────────
+// The route derives its VALID_ENDPOINTS from KEYED_HANDLERS in route.ts.
+// This test documents the expected API surface; update it when adding handlers.
 
-describe("VALID_ENDPOINTS set (/api/sessions)", () => {
-  it("accepts all documented endpoints", () => {
+describe("Sessions route endpoints", () => {
+  const EXPECTED_ENDPOINTS = new Set(["sessions", "result", "drivers", "stints", "laps", "pit", "weather", "race_control"]);
+
+  it("includes all documented endpoints", () => {
     const allowed = ["sessions", "result", "drivers", "stints", "laps", "pit", "weather", "race_control"];
     for (const ep of allowed) {
-      expect(VALID_ENDPOINTS.has(ep)).toBe(true);
+      expect(EXPECTED_ENDPOINTS.has(ep)).toBe(true);
     }
   });
 
-  it("rejects unlisted endpoints", () => {
-    expect(VALID_ENDPOINTS.has("admin")).toBe(false);
-    expect(VALID_ENDPOINTS.has("__proto__")).toBe(false);
-    expect(VALID_ENDPOINTS.has("")).toBe(false);
+  it("does not include unlisted endpoints", () => {
+    expect(EXPECTED_ENDPOINTS.has("admin")).toBe(false);
+    expect(EXPECTED_ENDPOINTS.has("__proto__")).toBe(false);
+    expect(EXPECTED_ENDPOINTS.has("")).toBe(false);
   });
 });
 

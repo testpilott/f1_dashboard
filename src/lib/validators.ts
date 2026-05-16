@@ -13,9 +13,5 @@ export const VALID_YEAR = /^\d{4}$/;
 export const VALID_MEETING_KEY = /^(\d{1,8}|latest)$/;
 export const VALID_SESSION_KEY = /^(\d{1,8}|latest)$/;
 
-export const VALID_ENDPOINTS: Set<string> = new Set([
-  "sessions", "result", "drivers", "stints", "laps", "pit", "weather", "race_control",
-]);
-
 /** Safe identifier: lowercase letters, digits, hyphens, underscores (Ergast/OpenF1 format). */
 export const VALID_ID = /^[a-z0-9_-]{1,40}$/;
