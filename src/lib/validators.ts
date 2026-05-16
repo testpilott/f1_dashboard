@@ -7,15 +7,15 @@
 
 export const VALID_SEASON = /^(\d{4}|current)$/;
 export const VALID_ROUND = /^([1-9]|[1-2][0-9]|30)$/;
-export const VALID_TYPE = new Set(["race", "qualifying", "sprint"] as const);
+export const VALID_TYPE: Set<string> = new Set(["race", "qualifying", "sprint"]);
 
 export const VALID_YEAR = /^\d{4}$/;
 export const VALID_MEETING_KEY = /^(\d{1,8}|latest)$/;
 export const VALID_SESSION_KEY = /^(\d{1,8}|latest)$/;
 
-export const VALID_ENDPOINTS = new Set([
+export const VALID_ENDPOINTS: Set<string> = new Set([
   "sessions", "result", "drivers", "stints", "laps", "pit", "weather", "race_control",
-] as const);
+]);
 
 /** Safe identifier: lowercase letters, digits, hyphens, underscores (Ergast/OpenF1 format). */
 export const VALID_ID = /^[a-z0-9_-]{1,40}$/;
