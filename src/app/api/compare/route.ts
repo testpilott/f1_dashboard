@@ -7,6 +7,7 @@ import {
 import { rateLimited } from "@/lib/api/withRateLimit";
 import { VALID_ID, VALID_SEASON, VALID_COMPARE_VIEW } from "@/lib/validators";
 import { seasonHeadToHead } from "@/lib/stats/headToHead";
+import { constructorHeadToHead } from "@/lib/stats/constructorH2H";
 
 export const revalidate = 300; // 5 min
 
@@ -49,6 +50,29 @@ export async function GET(req: Request) {
     } catch (err) {
       console.error("[/api/compare?view=season] Error:", err);
       return NextResponse.json({ error: "Failed to compute season comparison" }, { status: 500 });
+    }
+  }
+
+  // ── Constructor head-to-head ───────────────────────────────────────────────
+  if (view === "teams") {
+    if (!VALID_SEASON.test(season)) {
+      return NextResponse.json({ error: "Invalid season parameter" }, { status: 400 });
+    }
+    const constructorA = searchParams.get("constructorA");
+    const constructorB = searchParams.get("constructorB");
+    if (!constructorA || !constructorB) {
+      return NextResponse.json({ error: "constructorA and constructorB are required for teams view" }, { status: 400 });
+    }
+    if (!VALID_ID.test(constructorA) || !VALID_ID.test(constructorB)) {
+      return NextResponse.json({ error: "Invalid constructor identifier" }, { status: 400 });
+    }
+    try {
+      const races = await getSeasonRaceResults(season);
+      const stats = constructorHeadToHead(races, constructorA, constructorB);
+      return NextResponse.json({ view: "teams", season, constructorA, constructorB, stats });
+    } catch (err) {
+      console.error("[/api/compare?view=teams] Error:", err);
+      return NextResponse.json({ error: "Failed to compute constructor comparison" }, { status: 500 });
     }
   }
 

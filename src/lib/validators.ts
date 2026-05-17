@@ -20,4 +20,7 @@ export const VALID_ID = /^[a-z0-9_-]{1,40}$/;
 export const VALID_VIEW: Set<string> = new Set(["next", "last"]);
 
 /** Allowed values for the compare route 'view' parameter. */
-export const VALID_COMPARE_VIEW: Set<string> = new Set(["circuit", "season"]);
+export const VALID_COMPARE_VIEW: Set<string> = new Set(["circuit", "season", "teams"]);
+
+/** Safe search query: 1–60 chars, printable ASCII only. */
+export const VALID_SEARCH_QUERY = /^[\x20-\x7E]{1,60}$/;

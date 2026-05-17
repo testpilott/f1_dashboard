@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import TeamLogo from "@/components/ui/TeamLogo";
 import TelemetryPanel from "@/components/race/TelemetryPanel";
+import TeamRadioPanel from "@/components/race/TeamRadioPanel";
 import { getStatusLabel, getStatusTooltip } from "@/lib/constants";
 import {
   Table,
@@ -170,6 +171,11 @@ export default function RaceDetailClient({
               Telemetry
             </TabsTrigger>
           )}
+          {raceInfo && (
+            <TabsTrigger value="radio" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              Radio
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="race">
@@ -198,6 +204,11 @@ export default function RaceDetailClient({
         {raceInfo && (
           <TabsContent value="telemetry">
             <TelemetryPanel year={raceInfo.season} round={raceInfo.round} />
+          </TabsContent>
+        )}
+        {raceInfo && (
+          <TabsContent value="radio">
+            <TeamRadioPanel year={raceInfo.season} round={raceInfo.round} />
           </TabsContent>
         )}
       </Tabs>

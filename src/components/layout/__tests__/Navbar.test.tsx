@@ -1,7 +1,11 @@
 import { render, screen } from "@testing-library/react";
 import { vi, describe, it, expect } from "vitest";
 
-vi.mock("next/navigation", () => ({ usePathname: () => "/schedule" }));
+vi.mock("next/navigation", () => ({
+  usePathname: () => "/schedule",
+  useRouter: () => ({ push: vi.fn() }),
+  useSearchParams: () => new URLSearchParams(),
+}));
 vi.mock("next/link", () => ({
   default: ({ href, children, ...props }: React.ComponentProps<"a"> & { href: string }) => (
     <a href={href} {...props}>{children}</a>

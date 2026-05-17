@@ -7,12 +7,13 @@ import type {
   SprintResult,
 } from "@/lib/types";
 import { fetchWithTimeout } from "@/lib/api/fetchWithTimeout";
+import { adaptiveRevalidate, type DataClass } from "@/lib/cacheStrategy";
 
 const JOLPICA_BASE = "https://api.jolpi.ca/ergast/f1";
 
-async function jolpicaFetch<T>(path: string): Promise<T> {
+async function jolpicaFetch<T>(path: string, dataClass: DataClass = "standings"): Promise<T> {
   const res = await fetchWithTimeout(`${JOLPICA_BASE}${path}`, {
-    next: { revalidate: 300 }, // cache 5 min
+    next: { revalidate: adaptiveRevalidate(dataClass) },
     headers: { Accept: "application/json" },
   });
   if (!res.ok) throw new Error(`Jolpica fetch failed: ${res.status} ${path}`);
@@ -40,7 +41,7 @@ export async function getConstructorStandings(season = "current"): Promise<Const
 export async function getSchedule(season = "current"): Promise<Race[]> {
   const data = await jolpicaFetch<{
     MRData: { RaceTable: { Races: Race[] } };
-  }>(`/${season}.json?limit=30`);
+  }>(`/${season}.json?limit=30`, "schedule");
   return data.MRData.RaceTable.Races ?? [];
 }
 
@@ -49,21 +50,21 @@ export async function getSchedule(season = "current"): Promise<Race[]> {
 export async function getRaceResults(season: string, round: string): Promise<RaceResult[]> {
   const data = await jolpicaFetch<{
     MRData: { RaceTable: { Races: { Results: RaceResult[] }[] } };
-  }>(`/${season}/${round}/results.json?limit=25`);
+  }>(`/${season}/${round}/results.json?limit=25`, "results");
   return data.MRData.RaceTable.Races[0]?.Results ?? [];
 }
 
 export async function getQualifyingResults(season: string, round: string): Promise<QualifyingResult[]> {
   const data = await jolpicaFetch<{
     MRData: { RaceTable: { Races: { QualifyingResults: QualifyingResult[] }[] } };
-  }>(`/${season}/${round}/qualifying.json?limit=25`);
+  }>(`/${season}/${round}/qualifying.json?limit=25`, "results");
   return data.MRData.RaceTable.Races[0]?.QualifyingResults ?? [];
 }
 
 export async function getSprintResults(season: string, round: string): Promise<SprintResult[]> {
   const data = await jolpicaFetch<{
     MRData: { RaceTable: { Races: { SprintResults: SprintResult[] }[] } };
-  }>(`/${season}/${round}/sprint.json?limit=25`);
+  }>(`/${season}/${round}/sprint.json?limit=25`, "results");
   return data.MRData.RaceTable.Races[0]?.SprintResults ?? [];
 }
 
@@ -73,7 +74,7 @@ export async function getSprintResults(season: string, round: string): Promise<S
 export async function getSeasonResults(season: string): Promise<Race[]> {
   const data = await jolpicaFetch<{
     MRData: { RaceTable: { Races: Race[] } };
-  }>(`/${season}/results.json?limit=30`);
+  }>(`/${season}/results.json?limit=30`, "results");
   return data.MRData.RaceTable.Races ?? [];
 }
 
@@ -85,7 +86,7 @@ export async function getSeasonResults(season: string): Promise<Race[]> {
 export async function getSeasonRaceResults(season: string): Promise<Race[]> {
   const data = await jolpicaFetch<{
     MRData: { RaceTable: { Races: Race[] } };
-  }>(`/${season}/results.json?limit=1000`);
+  }>(`/${season}/results.json?limit=1000`, "results");
   return data.MRData.RaceTable.Races ?? [];
 }
 
@@ -94,14 +95,14 @@ export async function getSeasonRaceResults(season: string): Promise<Race[]> {
 export async function getRaceResultsAtCircuit(season: string, circuitId: string): Promise<RaceResult[]> {
   const data = await jolpicaFetch<{
     MRData: { RaceTable: { Races: { Results: RaceResult[] }[] } };
-  }>(`/${season}/circuits/${circuitId}/results.json?limit=25`);
+  }>(`/${season}/circuits/${circuitId}/results.json?limit=25`, "results");
   return data.MRData.RaceTable.Races[0]?.Results ?? [];
 }
 
 export async function getQualifyingResultsAtCircuit(season: string, circuitId: string): Promise<QualifyingResult[]> {
   const data = await jolpicaFetch<{
     MRData: { RaceTable: { Races: { QualifyingResults: QualifyingResult[] }[] } };
-  }>(`/${season}/circuits/${circuitId}/qualifying.json?limit=25`);
+  }>(`/${season}/circuits/${circuitId}/qualifying.json?limit=25`, "results");
   return data.MRData.RaceTable.Races[0]?.QualifyingResults ?? [];
 }
 

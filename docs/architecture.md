@@ -82,13 +82,30 @@ New same-origin, rate-limited, input-validated endpoints (all free-tier, no DB/a
 |---|---|---|
 | `GET /api/form?season=` | Per-driver recent-form (last 5 races) for standings chips | `VALID_SEASON` |
 | `GET /api/telemetry?year=&round=` | OpenF1 stint pace + tyre-degradation for the Race Detail "Telemetry" tab | `VALID_YEAR`, `VALID_ROUND` |
-| `GET /api/compare?view=season\|circuit&...` | `season` adds full-season head-to-head; `circuit` unchanged (default) | `VALID_COMPARE_VIEW`, `VALID_ID`, `VALID_SEASON` |
+| `GET /api/compare?view=season\|circuit\|teams&...` | `season` = driver H2H; `teams` = constructor H2H; `circuit` unchanged (default) | `VALID_COMPARE_VIEW`, `VALID_ID`, `VALID_SEASON` |
 | `GET /api/schedule/export?season=` | RFC-5545 `.ics` calendar download | `VALID_SEASON` |
+| `GET /api/search?q=` | Global driver/constructor/circuit/race search (pure scorer, no external dep) | `VALID_SEARCH_QUERY` |
+| `GET /api/team-radio?year=&round=` | OpenF1 team-radio clip list for the Race Detail "Radio" tab (2023+ only) | `VALID_YEAR`, `VALID_ROUND` |
 
-Pure logic lives in `src/lib/stats/{form,pace,headToHead,session-match}.ts` and
-`src/lib/ical.ts` (each unit-tested in the `node` project). `fetchWithTimeout` now
-throws on non-OK responses (spec-aligned; the per-fetcher `res.ok` checks remain as
-defence-in-depth).
+Pure logic lives in `src/lib/stats/{form,pace,headToHead,session-match,constructorH2H}.ts`,
+`src/lib/ical.ts`, `src/lib/search.ts`, and `src/lib/cacheStrategy.ts` (each
+unit-tested in the `node` project). `fetchWithTimeout` now throws on non-OK responses
+(spec-aligned; the per-fetcher `res.ok` checks remain as defence-in-depth).
+
+### Adaptive caching
+
+`src/lib/cacheStrategy.ts` exports `adaptiveRevalidate(dataClass, now?)` which halves
+most ISR TTLs on race-weekend days (Friday/Saturday/Sunday). All `jolpicaFetch` and
+`openF1Fetch` calls pass a `DataClass` so the revalidate time adjusts automatically.
+This keeps data fresh during a race weekend without hammering the free-tier APIs on
+quiet days.
+
+### Historical season browsing
+
+Standings and schedule pages accept a `?season=YYYY` URL param (validated
+`/^\d{4}$/`). The `SeasonPicker` client component pushes the param via `router.push`,
+triggering a full server re-render with the chosen season. `2026` maps to `"current"`
+for Jolpica compatibility.
 
 ### Intentional decision: Weekend route parked
 

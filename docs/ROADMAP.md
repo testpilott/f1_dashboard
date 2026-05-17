@@ -130,5 +130,33 @@ SSR hydration guards — tracked in `docs/architecture.md` "Known lint debt").
   `useSyncExternalStore` refactor; advisory rule, not correctness.
 - `npm run build` SSG-vs-sandbox `403` — environmental; fix by marking data pages
   dynamic (separate task).
-- Deferred Tier-2/3 ideas: historical season browsing, adaptive caching, global
-  search, constructor-vs-constructor, team radio.
+
+---
+
+## Tier-2/3 feature round ✅
+
+Previously-deferred features, all free-tier, no new heavy deps.
+
+- [x] **Historical season browsing** — `SeasonPicker` component; standings + schedule
+      pages accept `?season=YYYY` (`searchParams` prop); 2021–2026 supported; validates
+      with `/^\d{4}$/`; maps 2026 → `"current"` for Jolpica.
+- [x] **Adaptive caching** — `src/lib/cacheStrategy.ts`; race-weekend heuristic
+      (Fri/Sat/Sun = shorter ISR TTLs); all `jolpicaFetch` + `openF1Fetch` calls use
+      `adaptiveRevalidate(dataClass)` instead of hardcoded constants; 10 pure-function
+      tests in `cacheStrategy.test.ts`.
+- [x] **Global search** — `GET /api/search?q=` (rate-limited, `VALID_SEARCH_QUERY`
+      validated, 1 h revalidate); pure `src/lib/search.ts` scorer (prefix > infix,
+      no external dep); `GlobalSearch` command-palette component (Cmd/Ctrl+K, arrow
+      navigation, Enter to navigate, Escape to close) added to Navbar.
+- [x] **Constructor-vs-constructor compare** — `src/lib/stats/constructorH2H.ts`
+      (pure, 7 unit tests); `GET /api/compare?view=teams&constructorA=&constructorB=&
+      season=` branch (reuses `VALID_ID` + `VALID_SEASON`); new "Constructors" tab on
+      the compare page with selector cards + stat bars.
+- [x] **Team radio** — `OpenF1TeamRadio` type; `getTeamRadio()` in `openf1.ts`;
+      `GET /api/team-radio?year=&round=` (rate-limited, `VALID_YEAR`/`VALID_ROUND`,
+      session-resolved via `pickRaceSession`); `TeamRadioPanel.tsx` collapsible per
+      driver + `<audio controls preload="none">`; "Radio" tab on Race Detail (2023+
+      sessions only).
+
+**Test count:** 269 passing (31 test files). `npm run lint` 0 errors / 5 pre-existing
+advisory warnings. `npm run build` clean.

@@ -9,13 +9,16 @@ function wrapper({ children }: { children: React.ReactNode }) {
 }
 
 beforeEach(() => {
-  vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false }));
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
+  ok: false,
+  json: () => Promise.resolve({}),
+}));
 });
 
 describe("ComparePage", () => {
   it("renders heading", () => {
     render(<ComparePage />, { wrapper });
-    expect(screen.getByText("Driver Head-to-Head")).toBeInTheDocument();
+    expect(screen.getByText("Head-to-Head")).toBeInTheDocument();
   });
 
   it("shows select-two-drivers prompt when no drivers selected", async () => {
