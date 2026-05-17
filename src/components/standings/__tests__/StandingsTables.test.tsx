@@ -1,4 +1,5 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { vi, describe, it, expect, beforeEach } from "vitest";
 import StandingsTables from "@/components/standings/StandingsTables";
@@ -46,10 +47,24 @@ const mockData = {
   ],
 };
 
+const formPayload = {
+  form: {
+    verstappen: { races: 5, avgPoints: 22.4, podiumRatio: 0.8, finishes: 5, trend: "up" },
+  },
+};
+
+/** Route the fetch mock by URL so the two independent queries stay isolated. */
+function mockFetch(formResponse: unknown = formPayload, standings: unknown = mockData) {
+  global.fetch = vi.fn(async (url: string) => {
+    if (String(url).includes("/api/form")) {
+      return new Response(JSON.stringify(formResponse), { status: 200 });
+    }
+    return new Response(JSON.stringify(standings), { status: 200 });
+  }) as unknown as typeof fetch;
+}
+
 beforeEach(() => {
-  global.fetch = vi.fn(async () =>
-    new Response(JSON.stringify(mockData), { status: 200 })
-  ) as unknown as typeof fetch;
+  mockFetch();
 });
 
 describe("<StandingsTables />", () => {
@@ -59,15 +74,41 @@ describe("<StandingsTables />", () => {
     expect(screen.getByText("100")).toBeInTheDocument();
   });
 
-  it("renders a Constructors tab", () => {
+  it("renders the leader's position badge with the gold medal token", () => {
     render(withQuery(<StandingsTables initialData={mockData} />));
-    expect(screen.getByRole("tab", { name: /constructors/i })).toBeInTheDocument();
+    const goldBadge = screen
+      .getAllByText("1")
+      .find((el) => el.className.includes("bg-medal-gold"));
+    expect(goldBadge).toBeTruthy();
+    // No raw Tailwind color literals should remain on the badge.
+    expect(goldBadge?.className).not.toMatch(/bg-yellow-|bg-slate-|bg-amber-/);
+  });
+
+  it("hydrates the driver form chip from /api/form", async () => {
+    render(withQuery(<StandingsTables initialData={mockData} />));
+    // 22.4 avg pts with an "up" trend
+    expect(await screen.findByText("22.4")).toBeInTheDocument();
+    const chip = screen.getByTitle(/trend up/i);
+    expect(chip).toHaveTextContent("22.4");
+  });
+
+  it("shows a neutral placeholder when form data is unavailable", async () => {
+    mockFetch({ form: {} });
+    render(withQuery(<StandingsTables initialData={mockData} />));
+    expect(await screen.findByText(/verstappen/i)).toBeInTheDocument();
+    // Form column falls back to the em dash, table still renders.
+    expect(screen.getByText("—")).toBeInTheDocument();
+  });
+
+  it("switches to the Constructors tab and shows constructor rows", async () => {
+    render(withQuery(<StandingsTables initialData={mockData} />));
+    await userEvent.click(screen.getByRole("tab", { name: /constructors/i }));
+    const constructorsPanel = screen.getByRole("tabpanel");
+    expect(within(constructorsPanel).getByText("200")).toBeInTheDocument();
   });
 
   it("shows empty state when no drivers available", async () => {
-    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
-      new Response(JSON.stringify({ drivers: [], constructors: [] }), { status: 200 })
-    );
+    mockFetch(formPayload, { drivers: [], constructors: [] });
     render(withQuery(<StandingsTables initialData={{ drivers: [], constructors: [] }} />));
     expect(await screen.findByText(/no standings available/i)).toBeInTheDocument();
   });

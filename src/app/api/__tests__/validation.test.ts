@@ -293,3 +293,19 @@ describe("VALID_VIEW set (/api/schedule)", () => {
     expect(VALID_VIEW.has("next; rm -rf /")).toBe(false);
   });
 });
+
+// ─── /api/form (re-uses VALID_SEASON) ────────────────────────────────────────
+
+describe("/api/form season validation", () => {
+  it("accepts a 4-digit season and 'current'", () => {
+    expect(VALID_SEASON.test("2025")).toBe(true);
+    expect(VALID_SEASON.test("current")).toBe(true);
+  });
+
+  it("rejects injection / traversal attempts in the season param", () => {
+    expect(VALID_SEASON.test("2025; DROP TABLE")).toBe(false);
+    expect(VALID_SEASON.test("../../etc/passwd")).toBe(false);
+    expect(VALID_SEASON.test("current OR 1=1")).toBe(false);
+    expect(VALID_SEASON.test("")).toBe(false);
+  });
+});
