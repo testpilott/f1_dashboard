@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { parseISO, isPast } from "date-fns";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight, CalendarPlus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import CircuitThumb from "@/components/schedule/CircuitThumb";
 import { getFlag, getCircuitImageUrl, CIRCUIT_COORDS } from "@/lib/constants";
@@ -205,7 +205,7 @@ function ScheduleRow({ race }: { race: Race }) {
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {isSprint && (
-            <Badge className="bg-purple-800/60 text-purple-300 border-purple-800 text-xs px-1.5">
+            <Badge className="bg-accent-2/20 text-accent-2 border-accent-2/40 text-xs px-1.5">
               Sprint
             </Badge>
           )}
@@ -255,8 +255,19 @@ function ScheduleRow({ race }: { race: Race }) {
 // ─── Main export ──────────────────────────────────────────────────────────────
 
 export default function ScheduleClient({ races }: { races: Race[] }) {
+  const season = races[0]?.season ?? "current";
   return (
     <div className="space-y-2">
+      <div className="flex justify-end">
+        <a
+          href={`/api/schedule/export?season=${season}`}
+          download={`f1-${season}.ics`}
+          className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline underline-offset-4"
+        >
+          <CalendarPlus className="w-4 h-4" aria-hidden="true" />
+          Add season to calendar
+        </a>
+      </div>
       {races.map((race) => (
         <ScheduleRow key={race.round} race={race} />
       ))}
