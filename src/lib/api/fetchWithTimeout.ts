@@ -1,7 +1,7 @@
 /**
  * fetch() wrapper that aborts after `timeoutMs` (default 8 s).
  * Throws a DOMException with name "AbortError" on timeout.
- * Throws a TypeError on non-OK responses.
+ * Throws an Error on a non-OK (>=400) HTTP response so callers fail fast.
  */
 export async function fetchWithTimeout(
   input: RequestInfo | URL,
@@ -12,6 +12,9 @@ export async function fetchWithTimeout(
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const res = await fetch(input, { ...init, signal: controller.signal });
+    if (!res.ok) {
+      throw new Error(`Request failed: ${res.status} ${res.statusText}`.trim());
+    }
     return res;
   } finally {
     clearTimeout(timer);

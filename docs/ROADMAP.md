@@ -98,3 +98,37 @@ doc complete.
 
 **DoD:** all routes rate-limited + validated with tests; full suite + `npm run build`
 green at final coverage gate; every doc has a TL;DR and runnable commands.
+
+---
+
+## Post-handoff — Data & Features round ✅
+
+Features-first follow-up after the handoff review. See `docs/architecture.md`
+"Post-handoff additions" for endpoint/contract detail.
+
+- [x] **WS-1** Driver form & momentum chips on standings (`/api/form`, pure
+      `lib/stats/form.ts`) + medal-badge color tokens (defect #1 partial).
+- [x] **WS-2** Race Detail "Telemetry" tab (`/api/telemetry`, pure `lib/stats/pace.ts`
+      + `session-match.ts`) + fastest-lap/sprint `--accent-2` token (defect #1 partial).
+- [x] **WS-3** Compare season head-to-head (`/api/compare?view=season`, pure
+      `lib/stats/headToHead.ts`) + stray purple → token.
+- [x] **WS-4** iCal export (`/api/schedule/export`, pure `lib/ical.ts`) + the missing
+      `ScheduleClient` test (defect #2) + Sprint-badge token.
+- [x] **WS-5** Cleanup: `fetchWithTimeout` spec-aligned (defect #3); remaining
+      `drivers/page.tsx` colors → tokens (defect #1 done); `.claude/settings.json`
+      SessionStart hook (defect #4); `LapChart` rules-of-hooks bug + 2 purity errors
+      fixed; docs updated.
+
+**Status:** test suite 174 → **238** passing; `npm run test:ci` green (coverage well
+above the 80/75/80 gate). Lint errors 8 → **5** (remaining are pre-existing intentional
+SSR hydration guards — tracked in `docs/architecture.md` "Known lint debt").
+
+**Intentionally not done (tracked in `docs/architecture.md`):**
+- Weekend route stays parked (product decision) — telemetry value delivered via Race
+  Detail instead.
+- 5 `react-hooks/set-state-in-effect` lint errors — need a browser-verified
+  `useSyncExternalStore` refactor; advisory rule, not correctness.
+- `npm run build` SSG-vs-sandbox `403` — environmental; fix by marking data pages
+  dynamic (separate task).
+- Deferred Tier-2/3 ideas: historical season browsing, adaptive caching, global
+  search, constructor-vs-constructor, team radio.

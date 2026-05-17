@@ -105,7 +105,9 @@ function SessionRow({
   userTz: string | null;
 }) {
   const dt = buildUTCDate(session.date, session.time);
-  const isSessionPast = dt.getTime() < Date.now();
+  // Capture "now" once at mount so render stays pure (react-hooks/purity).
+  const [now] = useState(() => Date.now());
+  const isSessionPast = dt.getTime() < now;
   const sameZone = userTz === circuitTz;
   const isRace = session.label === "Race";
 

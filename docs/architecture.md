@@ -73,3 +73,59 @@ See the table in `docs/contributing.md`. Tests are co-located in `__tests__/`. L
 - Next.js 16 build output confirms all 9 app routes compile cleanly. Run
   `npm run build` and inspect `.next/analyze/` (add `@next/bundle-analyzer` if needed)
   for per-chunk breakdowns.
+
+## Post-handoff additions (data & features round)
+
+New same-origin, rate-limited, input-validated endpoints (all free-tier, no DB/auth):
+
+| Route | Purpose | Validation |
+|---|---|---|
+| `GET /api/form?season=` | Per-driver recent-form (last 5 races) for standings chips | `VALID_SEASON` |
+| `GET /api/telemetry?year=&round=` | OpenF1 stint pace + tyre-degradation for the Race Detail "Telemetry" tab | `VALID_YEAR`, `VALID_ROUND` |
+| `GET /api/compare?view=season\|circuit&...` | `season` adds full-season head-to-head; `circuit` unchanged (default) | `VALID_COMPARE_VIEW`, `VALID_ID`, `VALID_SEASON` |
+| `GET /api/schedule/export?season=` | RFC-5545 `.ics` calendar download | `VALID_SEASON` |
+
+Pure logic lives in `src/lib/stats/{form,pace,headToHead,session-match}.ts` and
+`src/lib/ical.ts` (each unit-tested in the `node` project). `fetchWithTimeout` now
+throws on non-OK responses (spec-aligned; the per-fetcher `res.ok` checks remain as
+defence-in-depth).
+
+### Intentional decision: Weekend route parked
+
+`src/app/weekend/page.tsx` is deliberately disabled (returns `notFound()`) and hidden
+from the nav. This is an accepted product decision, **not** a regression: the live
+session/telemetry value it would have carried is instead surfaced on the **Race Detail
+Telemetry tab** (`/api/telemetry`), which works for any 2023+ race without depending on
+a live session. The roadmap's original "all 9 routes" constraint is therefore
+intentionally **8 active routes + Weekend parked**. Re-enabling Weekend is out of scope
+unless the product decision changes.
+
+### Known lint debt (pre-existing, tracked)
+
+`npm run lint` reports 5 remaining `react-hooks/set-state-in-effect` errors, all
+pre-existing in handoff code and all the **same intentional SSR hydration mount-guard
+pattern** (`useEffect(() => setX(clientOnlyValue), [])`):
+
+- `components/ui/ThemeToggle.tsx:12` (mounted flag for `next-themes`)
+- `components/schedule/ScheduleClient.tsx:62, ~167` (`userTz`, expand state)
+- `components/next-race/NextRaceCard.tsx:42` (countdown)
+- `components/weekend/RaceCalendar.tsx:46` (countdown)
+
+These set client-only state *after* hydration specifically to avoid a server/client
+hydration mismatch — converting them to lazy `useState` initialisers would reintroduce
+that mismatch. Recommended remediation (separate, browser-verified task): adopt
+`useSyncExternalStore` (or a `useIsMounted`/`useClientValue` hook) so the value is read
+through a hydration-safe API rather than an effect. Not done here because it cannot be
+browser-verified in the build sandbox and the rule is advisory (performance, not
+correctness). The genuine correctness bug that *was* here — a conditionally-called
+`useMemo` in `LapChart.tsx` (rules-of-hooks) — has been fixed, along with two
+`react-hooks/purity` (`Date.now()`-in-render) errors.
+
+### Build sandbox limitation
+
+`npm run build` fails in the isolated build sandbox because statically-prerendered
+pages (e.g. `/schedule`) fetch the external Jolpica API at build time and the sandbox
+blocks egress (`403`). This reproduces on the untouched merge base, so it is an
+**environmental/architectural** constraint, not a code regression. Recommended fix
+(separate task): mark data-dependent pages dynamic (`export const dynamic =
+"force-dynamic"`) or add a build-time fallback so SSG does not depend on a live API.

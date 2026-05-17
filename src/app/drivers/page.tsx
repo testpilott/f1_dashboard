@@ -97,7 +97,7 @@ export default function DriversPage() {
                       {d.Driver.code}
                     </span>
                     {d.wins !== "0" && (
-                      <Badge className="bg-yellow-900/40 text-yellow-400 border-yellow-900 text-[10px] px-1">
+                      <Badge className="bg-medal-gold/15 text-medal-gold border-medal-gold/30 text-[10px] px-1">
                         {d.wins}W
                       </Badge>
                     )}
@@ -161,10 +161,12 @@ function DriverDetailPanel({
   const color = getTeamColor(team);
   const pos = parseInt(driver.position, 10);
 
+  // Capture "now" once at mount so the render stays pure (react-hooks/purity).
+  const [now] = useState(() => Date.now());
   const age =
     driver.Driver.dateOfBirth
       ? Math.floor(
-          (Date.now() - new Date(driver.Driver.dateOfBirth).getTime()) /
+          (now - new Date(driver.Driver.dateOfBirth).getTime()) /
             (1000 * 60 * 60 * 24 * 365.25)
         )
       : null;
@@ -233,7 +235,7 @@ function DriverDetailPanel({
         {staticData?.style && (
           <div className="px-5 py-3.5">
             <div className="flex items-center gap-1.5 mb-2">
-              <Zap size={13} className="text-yellow-500 shrink-0" />
+              <Zap size={13} className="text-medal-gold shrink-0" />
               <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                 Driving Style
               </h3>
@@ -246,7 +248,7 @@ function DriverDetailPanel({
         {staticData?.quotes && staticData.quotes.length > 0 && (
           <div className="py-3.5">
             <div className="flex items-center gap-1.5 mb-3 px-5">
-              <Radio size={13} className="text-green-500 shrink-0" />
+              <Radio size={13} className="text-chart-5 shrink-0" />
               <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                 Memorable Quotes
               </h3>
@@ -337,7 +339,7 @@ function StatBox({
   return (
     <div className="bg-surface-3/60 rounded-lg p-2.5 text-center">
       <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-0.5">{label}</p>
-      <p className={`text-lg font-black font-mono ${highlight ? "text-yellow-400" : ""}`}>
+      <p className={`text-lg font-black font-mono ${highlight ? "text-medal-gold" : ""}`}>
         {value}
       </p>
     </div>
