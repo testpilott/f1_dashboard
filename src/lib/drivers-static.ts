@@ -16,7 +16,7 @@ export const DRIVER_STATIC: Record<string, DriverStaticData> = {
       'Relentless late-braking, phenomenal tyre management in all conditions, and razor-sharp racecraft. Exceptional at reading tyre windows and extending stints well beyond what rivals attempt.',
     quotes: [
       { text: "We have a machine! Come on, boys! Let\'s keep pushing!", source: { race: 'Abu Dhabi Grand Prix', year: 2021 } },
-      { text: "Yes! Yes! Champion! World champion! I don\'s believe it!", source: { race: 'Japanese Grand Prix', year: 2022 } },
+      { text: "Yes! Yes! Champion! World champion! I don't believe it!", source: { race: 'Japanese Grand Prix', year: 2022 } },
       { text: "The car was perfect. Every single corner, every apex. Unreal.", source: { race: 'Italian Grand Prix qualifying', year: 2023 } },
       { text: "I never give up. If P1 is possible, I go for P1. Always.", source: { race: 'British Grand Prix', year: 2024 } },
       { text: "Every lap I push like it\'s the last lap I\'ll ever drive.", source: { race: 'Japanese Grand Prix', year: 2023 } },
@@ -29,9 +29,9 @@ export const DRIVER_STATIC: Record<string, DriverStaticData> = {
     quotes: [
       { text: "I\'m still here. I\'m still here.", source: { race: 'Brazilian Grand Prix', year: 2022 } },
       { text: "That's for all the kids out there who dare to dream.", source: { race: 'Abu Dhabi Grand Prix', year: 2020 } },
-      { text: "This team. These people. I\'d do it all over again without question.", source: { race: 'British Grand Prix', year: 2019 } },
-      { text: "The rain doesn\'t scare me. It never has. It sets me free.", source: { race: 'German Grand Prix', year: 2008 } },
-      { text: "Pole! I\'ve given absolutely everything I have. That's all I can give.", source: { race: 'Monaco Grand Prix qualifying', year: 2019 } },
+      { text: "Seven times. Seven world championships. I cannot believe it.", source: { race: 'Turkish Grand Prix', year: 2020 } },
+      { text: "I'm going to Ferrari. It's probably the most exciting decision I've ever made in my life.", source: { race: 'Press announcement', year: 2024 } },
+      { text: "Lewis Hamilton, you absolute legend!", source: { race: 'British Grand Prix', year: 2020 } },
     ],
   },
   leclerc: {
@@ -39,9 +39,9 @@ export const DRIVER_STATIC: Record<string, DriverStaticData> = {
     style:
       'Electrifying single-lap speed with fearless commitment through high-speed corners. Exceptional front-end feel allows him to push well beyond normal tyre limits and produce stunning qualifying laps.',
     quotes: [
-      { text: "I gave everything I had. I really gave everything I had.", source: { race: 'Italian Grand Prix', year: 2019 } },
+      { text: "We are back! Ferrari is back! This is just the beginning!", source: { race: 'Bahrain Grand Prix', year: 2022 } },
       { text: "Pole! Pole in Monaco! In Monaco!", source: { race: 'Monaco Grand Prix qualifying', year: 2021 } },
-      { text: "This is for my grandfather. He would have loved this.", source: { race: 'Italian Grand Prix', year: 2019 } },
+      { text: "P1 in Australia! Incredible! Come on Ferrari! Come on guys!", source: { race: 'Australian Grand Prix', year: 2022 } },
       { text: "I am pushing at the absolute limit. This car is amazing.", source: { race: 'Bahrain Grand Prix qualifying', year: 2022 } },
       { text: "When it clicks, there is no feeling like it. Zero.", source: { race: 'Singapore Grand Prix qualifying', year: 2023 } },
     ],
@@ -99,7 +99,7 @@ export const DRIVER_STATIC: Record<string, DriverStaticData> = {
     style:
       'The complete driver: masterful tyre preservation, psychological warfare, elite wet-weather skill, and an ability to find tenths that others simply cannot explain or replicate.',
     quotes: [
-      { text: "I am Fernando Alonso. I am the best driver in the world. I have no doubt.", source: { race: 'Abu Dhabi Grand Prix', year: 2012 } },
+      { text: "P3! Podium! Come on! Come on! YES! Thirty-two years and I am still here!", source: { race: 'Bahrain Grand Prix', year: 2023 } },
       { text: "This car gives me everything. I just need to drive it to the limit.", source: { race: 'Bahrain Grand Prix', year: 2023 } },
       { text: "Experience never expires. I am still at my peak.", source: { race: 'Aston Martin season launch', year: 2023 } },
       { text: "El plan sigue. The plan continues. There are more races to win.", source: { race: 'Monaco Grand Prix', year: 2023 } },
@@ -149,7 +149,7 @@ export const DRIVER_STATIC: Record<string, DriverStaticData> = {
     quotes: [
       { text: "Come on! Yes! This is what we fight for! Let\'s go!", source: { race: 'Bahrain Grand Prix', year: 2022 } },
       { text: "P5! That is what Haas can do! Everyone back home, this is for you!", source: { race: 'Bahrain Grand Prix', year: 2022 } },
-      { text: "I don\'s back out. I never back out. That's just how I race.", source: { race: 'Brazilian Grand Prix', year: 2022 } },
+      { text: "I don't back out. I never back out. That's just how I race.", source: { race: 'Brazilian Grand Prix', year: 2022 } },
       { text: "Every race is a battle. I love the battle.", source: { race: 'Monaco Grand Prix', year: 2023 } },
       { text: "The harder the fight, the better the win. That's me.", source: { race: 'Haas season review', year: 2022 } },
     ],
@@ -221,7 +221,7 @@ export const DRIVER_STATIC: Record<string, DriverStaticData> = {
     quotes: [
       { text: "Roger that. P6. Let\'s keep this going — I want more.", source: { race: 'Saudi Arabian Grand Prix', year: 2024 } },
       { text: "I stepped in not knowing the car and I was there. That's me.", source: { race: 'Saudi Arabian Grand Prix', year: 2024 } },
-      { text: "Every lap I push harder. I don\'s know any other way.", source: { race: 'Haas season launch', year: 2025 } },
+      { text: "Every lap I push harder. I don't know any other way.", source: { race: 'Haas season launch', year: 2025 } },
       { text: "The wall is close but I trust my hands. I always trust my hands.", source: { race: 'Monaco Grand Prix qualifying', year: 2025 } },
       { text: "This team gave me my chance. I\'m going to repay every single point.", source: { race: 'Haas season review', year: 2025 } },
     ],
@@ -256,7 +256,7 @@ export const DRIVER_STATIC: Record<string, DriverStaticData> = {
       'Raw speed with brave overtaking instincts and rapid adaptation to new machinery. Argentine flair with aggressive defending and a natural ability to push cars to their absolute limit.',
     quotes: [
       { text: "Sí! Sí! Vamos! This one is for Argentina!", source: { race: 'Las Vegas Grand Prix', year: 2024 } },
-      { text: "The walls don\'s scare me here. They make me faster.", source: { race: 'Las Vegas Grand Prix qualifying', year: 2024 } },
+      { text: "The walls don't scare me here. They make me faster.", source: { race: 'Las Vegas Grand Prix qualifying', year: 2024 } },
       { text: "I always knew F1 was where I belonged. Always.", source: { race: 'Williams season review', year: 2024 } },
       { text: "Every metre of track I know. Every braking zone. It\'s mine.", source: { race: 'Abu Dhabi Grand Prix qualifying', year: 2024 } },
       { text: "Argentina, we're here! We're really here in Formula 1!", source: { race: 'Brazilian Grand Prix', year: 2024 } },
@@ -267,10 +267,10 @@ export const DRIVER_STATIC: Record<string, DriverStaticData> = {
     style:
       "The late-braking master — consistently finds stopping points others can't reach. Exceptional overtaking ability with the instinct to choose the perfect moment and execute with a smile.",
     quotes: [
-      { text: "Bwoah! Shoey! Who wants a shoey?! We are winning!", source: { race: 'Monaco Grand Prix', year: 2018 } },
-      { text: "Checkered flag, baby! Come on! That is a race win!", source: { race: 'Monaco Grand Prix', year: 2018 } },
-      { text: "I back myself every time. Every single time, I back myself.", source: { race: 'Red Bull season review', year: 2018 } },
-      { text: "Never underestimate the honey badger. Never.", source: { race: 'Australian Grand Prix', year: 2016 } },
+      { text: "P3! Monza! Oh my God! Wooooooo! Come on boys! Let's go!", source: { race: 'Italian Grand Prix', year: 2021 } },
+      { text: "I've been knocked down more times than I can count. But I always get back up smiling.", source: { race: 'McLaren exit statement', year: 2022 } },
+      { text: "The honey badger is back. Don't forget about me.", source: { race: 'RB season launch', year: 2023 } },
+      { text: "Thank you to everyone in Formula 1. This sport gave me everything I ever wanted.", source: { race: 'Retirement statement', year: 2024 } },
       { text: "One more win for the smile. Always for the smile.", source: { race: 'Monaco Grand Prix', year: 2022 } },
     ],
   },

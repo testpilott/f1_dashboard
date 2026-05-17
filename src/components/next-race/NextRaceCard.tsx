@@ -3,7 +3,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import type { Race, WeatherForecast } from "@/lib/types";
-import { CIRCUIT_COORDS, getWeatherIcon, getWeatherLabel } from "@/lib/constants";
+import { CIRCUIT_COORDS, getWeatherIcon, getWeatherLabel, getCircuitImageUrl } from "@/lib/constants";
+import CircuitThumb from "@/components/schedule/CircuitThumb";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -117,6 +118,7 @@ export default function NextRaceCard({
   const rainProb = raceWeatherIdx >= 0 && probs && raceWeatherIdx < probs.length ? probs[raceWeatherIdx] : null;
 
   const coords = CIRCUIT_COORDS[country];
+  const circuitImgUrl = getCircuitImageUrl(race.Circuit.circuitId);
 
   return (
     <Card className="bg-zinc-900 border-zinc-800 overflow-hidden">
@@ -129,13 +131,16 @@ export default function NextRaceCard({
             </p>
             <CardTitle className="text-lg leading-tight">{race.raceName}</CardTitle>
           </div>
-          <div className="flex flex-col items-end gap-1 shrink-0">
+          <div className="flex flex-col items-end gap-2 shrink-0">
             {isSprint && (
               <Badge className="bg-purple-700 text-white text-xs">Sprint Weekend</Badge>
             )}
             <Badge variant="outline" className="border-zinc-700 text-zinc-400 text-xs">
               {format(raceDate, "d MMM yyyy")}
             </Badge>
+            {circuitImgUrl && (
+              <CircuitThumb url={circuitImgUrl} country={country} size={80} />
+            )}
           </div>
         </div>
       </CardHeader>
