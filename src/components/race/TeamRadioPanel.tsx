@@ -99,7 +99,6 @@ export default function TeamRadioPanel({ year, round }: { year: string; round: s
       <div className="mt-4 py-8 text-center text-muted-foreground">
         <Radio className="w-8 h-8 mx-auto mb-3 opacity-40" />
         <p className="text-sm">{data?.reason ?? "No team radio clips available for this session."}</p>
-        <p className="text-xs mt-1 opacity-60">OpenF1 provides radio for 2023+ sessions.</p>
       </div>
     );
   }

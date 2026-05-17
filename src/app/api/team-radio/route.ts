@@ -44,7 +44,26 @@ export async function GET(req: Request) {
       getDriversForSession(sessionKey),
     ]);
 
-    const clips = radio.status === "fulfilled" ? radio.value : [];
+    const matched = sessions.find((s) => s.session_key === sessionKey);
+
+    if (radio.status === "rejected") {
+      return NextResponse.json({
+        available: false,
+        reason: "Team radio data is not yet available from OpenF1 for this session.",
+      });
+    }
+
+    const clips = radio.value;
+    if (clips.length === 0) {
+      return NextResponse.json({
+        available: true,
+        sessionKey,
+        sessionName: matched?.session_name ?? "Race",
+        items: [],
+        reason: "No radio clips were broadcast during this session.",
+      });
+    }
+
     const driverList = drivers.status === "fulfilled" ? drivers.value : [];
     const driverMap = new Map(driverList.map((d) => [d.driver_number, d]));
 
@@ -64,8 +83,6 @@ export async function GET(req: Request) {
         clips: driverClips.sort((a, b) => a.date.localeCompare(b.date)),
       };
     });
-
-    const matched = sessions.find((s) => s.session_key === sessionKey);
 
     return NextResponse.json({
       available: true,
