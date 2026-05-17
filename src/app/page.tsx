@@ -33,8 +33,8 @@ export default async function HomePage() {
         />
       </section>
 
-      {/* Right column — next race + quick links */}
-      <aside className="space-y-6">
+      {/* Right column — next race + quick links (shown first on mobile) */}
+      <aside className="space-y-6 order-first xl:order-last">
         <div>
             <h2 className="text-base font-semibold text-muted-foreground mb-3">Next Race</h2>
             <Suspense fallback={<div className="h-64 bg-surface-2 border border-border rounded-xl animate-pulse" />}>
