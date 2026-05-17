@@ -309,3 +309,21 @@ describe("/api/form season validation", () => {
     expect(VALID_SEASON.test("")).toBe(false);
   });
 });
+
+// ─── /api/telemetry (re-uses VALID_YEAR + VALID_ROUND) ───────────────────────
+
+describe("/api/telemetry param validation", () => {
+  it("accepts a 4-digit year and a 1–30 round", () => {
+    expect(VALID_YEAR.test("2024")).toBe(true);
+    expect(VALID_ROUND.test("1")).toBe(true);
+    expect(VALID_ROUND.test("24")).toBe(true);
+  });
+
+  it("rejects malformed / injection year & round", () => {
+    expect(VALID_YEAR.test("24")).toBe(false);
+    expect(VALID_YEAR.test("2024 OR 1=1")).toBe(false);
+    expect(VALID_ROUND.test("0")).toBe(false);
+    expect(VALID_ROUND.test("99")).toBe(false);
+    expect(VALID_ROUND.test("1; rm -rf /")).toBe(false);
+  });
+});

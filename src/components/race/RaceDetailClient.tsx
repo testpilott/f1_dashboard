@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import TeamLogo from "@/components/ui/TeamLogo";
+import TelemetryPanel from "@/components/race/TelemetryPanel";
 import { getStatusLabel, getStatusTooltip } from "@/lib/constants";
 import {
   Table,
@@ -102,7 +103,7 @@ function ResultTable({
                     {r.Driver.givenName} {r.Driver.familyName}
                   </span>
                   {r.FastestLap?.rank === "1" && (
-                    <Badge className="bg-purple-900/60 text-purple-300 text-[10px] px-1 py-0">FL</Badge>
+                    <Badge className="bg-accent-2/20 text-accent-2 text-[10px] px-1 py-0">FL</Badge>
                   )}
                 </div>
               </TableCell>
@@ -160,8 +161,13 @@ export default function RaceDetailClient({
             Qualifying
           </TabsTrigger>
           {hasSprint && (
-            <TabsTrigger value="sprint" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
+            <TabsTrigger value="sprint" className="data-[state=active]:bg-accent-2 data-[state=active]:text-accent-2-foreground">
               Sprint
+            </TabsTrigger>
+          )}
+          {raceInfo && (
+            <TabsTrigger value="telemetry" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              Telemetry
             </TabsTrigger>
           )}
         </TabsList>
@@ -187,6 +193,11 @@ export default function RaceDetailClient({
               title="Sprint results"
               initialData={initialData.sprintResults}
             />
+          </TabsContent>
+        )}
+        {raceInfo && (
+          <TabsContent value="telemetry">
+            <TelemetryPanel year={raceInfo.season} round={raceInfo.round} />
           </TabsContent>
         )}
       </Tabs>
