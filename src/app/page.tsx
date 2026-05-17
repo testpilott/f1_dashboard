@@ -1,4 +1,5 @@
 import type { DriverStanding, ConstructorStanding, Race, WeatherForecast } from "@/lib/types";
+import { Suspense } from "react";
 import StandingsTables from "@/components/standings/StandingsTables";
 import NextRaceCard from "@/components/next-race/NextRaceCard";
 import { getDriverStandings, getConstructorStandings, getNextRace } from "@/lib/api/jolpica";
@@ -22,18 +23,6 @@ export default async function HomePage() {
     constructorsResult.status === "fulfilled" ? constructorsResult.value : [];
   const initialRace: Race | null = raceResult.status === "fulfilled" ? raceResult.value : null;
 
-  let initialWeather: WeatherForecast | null = null;
-  const country = initialRace?.Circuit?.Location?.country;
-  const coords = country ? CIRCUIT_COORDS[country] : undefined;
-
-  if (coords) {
-    try {
-      initialWeather = await getWeatherForecast(coords.lat, coords.lng, coords.timezone);
-    } catch {
-      initialWeather = null;
-    }
-  }
-
   return (
     <div className="grid grid-cols-1 xl:grid-cols-[1fr_340px] gap-6">
       {/* Left column — standings */}
@@ -47,9 +36,11 @@ export default async function HomePage() {
       {/* Right column — next race + quick links */}
       <aside className="space-y-6">
         <div>
-          <h2 className="text-base font-semibold text-zinc-400 mb-3">Next Race</h2>
-          <NextRaceCard initialRace={initialRace} initialWeather={initialWeather} />
-        </div>
+            <h2 className="text-base font-semibold text-zinc-400 mb-3">Next Race</h2>
+            <Suspense fallback={<div className="h-64 bg-zinc-900 border border-zinc-800 rounded-xl animate-pulse" />}>
+              <NextRaceSection initialRace={initialRace} />
+            </Suspense>
+          </div>
         <div className="grid grid-cols-2 gap-3">
           {[
             { href: "/weekend", label: "Race Weekend", sub: "Sessions & results" },
@@ -70,4 +61,18 @@ export default async function HomePage() {
       </aside>
     </div>
   );
+}
+
+async function NextRaceSection({ initialRace }: { initialRace: Race | null }) {
+  let initialWeather: WeatherForecast | null = null;
+  const country = initialRace?.Circuit?.Location?.country;
+  const coords = country ? CIRCUIT_COORDS[country] : undefined;
+  if (coords) {
+    try {
+      initialWeather = await getWeatherForecast(coords.lat, coords.lng, coords.timezone);
+    } catch {
+      initialWeather = null;
+    }
+  }
+  return <NextRaceCard initialRace={initialRace} initialWeather={initialWeather} />;
 }

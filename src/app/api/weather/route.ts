@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server";
 import { getWeatherForecast } from "@/lib/api/openmeteo";
 import { CIRCUIT_COORDS } from "@/lib/constants";
+import { rateLimited } from "@/lib/api/withRateLimit";
 
 export const revalidate = 3600; // 1 hour
 
 export async function GET(req: Request) {
+  const blocked = rateLimited(req, "weather");
+  if (blocked) return blocked;
+
   const { searchParams } = new URL(req.url);
   const country = searchParams.get("country");
   const lat = searchParams.get("lat");

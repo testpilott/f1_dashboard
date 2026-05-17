@@ -7,6 +7,10 @@
 // timestamp is older than this are guaranteed to be fully expired.
 const MAX_WINDOW_MS = 5 * 60 * 1000; // 5 minutes — conservative upper bound
 
+// Hard cap on tracked IPs. When exceeded, the oldest-inserted entry is evicted
+// (FIFO) to prevent unbounded memory growth under rotating-IP attacks.
+const MAX_STORE_SIZE = 10_000;
+
 const store = new Map<string, number[]>();
 
 /**
@@ -54,6 +58,12 @@ export function checkRateLimit(key: string, windowMs: number, max: number): bool
 
   if (timestamps.length >= max) {
     return false;
+  }
+
+  // Evict oldest entry before inserting a new key to bound memory usage.
+  if (!store.has(key) && store.size >= MAX_STORE_SIZE) {
+    const first = store.keys().next().value;
+    if (first !== undefined) store.delete(first);
   }
 
   timestamps.push(now);

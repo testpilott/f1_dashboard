@@ -100,7 +100,7 @@ function ProjectionRow({ driver, maxWinProb }: { driver: DriverProjection; maxWi
 }
 
 export default function ProjectionsPage() {
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["projections"],
     queryFn: fetchProjections,
     staleTime: 60 * 60 * 1000, // 1 hour
@@ -132,7 +132,12 @@ export default function ProjectionsPage() {
       )}
 
       {isError && (
-        <p className="text-zinc-500 text-sm">Failed to compute projections. Check back after race results are available.</p>
+        <div className="flex items-center gap-3 py-8">
+          <p className="text-zinc-500 text-sm">Failed to compute projections.</p>
+          <button onClick={() => refetch()} className="text-xs text-red-400 hover:underline">
+            Retry
+          </button>
+        </div>
       )}
 
       {data && (

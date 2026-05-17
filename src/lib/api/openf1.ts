@@ -10,9 +10,6 @@ import type {
   OpenF1SessionResult,
   OpenF1Weather,
   OpenF1RaceControl,
-  OpenF1Overtake,
-  OpenF1Location,
-  OpenF1CarData,
   OpenF1StartingGrid,
 } from "@/lib/types";
 
@@ -93,40 +90,10 @@ export async function getIntervals(sessionKey: number): Promise<OpenF1Interval[]
   return openF1Fetch<OpenF1Interval[]>(`/intervals?session_key=${sessionKey}`);
 }
 
-// ─── Overtakes ────────────────────────────────────────────────────────────────
-
-export async function getOvertakes(sessionKey: number): Promise<OpenF1Overtake[]> {
-  return openF1Fetch<OpenF1Overtake[]>(`/overtakes?session_key=${sessionKey}`);
-}
-
 // ─── Weather (at track) ───────────────────────────────────────────────────────
 
 export async function getTrackWeather(sessionKey: number): Promise<OpenF1Weather[]> {
   return openF1Fetch<OpenF1Weather[]>(`/weather?session_key=${sessionKey}`);
-}
-
-// ─── Car GPS positions ────────────────────────────────────────────────────────
-
-export async function getCarLocations(
-  sessionKey: number,
-  driverNumber: number,
-  dateStart: string,
-  dateEnd: string
-): Promise<OpenF1Location[]> {
-  return openF1Fetch<OpenF1Location[]>(
-    `/location?session_key=${sessionKey}&driver_number=${driverNumber}&date>=${dateStart}&date<=${dateEnd}`
-  );
-}
-
-// ─── Car telemetry ────────────────────────────────────────────────────────────
-
-export async function getCarData(
-  sessionKey: number,
-  driverNumber: number
-): Promise<OpenF1CarData[]> {
-  return openF1Fetch<OpenF1CarData[]>(
-    `/car_data?session_key=${sessionKey}&driver_number=${driverNumber}`
-  );
 }
 
 // ─── Race control ─────────────────────────────────────────────────────────────

@@ -72,28 +72,27 @@ export function getFlag(country: string): string {
 
 // ─── Race status display labels (Jolpica positionText → label) ────────────────
 
-export const STATUS_MAP: Record<string, string> = {
-  R: "DNF",
-  D: "DSQ",
-  E: "EXC",
-  W: "WD",
-  F: "DNQ",
-  N: "NC",
+const STATUS_INFO: Record<string, { label: string; tooltip: string }> = {
+  R: { label: "DNF", tooltip: "Did Not Finish" },
+  D: { label: "DSQ", tooltip: "Disqualified" },
+  E: { label: "EXC", tooltip: "Excluded" },
+  W: { label: "WD",  tooltip: "Withdrew" },
+  F: { label: "DNQ", tooltip: "Did Not Qualify" },
+  N: { label: "NC",  tooltip: "Not Classified" },
 };
+
+export const STATUS_MAP: Record<string, string> = Object.fromEntries(
+  Object.entries(STATUS_INFO).map(([k, v]) => [k, v.label])
+);
 
 export function getStatusLabel(positionText: string): string {
-  return STATUS_MAP[positionText] ?? positionText;
+  return STATUS_INFO[positionText]?.label ?? positionText;
 }
 
-export const STATUS_TOOLTIP: Record<string, string> = {
-  R: "Did Not Finish",
-  D: "Disqualified",
-  E: "Excluded",
-  W: "Withdrew",
-  F: "Did Not Qualify",
-  N: "Not Classified",
-};
+export const STATUS_TOOLTIP: Record<string, string> = Object.fromEntries(
+  Object.entries(STATUS_INFO).map(([k, v]) => [k, v.tooltip])
+);
 
 export function getStatusTooltip(positionText: string): string {
-  return STATUS_TOOLTIP[positionText] ?? positionText;
+  return STATUS_INFO[positionText]?.tooltip ?? positionText;
 }

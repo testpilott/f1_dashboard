@@ -79,12 +79,16 @@ export default function LapChart({ sessionKey }: { sessionKey: number }) {
     const dNums = [...new Set(laps.map((l) => l.driver_number))];
     const maxLap = Math.max(...laps.map((l) => l.lap_number));
 
-    // Group laps by lap number, keyed by driver code
+    // Pre-index for O(1) lookup instead of O(N) laps.find() inside the double loop.
+    const lapIndex = new Map<string, OpenF1Lap>();
+    for (const l of laps) lapIndex.set(`${l.lap_number}:${l.driver_number}`, l);
+
+    // Build chart data
     const data: ChartPoint[] = [];
     for (let lap = 1; lap <= maxLap; lap++) {
       const point: ChartPoint = { lap };
       for (const dNum of dNums) {
-        const lapEntry = laps.find((l) => l.lap_number === lap && l.driver_number === dNum);
+        const lapEntry = lapIndex.get(`${lap}:${dNum}`);
         const d = map.get(dNum);
         const code = d?.name_acronym ?? `#${dNum}`;
         point[code] = lapTimeToSeconds(lapEntry?.lap_duration);

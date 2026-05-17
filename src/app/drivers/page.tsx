@@ -32,7 +32,7 @@ export default function DriversPage() {
 
   // Distinct key from StandingsTables (["standings", season]) to avoid cache shape mismatch.
   // StandingsTables caches { drivers, constructors }; this page expects DriverStanding[].
-  const { data: drivers, isLoading, isError } = useQuery({
+  const { data: drivers, isLoading, isError, refetch } = useQuery({
     queryKey: ["driver-standings", "current"],
     queryFn: fetchStandings,
     staleTime: 5 * 60 * 1000,
@@ -62,7 +62,12 @@ export default function DriversPage() {
             ))}
 
           {isError && (
-            <p className="text-zinc-500 text-sm col-span-full">Failed to load drivers. Please try again.</p>
+            <div className="col-span-full flex items-center gap-3 py-6">
+              <p className="text-zinc-500 text-sm">Failed to load drivers.</p>
+              <button onClick={() => refetch()} className="text-xs text-red-400 hover:underline">
+                Retry
+              </button>
+            </div>
           )}
 
           {drivers?.map((d) => {

@@ -5,7 +5,6 @@ import type {
   RaceResult,
   QualifyingResult,
   SprintResult,
-  Circuit,
 } from "@/lib/types";
 
 const JOLPICA_BASE = "https://api.jolpi.ca/ergast/f1";
@@ -69,19 +68,6 @@ export async function getSprintResults(season: string, round: string): Promise<S
 
 // ─── Historical lookup ────────────────────────────────────────────────────────
 
-export async function getCircuits(season = "current"): Promise<Circuit[]> {
-  const data = await jolpicaFetch<{
-    MRData: { CircuitTable: { Circuits: Circuit[] } };
-  }>(`/${season}/circuits.json?limit=30`);
-  return data.MRData.CircuitTable.Circuits ?? [];
-}
-
-export async function getDriverHistory(driverId: string, limit = 10): Promise<Race[]> {
-  const data = await jolpicaFetch<{
-    MRData: { total: string; RaceTable: { Races: Race[] } };
-  }>(`/drivers/${driverId}/results.json?limit=${limit}&offset=0`);
-  return data.MRData.RaceTable.Races ?? [];
-}
 
 export async function getSeasonResults(season: string): Promise<Race[]> {
   const data = await jolpicaFetch<{

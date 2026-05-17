@@ -15,24 +15,20 @@ async function fetchNews(filter?: string) {
   return res.json().then((d) => (Array.isArray(d.items) ? d.items : []) as NewsItem[]);
 }
 
-const FILTERS = [
-  "", "verstappen", "norris", "leclerc", "piastri", "russell",
-  "hamilton", "sainz", "alonso", "upgrade", "tyre", "crash",
-];
-const FILTER_LABELS: Record<string, string> = {
-  "": "All",
-  verstappen: "Verstappen",
-  norris: "Norris",
-  leclerc: "Leclerc",
-  piastri: "Piastri",
-  russell: "Russell",
-  hamilton: "Hamilton",
-  sainz: "Sainz",
-  alonso: "Alonso",
-  upgrade: "Upgrades",
-  tyre: "Tyres",
-  crash: "Incidents",
-};
+const NEWS_FILTERS = [
+  { id: "", label: "All" },
+  { id: "verstappen", label: "Verstappen" },
+  { id: "norris", label: "Norris" },
+  { id: "leclerc", label: "Leclerc" },
+  { id: "piastri", label: "Piastri" },
+  { id: "russell", label: "Russell" },
+  { id: "hamilton", label: "Hamilton" },
+  { id: "sainz", label: "Sainz" },
+  { id: "alonso", label: "Alonso" },
+  { id: "upgrade", label: "Upgrades" },
+  { id: "tyre", label: "Tyres" },
+  { id: "crash", label: "Incidents" },
+] as const;
 
 export default function NewsPage() {
   const [filter, setFilter] = useState("");
@@ -48,17 +44,18 @@ export default function NewsPage() {
       <div className="flex items-center justify-between gap-4 mb-6 flex-wrap">
         <h1 className="text-2xl font-bold">F1 News</h1>
         <div className="flex flex-wrap gap-1.5">
-          {FILTERS.map((f) => (
+          {NEWS_FILTERS.map(({ id, label }) => (
             <button
-              key={f || "all"}
-              onClick={() => setFilter(f)}
+              key={id || "all"}
+              onClick={() => setFilter(id)}
+              aria-pressed={filter === id}
               className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                filter === f
+                filter === id
                   ? "bg-red-600 text-white"
                   : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-white"
               }`}
             >
-              {FILTER_LABELS[f]}
+              {label}
             </button>
           ))}
         </div>
