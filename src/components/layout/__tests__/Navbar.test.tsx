@@ -20,9 +20,9 @@ vi.mock("next-themes", () => ({
 import Navbar from "@/components/layout/Navbar";
 
 describe("Navbar", () => {
-  it("renders all 7 destinations", () => {
+  it("renders all 6 destinations", () => {
     render(<Navbar />);
-    for (const label of ["Standings", "Schedule", "Weekend", "Drivers", "Compare", "Projections", "News"]) {
+    for (const label of ["Standings", "Schedule", "Drivers", "Compare", "Projections", "News"]) {
       expect(screen.getAllByText(label).length).toBeGreaterThan(0);
     }
   });

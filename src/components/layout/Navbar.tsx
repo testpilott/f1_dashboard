@@ -7,7 +7,6 @@ import { useEffect, useRef } from "react";
 import {
   BarChart2,
   Calendar,
-  Flag,
   Newspaper,
   TrendingUp,
   Users,
@@ -19,7 +18,6 @@ import ThemeToggle from "@/components/ui/ThemeToggle";
 const NAV_ITEMS = [
   { href: "/", label: "Standings", icon: BarChart2 },
   { href: "/schedule", label: "Schedule", icon: Calendar },
-  { href: "/weekend", label: "Weekend", icon: Flag },
   { href: "/drivers", label: "Drivers", icon: Users },
   { href: "/compare", label: "Compare", icon: GitCompare },
   { href: "/projections", label: "Projections", icon: TrendingUp },
