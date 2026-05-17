@@ -77,6 +77,18 @@ export async function getSeasonResults(season: string): Promise<Race[]> {
   return data.MRData.RaceTable.Races ?? [];
 }
 
+/**
+ * Full-season race results (all rounds). Uses Ergast's max page size so the
+ * whole season is returned — unlike getSeasonResults (limit=30) which is left
+ * unchanged to avoid altering projections' behaviour.
+ */
+export async function getSeasonRaceResults(season: string): Promise<Race[]> {
+  const data = await jolpicaFetch<{
+    MRData: { RaceTable: { Races: Race[] } };
+  }>(`/${season}/results.json?limit=1000`);
+  return data.MRData.RaceTable.Races ?? [];
+}
+
 // ─── Next race helper ─────────────────────────────────────────────────────────
 
 export async function getRaceResultsAtCircuit(season: string, circuitId: string): Promise<RaceResult[]> {

@@ -46,6 +46,25 @@ async function fetchCompare(dA: string, dB: string, cId: string): Promise<Compar
   return res.json();
 }
 
+interface SeasonStats {
+  raceCompared: number;
+  raceAheadA: number;
+  raceAheadB: number;
+  qualiCompared: number;
+  qualiAheadA: number;
+  qualiAheadB: number;
+  a: { podiums: number; poles: number };
+  b: { podiums: number; poles: number };
+}
+
+async function fetchSeasonCompare(dA: string, dB: string): Promise<{ stats: SeasonStats }> {
+  const res = await fetch(
+    `/api/compare?view=season&driverA=${encodeURIComponent(dA)}&driverB=${encodeURIComponent(dB)}`
+  );
+  if (!res.ok) throw new Error("Failed to load season comparison");
+  return res.json();
+}
+
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function StatBar({
@@ -80,7 +99,7 @@ function Pos({
       <span className="text-sm font-bold font-mono tabular-nums" style={{ color: pos <= 3 ? color : "var(--foreground)" }}>
         P{pos}
       </span>
-      {fastest && <span className="text-[9px] text-purple-400 leading-none">⚡</span>}
+      {fastest && <span className="text-[9px] text-accent-2 leading-none">⚡</span>}
     </span>
   );
 }
@@ -115,6 +134,13 @@ export default function ComparePage() {
     queryKey: ["circuit-compare", driverAId, driverBId, circuitId],
     queryFn: () => fetchCompare(driverAId, driverBId, circuitId),
     enabled: bothSelected && Boolean(circuitId),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: seasonData } = useQuery({
+    queryKey: ["season-compare", driverAId, driverBId],
+    queryFn: () => fetchSeasonCompare(driverAId, driverBId),
+    enabled: bothSelected,
     staleTime: 5 * 60 * 1000,
   });
 
@@ -281,6 +307,44 @@ export default function ComparePage() {
               colorB={colorB}
             />
           </div>
+
+          {/* Season head-to-head (derived from every round) */}
+          {seasonData && seasonData.stats.raceCompared > 0 && (
+            <div className="rounded-lg bg-surface-2 border border-border p-5 space-y-4">
+              <p className="text-xs text-muted-foreground uppercase tracking-wider">
+                Season head-to-head ·{" "}
+                <span className="tabular-nums">{seasonData.stats.raceCompared}</span> shared races
+              </p>
+              <StatBar
+                label="Finished ahead"
+                a={seasonData.stats.raceAheadA}
+                b={seasonData.stats.raceAheadB}
+                colorA={colorA}
+                colorB={colorB}
+              />
+              <StatBar
+                label="Out-qualified"
+                a={seasonData.stats.qualiAheadA}
+                b={seasonData.stats.qualiAheadB}
+                colorA={colorA}
+                colorB={colorB}
+              />
+              <StatBar
+                label="Podiums"
+                a={seasonData.stats.a.podiums}
+                b={seasonData.stats.b.podiums}
+                colorA={colorA}
+                colorB={colorB}
+              />
+              <StatBar
+                label="Poles"
+                a={seasonData.stats.a.poles}
+                b={seasonData.stats.b.poles}
+                colorA={colorA}
+                colorB={colorB}
+              />
+            </div>
+          )}
 
           {/* Circuit history */}
           {circuitId && (

@@ -14,6 +14,7 @@ import {
   VALID_SESSION_KEY,
   VALID_ID,
   VALID_VIEW,
+  VALID_COMPARE_VIEW,
 } from "@/lib/validators";
 
 // projections route re-uses VALID_SEASON
@@ -325,5 +326,21 @@ describe("/api/telemetry param validation", () => {
     expect(VALID_ROUND.test("0")).toBe(false);
     expect(VALID_ROUND.test("99")).toBe(false);
     expect(VALID_ROUND.test("1; rm -rf /")).toBe(false);
+  });
+});
+
+// ─── VALID_COMPARE_VIEW (/api/compare) ───────────────────────────────────────
+
+describe("VALID_COMPARE_VIEW set", () => {
+  it("accepts the two supported views", () => {
+    expect(VALID_COMPARE_VIEW.has("circuit")).toBe(true);
+    expect(VALID_COMPARE_VIEW.has("season")).toBe(true);
+  });
+
+  it("rejects anything else, including injection attempts", () => {
+    expect(VALID_COMPARE_VIEW.has("next")).toBe(false);
+    expect(VALID_COMPARE_VIEW.has("")).toBe(false);
+    expect(VALID_COMPARE_VIEW.has("season; DROP TABLE")).toBe(false);
+    expect(VALID_COMPARE_VIEW.has("../../etc")).toBe(false);
   });
 });
