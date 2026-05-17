@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import {
   addMonths,
   subMonths,
@@ -33,19 +33,20 @@ export default function RaceCalendar({
   activeMeetingKey: number | null;
   onSelect: (meetingKey: number) => void;
 }) {
-  const [currentMonth, setCurrentMonth] = useState<Date>(() => {
-    const active = meetings.find((m) => m.meeting_key === activeMeetingKey);
-    return active ? startOfMonth(parseISO(active.date_start)) : startOfMonth(new Date());
-  });
+  const [prevActiveMeetingKey, setPrevActiveMeetingKey] = useState(activeMeetingKey);
+  const [monthOverride, setMonthOverride] = useState<Date | null>(null);
 
-  const prevActiveRef = useRef(activeMeetingKey);
-  useEffect(() => {
-    if (activeMeetingKey !== prevActiveRef.current) {
-      prevActiveRef.current = activeMeetingKey;
-      const active = meetings.find((m) => m.meeting_key === activeMeetingKey);
-      if (active) setCurrentMonth(startOfMonth(parseISO(active.date_start)));
-    }
-  }, [activeMeetingKey, meetings]);
+  // Render-time state sync: clear manual override when active meeting changes.
+  if (activeMeetingKey !== prevActiveMeetingKey) {
+    setPrevActiveMeetingKey(activeMeetingKey);
+    setMonthOverride(null);
+  }
+
+  const activeMeeting = meetings.find((m) => m.meeting_key === activeMeetingKey);
+  const baseMonth = activeMeeting
+    ? startOfMonth(parseISO(activeMeeting.date_start))
+    : startOfMonth(new Date());
+  const currentMonth = monthOverride ?? baseMonth;
 
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
@@ -68,7 +69,7 @@ export default function RaceCalendar({
       {/* Month navigation */}
       <div className="flex items-center justify-between mb-3">
         <button
-          onClick={() => setCurrentMonth((m) => subMonths(m, 1))}
+          onClick={() => setMonthOverride(subMonths(currentMonth, 1))}
           className="p-1.5 rounded hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
           aria-label="Previous month"
         >
@@ -76,7 +77,7 @@ export default function RaceCalendar({
         </button>
         <span className="text-sm font-semibold">{format(currentMonth, "MMMM yyyy")}</span>
         <button
-          onClick={() => setCurrentMonth((m) => addMonths(m, 1))}
+          onClick={() => setMonthOverride(addMonths(currentMonth, 1))}
           className="p-1.5 rounded hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
           aria-label="Next month"
         >

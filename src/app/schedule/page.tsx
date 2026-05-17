@@ -2,6 +2,8 @@ import type { Race } from "@/lib/types";
 import { getSchedule } from "@/lib/api/jolpica";
 import ScheduleClient from "@/components/schedule/ScheduleClient";
 
+export const dynamic = "force-dynamic";
+
 export default async function SchedulePage() {
   const races = await getSchedule();
 

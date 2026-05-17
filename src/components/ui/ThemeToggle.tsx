@@ -1,15 +1,13 @@
 "use client";
 
 import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
 import { Sun, Moon } from "lucide-react";
+import { useIsClient } from "@/lib/hooks/useIsClient";
 
 export default function ThemeToggle() {
   const { resolvedTheme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
+  const mounted = useIsClient();
 
-  // Avoid hydration mismatch — only render after mount
-  useEffect(() => setMounted(true), []);
   if (!mounted) return <div className="w-8 h-8" />;
 
   const isDark = resolvedTheme === "dark";

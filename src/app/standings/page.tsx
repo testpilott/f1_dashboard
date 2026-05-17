@@ -2,6 +2,8 @@ import type { DriverStanding, ConstructorStanding } from "@/lib/types";
 import StandingsTables from "@/components/standings/StandingsTables";
 import { getDriverStandings, getConstructorStandings } from "@/lib/api/jolpica";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "F1 Dashboard · Championship Standings",
 };

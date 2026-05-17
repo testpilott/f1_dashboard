@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useSyncExternalStore } from "react";
 import Link from "next/link";
+import { useNow } from "@/lib/hooks/useNow";
 import { parseISO, isPast } from "date-fns";
 import { ChevronDown, ChevronRight, CalendarPlus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -55,20 +57,9 @@ function formatCountdown(ms: number): string {
 // ─── Countdown component (client-only, avoids hydration mismatch) ─────────────
 
 function Countdown({ target }: { target: Date }) {
-  const [remaining, setRemaining] = useState<number | null>(null);
-
-  useEffect(() => {
-    const calc = () => target.getTime() - Date.now();
-    setRemaining(calc());
-    const interval = setInterval(() => {
-      const r = calc();
-      setRemaining(r);
-      if (r <= 0) clearInterval(interval);
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [target]);
-
-  if (remaining === null) return null;
+  const now = useNow();
+  if (now === null) return null;
+  const remaining = target.getTime() - now;
   if (remaining <= 0) return <span className="text-primary font-mono text-xs">Starting…</span>;
   return (
     <span className="text-primary font-mono text-xs tabular-nums">
@@ -157,15 +148,17 @@ function SessionRow({
   );
 }
 
+const _noopSubscribe = () => () => {};
+
 // ─── Race row ─────────────────────────────────────────────────────────────────
 
 function ScheduleRow({ race }: { race: Race }) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [userTz, setUserTz] = useState<string | null>(null);
-
-  useEffect(() => {
-    setUserTz(Intl.DateTimeFormat().resolvedOptions().timeZone);
-  }, []);
+  const userTz = useSyncExternalStore(
+    _noopSubscribe,
+    () => Intl.DateTimeFormat().resolvedOptions().timeZone,
+    () => null
+  );
 
   const raceDate = parseISO(race.date);
   const past = isPast(raceDate);
