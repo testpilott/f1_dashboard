@@ -7,7 +7,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import TeamLogo from "@/components/ui/TeamLogo";
 import TelemetryPanel from "@/components/race/TelemetryPanel";
 import TeamRadioPanel from "@/components/race/TeamRadioPanel";
-import { getStatusLabel, getStatusTooltip } from "@/lib/constants";
+import { getStatusLabel, getStatusTooltip, RADIO_AVAILABLE_FROM, RADIO_AVAILABLE_THROUGH } from "@/lib/constants";
 import {
   Table,
   TableBody,
@@ -133,6 +133,8 @@ export default function RaceDetailClient({
   const raceInfo = initialData.raceInfo;
 
   const hasSprint = Boolean(raceInfo?.Sprint);
+  const season = Number(raceInfo?.season ?? 0);
+  const hasRadio = season >= RADIO_AVAILABLE_FROM && season <= RADIO_AVAILABLE_THROUGH;
 
   return (
     <div>
@@ -171,7 +173,7 @@ export default function RaceDetailClient({
               Telemetry
             </TabsTrigger>
           )}
-          {raceInfo && (
+          {raceInfo && hasRadio && (
             <TabsTrigger value="radio" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               Radio
             </TabsTrigger>
@@ -206,7 +208,7 @@ export default function RaceDetailClient({
             <TelemetryPanel year={raceInfo.season} round={raceInfo.round} />
           </TabsContent>
         )}
-        {raceInfo && (
+        {raceInfo && hasRadio && (
           <TabsContent value="radio">
             <TeamRadioPanel year={raceInfo.season} round={raceInfo.round} />
           </TabsContent>

@@ -12,6 +12,8 @@ import {
   POINTS_SYSTEM,
   SPRINT_POINTS_SYSTEM,
   FASTEST_LAP_POINT,
+  RADIO_AVAILABLE_FROM,
+  RADIO_AVAILABLE_THROUGH,
 } from "@/lib/constants";
 
 // ─── getTeamColor ─────────────────────────────────────────────────────────────
@@ -194,5 +196,33 @@ describe("SPRINT_POINTS_SYSTEM", () => {
 describe("FASTEST_LAP_POINT", () => {
   it("is 1", () => {
     expect(FASTEST_LAP_POINT).toBe(1);
+  });
+});
+
+// ─── RADIO_AVAILABLE_FROM / RADIO_AVAILABLE_THROUGH ──────────────────────────
+
+describe("radio availability constants", () => {
+  it("RADIO_AVAILABLE_FROM is 2023 (first season OpenF1 covers)", () => {
+    expect(RADIO_AVAILABLE_FROM).toBe(2023);
+  });
+
+  it("RADIO_AVAILABLE_THROUGH is at least 2023 and no greater than the current year", () => {
+    expect(RADIO_AVAILABLE_THROUGH).toBeGreaterThanOrEqual(RADIO_AVAILABLE_FROM);
+    expect(RADIO_AVAILABLE_THROUGH).toBeLessThanOrEqual(new Date().getFullYear());
+  });
+
+  it("correctly identifies 2025 as within the supported range", () => {
+    const year = 2025;
+    expect(year >= RADIO_AVAILABLE_FROM && year <= RADIO_AVAILABLE_THROUGH).toBe(true);
+  });
+
+  it("correctly identifies 2026 as outside the supported range", () => {
+    const year = 2026;
+    expect(year >= RADIO_AVAILABLE_FROM && year <= RADIO_AVAILABLE_THROUGH).toBe(false);
+  });
+
+  it("correctly identifies 2022 as outside the supported range", () => {
+    const year = 2022;
+    expect(year >= RADIO_AVAILABLE_FROM && year <= RADIO_AVAILABLE_THROUGH).toBe(false);
   });
 });

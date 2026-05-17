@@ -1,3 +1,10 @@
+// ─── OpenF1 team radio coverage ───────────────────────────────────────────────
+// OpenF1 covers team radio from 2023 onwards. FOM restricted access to the
+// underlying static files for 2026+ so this constant marks the last confirmed
+// year with available data. Bump when OpenF1 backfills a new season.
+export const RADIO_AVAILABLE_FROM = 2023;
+export const RADIO_AVAILABLE_THROUGH = 2025;
+
 // ─── Tyre compound colours ────────────────────────────────────────────────────
 
 export const TYRE_COLORS: Record<string, string> = {
