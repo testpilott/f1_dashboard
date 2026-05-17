@@ -114,8 +114,14 @@ export default function NextRaceCard({
   const circuitImgUrl = getCircuitImageUrl(race.Circuit.circuitId);
 
   return (
-    <Card className="bg-surface-2 border-border overflow-hidden">
+    <Card className="relative bg-surface-2 border-border overflow-hidden">
       <div className="h-1.5 bg-primary w-full" />
+      {circuitImgUrl && (
+        <div className="pointer-events-none absolute right-2 top-1/2 z-0 hidden -translate-y-1/2 opacity-20 sm:block">
+          <CircuitThumb url={circuitImgUrl} country={country} size={160} />
+        </div>
+      )}
+      <div className="relative z-10">
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-2">
           <div>
@@ -131,9 +137,6 @@ export default function NextRaceCard({
             <Badge variant="outline" className="border-border text-muted-foreground text-xs">
               {format(raceDate, "d MMM yyyy")}
             </Badge>
-            {circuitImgUrl && (
-              <CircuitThumb url={circuitImgUrl} country={country} size={80} />
-            )}
           </div>
         </div>
       </CardHeader>
@@ -177,6 +180,7 @@ export default function NextRaceCard({
           </p>
         )}
       </CardContent>
+      </div>
     </Card>
   );
 }
