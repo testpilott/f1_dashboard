@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Fragment } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { DriverStanding, NewsItem } from "@/lib/types";
 import { getTeamColor, getFlag } from "@/lib/constants";
@@ -52,7 +52,7 @@ export default function DriversPage() {
       <div className="flex flex-col lg:flex-row lg:items-start gap-4">
         {/* ── Driver grid ── */}
         <div
-          className={`grid gap-3 grid-cols-1 sm:grid-cols-2 ${
+          className={`grid gap-3 grid-cols-1 ${
             selected ? "lg:grid-cols-2 lg:flex-1 lg:min-w-0" : "w-full lg:grid-cols-3"
           }`}
         >
@@ -72,16 +72,16 @@ export default function DriversPage() {
             const isActive = selected?.Driver.driverId === d.Driver.driverId;
 
             return (
-              <button
-                key={d.Driver.driverId}
-                onClick={() => setSelected(isActive ? null : d)}
-                className={`rounded-lg border p-4 flex items-center gap-4 transition-all text-left w-full cursor-pointer ${
-                  isActive
-                    ? "bg-zinc-800 border-zinc-600 ring-1 ring-zinc-600"
-                    : "bg-zinc-900 border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900/80"
-                }`}
-                style={{ borderLeftColor: color, borderLeftWidth: 3 }}
-              >
+              <Fragment key={d.Driver.driverId}>
+                <button
+                  onClick={() => setSelected(isActive ? null : d)}
+                  className={`rounded-lg border p-4 flex items-center gap-4 transition-all text-left w-full cursor-pointer ${
+                    isActive
+                      ? "bg-zinc-800 border-zinc-600 ring-1 ring-zinc-600"
+                      : "bg-zinc-900 border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900/80"
+                  }`}
+                  style={{ borderLeftColor: color, borderLeftWidth: 3 }}
+                >
                 <div className="text-3xl font-black text-zinc-700 w-8 text-center tabular-nums shrink-0">
                   {pos}
                 </div>
@@ -106,19 +106,33 @@ export default function DriversPage() {
                   <p className="font-bold font-mono text-lg">{d.points}</p>
                   <p className="text-[10px] text-zinc-600">pts</p>
                 </div>
-              </button>
+                </button>
+                {/* Mobile inline detail panel — shown directly below selected driver on small screens */}
+                {isActive && (
+                  <div className="lg:hidden">
+                    <DriverDetailPanel
+                      driver={d}
+                      news={news}
+                      newsLoading={newsLoading}
+                      onClose={() => setSelected(null)}
+                    />
+                  </div>
+                )}
+              </Fragment>
             );
           })}
         </div>
 
-        {/* ── Detail panel ── */}
+        {/* ── Desktop sidebar detail panel ── */}
         {selected && (
-          <DriverDetailPanel
-            driver={selected}
-            news={news}
-            newsLoading={newsLoading}
-            onClose={() => setSelected(null)}
-          />
+          <div className="hidden lg:block lg:w-[380px] lg:shrink-0 lg:sticky lg:top-4">
+            <DriverDetailPanel
+              driver={selected}
+              news={news}
+              newsLoading={newsLoading}
+              onClose={() => setSelected(null)}
+            />
+          </div>
         )}
       </div>
     </div>
@@ -154,7 +168,7 @@ function DriverDetailPanel({
   const staticData = getDriverStatic(driver.Driver.driverId);
 
   return (
-    <div className="lg:w-[380px] lg:shrink-0 lg:sticky lg:top-4 bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+    <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
       {/* ── Coloured header bar ── */}
       <div className="h-1 w-full" style={{ backgroundColor: color }} />
 
@@ -223,24 +237,33 @@ function DriverDetailPanel({
           </div>
         )}
 
-        {/* Famous radio */}
-        {staticData?.radioMessage && (
-          <div className="px-5 py-3.5">
-            <div className="flex items-center gap-1.5 mb-2">
+        {/* Memorable Quotes carousel */}
+        {staticData?.quotes && staticData.quotes.length > 0 && (
+          <div className="py-3.5">
+            <div className="flex items-center gap-1.5 mb-3 px-5">
               <Radio size={13} className="text-green-500 shrink-0" />
               <h3 className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">
-                Memorable Radio
+                Memorable Quotes
               </h3>
             </div>
-            <blockquote
-              className="text-sm text-zinc-200 italic border-l-2 pl-3 leading-relaxed"
-              style={{ borderLeftColor: color }}
-            >
-              &ldquo;{staticData.radioMessage}&rdquo;
-            </blockquote>
-            <p className="text-[10px] text-zinc-500 pl-3 mt-1">
-              — {staticData.radioSource.race} &middot; {staticData.radioSource.year}
-            </p>
+            <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 px-5">
+              {staticData.quotes.map((quote, i) => (
+                <div
+                  key={i}
+                  className="min-w-[220px] max-w-[260px] snap-start flex-shrink-0 bg-zinc-800/60 rounded-lg p-3"
+                >
+                  <blockquote
+                    className="text-sm text-zinc-200 italic border-l-2 pl-3 leading-relaxed"
+                    style={{ borderLeftColor: color }}
+                  >
+                    &ldquo;{quote.text}&rdquo;
+                  </blockquote>
+                  <p className="text-[10px] text-zinc-500 pl-3 mt-1.5">
+                    — {quote.source.race} &middot; {quote.source.year}
+                  </p>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
