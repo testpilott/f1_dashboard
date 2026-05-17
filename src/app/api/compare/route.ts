@@ -1,7 +1,13 @@
 import { NextResponse } from "next/server";
-import { getRaceResultsAtCircuit, getQualifyingResultsAtCircuit } from "@/lib/api/jolpica";
+import {
+  getRaceResultsAtCircuit,
+  getQualifyingResultsAtCircuit,
+  getSeasonRaceResults,
+} from "@/lib/api/jolpica";
 import { rateLimited } from "@/lib/api/withRateLimit";
-import { VALID_ID } from "@/lib/validators";
+import { VALID_ID, VALID_SEASON, VALID_COMPARE_VIEW } from "@/lib/validators";
+import { seasonHeadToHead } from "@/lib/stats/headToHead";
+import { constructorHeadToHead } from "@/lib/stats/constructorH2H";
 
 export const revalidate = 300; // 5 min
 
@@ -16,15 +22,66 @@ export async function GET(req: Request) {
   const driverA = searchParams.get("driverA");
   const driverB = searchParams.get("driverB");
   const circuitId = searchParams.get("circuitId");
+  const view = searchParams.get("view") ?? "circuit";
+  const season = searchParams.get("season") ?? "current";
 
-  if (!driverA || !driverB || !circuitId) {
+  if (!VALID_COMPARE_VIEW.has(view)) {
+    return NextResponse.json({ error: "Invalid view parameter" }, { status: 400 });
+  }
+  if (!driverA || !driverB) {
     return NextResponse.json(
-      { error: "driverA, driverB, and circuitId are all required" },
+      { error: "driverA and driverB are required" },
       { status: 400 }
     );
   }
   if (!VALID_ID.test(driverA) || !VALID_ID.test(driverB)) {
     return NextResponse.json({ error: "Invalid driver identifier" }, { status: 400 });
+  }
+
+  // ── Season-long head-to-head ────────────────────────────────────────────────
+  if (view === "season") {
+    if (!VALID_SEASON.test(season)) {
+      return NextResponse.json({ error: "Invalid season parameter" }, { status: 400 });
+    }
+    try {
+      const races = await getSeasonRaceResults(season);
+      const stats = seasonHeadToHead(races, driverA, driverB);
+      return NextResponse.json({ view: "season", season, driverA, driverB, stats });
+    } catch (err) {
+      console.error("[/api/compare?view=season] Error:", err);
+      return NextResponse.json({ error: "Failed to compute season comparison" }, { status: 500 });
+    }
+  }
+
+  // ── Constructor head-to-head ───────────────────────────────────────────────
+  if (view === "teams") {
+    if (!VALID_SEASON.test(season)) {
+      return NextResponse.json({ error: "Invalid season parameter" }, { status: 400 });
+    }
+    const constructorA = searchParams.get("constructorA");
+    const constructorB = searchParams.get("constructorB");
+    if (!constructorA || !constructorB) {
+      return NextResponse.json({ error: "constructorA and constructorB are required for teams view" }, { status: 400 });
+    }
+    if (!VALID_ID.test(constructorA) || !VALID_ID.test(constructorB)) {
+      return NextResponse.json({ error: "Invalid constructor identifier" }, { status: 400 });
+    }
+    try {
+      const races = await getSeasonRaceResults(season);
+      const stats = constructorHeadToHead(races, constructorA, constructorB);
+      return NextResponse.json({ view: "teams", season, constructorA, constructorB, stats });
+    } catch (err) {
+      console.error("[/api/compare?view=teams] Error:", err);
+      return NextResponse.json({ error: "Failed to compute constructor comparison" }, { status: 500 });
+    }
+  }
+
+  // ── Circuit history (default) ───────────────────────────────────────────────
+  if (!circuitId) {
+    return NextResponse.json(
+      { error: "circuitId is required for circuit view" },
+      { status: 400 }
+    );
   }
   if (!VALID_ID.test(circuitId)) {
     return NextResponse.json({ error: "Invalid circuit identifier" }, { status: 400 });

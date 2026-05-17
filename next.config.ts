@@ -40,6 +40,9 @@ const nextConfig: NextConfig = {
               "font-src 'self'",
               // All external API calls go through our own /api/* routes
               "connect-src 'self'",
+              // Team-radio audio streams directly from the F1 live-timing CDN
+              // (OpenF1's team_radio recording_url host) — not proxied.
+              "media-src 'self' https://livetiming.formula1.com",
               // Prevent this page from being embedded as a frame
               "frame-ancestors 'none'",
               "base-uri 'self'",

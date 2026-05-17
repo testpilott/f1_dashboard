@@ -1,8 +1,8 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useState, useEffect } from "react";
 import type { Race, WeatherForecast } from "@/lib/types";
+import { useNow } from "@/lib/hooks/useNow";
 import { CIRCUIT_COORDS, getWeatherIcon, getWeatherLabel, getCircuitImageUrl } from "@/lib/constants";
 import CircuitThumb from "@/components/schedule/CircuitThumb";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -36,15 +36,8 @@ function CountdownSegment({ value, label }: { value: number; label: string }) {
 }
 
 function Countdown({ dateStr }: { dateStr: string }) {
-  const [now, setNow] = useState(0);
-
-  useEffect(() => {
-    setNow(Date.now());
-    const id = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(id);
-  }, []);
-
-  if (now === 0) return null;
+  const now = useNow();
+  if (now === null) return null;
 
   const target = parseISO(dateStr).getTime();
   const diff = target - now;
@@ -133,7 +126,7 @@ export default function NextRaceCard({
           </div>
           <div className="flex flex-col items-end gap-2 shrink-0">
             {isSprint && (
-              <Badge className="bg-purple-700 text-white text-xs">Sprint Weekend</Badge>
+              <Badge className="bg-accent-2/20 text-accent-2 border-accent-2/40 text-xs">Sprint Weekend</Badge>
             )}
             <Badge variant="outline" className="border-border text-muted-foreground text-xs">
               {format(raceDate, "d MMM yyyy")}

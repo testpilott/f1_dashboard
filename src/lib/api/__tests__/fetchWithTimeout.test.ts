@@ -20,12 +20,20 @@ describe("fetchWithTimeout", () => {
     expect(res.status).toBe(200);
   });
 
-  it("passes through a non-OK response without throwing", async () => {
-    const mockRes = new Response("Not Found", { status: 404 });
+  it("throws on a non-OK HTTP response so callers fail fast", async () => {
+    const mockRes = new Response("Not Found", { status: 404, statusText: "Not Found" });
     (fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(mockRes);
 
-    const res = await fetchWithTimeout("https://example.com/api");
-    expect(res.status).toBe(404);
+    await expect(fetchWithTimeout("https://example.com/api")).rejects.toThrow(/404/);
+  });
+
+  it("clears the abort timer even when the response is non-OK", async () => {
+    const mockRes = new Response("", { status: 500 });
+    (fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(mockRes);
+
+    await expect(fetchWithTimeout("https://example.com/api")).rejects.toThrow();
+    // Advancing past the timeout must not trigger a late abort / unhandled rejection.
+    expect(() => vi.advanceTimersByTime(10_000)).not.toThrow();
   });
 
   it("aborts when the timeout elapses before fetch resolves", async () => {

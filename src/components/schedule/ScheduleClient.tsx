@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useSyncExternalStore } from "react";
 import Link from "next/link";
+import { useNow } from "@/lib/hooks/useNow";
 import { parseISO, isPast } from "date-fns";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight, CalendarPlus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import CircuitThumb from "@/components/schedule/CircuitThumb";
 import { getFlag, getCircuitImageUrl, CIRCUIT_COORDS } from "@/lib/constants";
@@ -55,20 +57,9 @@ function formatCountdown(ms: number): string {
 // ─── Countdown component (client-only, avoids hydration mismatch) ─────────────
 
 function Countdown({ target }: { target: Date }) {
-  const [remaining, setRemaining] = useState<number | null>(null);
-
-  useEffect(() => {
-    const calc = () => target.getTime() - Date.now();
-    setRemaining(calc());
-    const interval = setInterval(() => {
-      const r = calc();
-      setRemaining(r);
-      if (r <= 0) clearInterval(interval);
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [target]);
-
-  if (remaining === null) return null;
+  const now = useNow();
+  if (now === null) return null;
+  const remaining = target.getTime() - now;
   if (remaining <= 0) return <span className="text-primary font-mono text-xs">Starting…</span>;
   return (
     <span className="text-primary font-mono text-xs tabular-nums">
@@ -105,7 +96,9 @@ function SessionRow({
   userTz: string | null;
 }) {
   const dt = buildUTCDate(session.date, session.time);
-  const isSessionPast = dt.getTime() < Date.now();
+  // Capture "now" once at mount so render stays pure (react-hooks/purity).
+  const [now] = useState(() => Date.now());
+  const isSessionPast = dt.getTime() < now;
   const sameZone = userTz === circuitTz;
   const isRace = session.label === "Race";
 
@@ -155,15 +148,17 @@ function SessionRow({
   );
 }
 
+const _noopSubscribe = () => () => {};
+
 // ─── Race row ─────────────────────────────────────────────────────────────────
 
 function ScheduleRow({ race }: { race: Race }) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [userTz, setUserTz] = useState<string | null>(null);
-
-  useEffect(() => {
-    setUserTz(Intl.DateTimeFormat().resolvedOptions().timeZone);
-  }, []);
+  const userTz = useSyncExternalStore(
+    _noopSubscribe,
+    () => Intl.DateTimeFormat().resolvedOptions().timeZone,
+    () => null
+  );
 
   const raceDate = parseISO(race.date);
   const past = isPast(raceDate);
@@ -205,7 +200,7 @@ function ScheduleRow({ race }: { race: Race }) {
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {isSprint && (
-            <Badge className="bg-purple-800/60 text-purple-300 border-purple-800 text-xs px-1.5">
+            <Badge className="bg-accent-2/20 text-accent-2 border-accent-2/40 text-xs px-1.5">
               Sprint
             </Badge>
           )}
@@ -255,8 +250,19 @@ function ScheduleRow({ race }: { race: Race }) {
 // ─── Main export ──────────────────────────────────────────────────────────────
 
 export default function ScheduleClient({ races }: { races: Race[] }) {
+  const season = races[0]?.season ?? "current";
   return (
     <div className="space-y-2">
+      <div className="flex justify-end">
+        <a
+          href={`/api/schedule/export?season=${season}`}
+          download={`f1-${season}.ics`}
+          className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline underline-offset-4"
+        >
+          <CalendarPlus className="w-4 h-4" aria-hidden="true" />
+          Add season to calendar
+        </a>
+      </div>
       {races.map((race) => (
         <ScheduleRow key={race.round} race={race} />
       ))}

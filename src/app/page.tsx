@@ -6,6 +6,8 @@ import { getDriverStandings, getConstructorStandings, getNextRace } from "@/lib/
 import { getWeatherForecast } from "@/lib/api/openmeteo";
 import { CIRCUIT_COORDS } from "@/lib/constants";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "F1 Dashboard · Championship Standings",
 };

@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ThemeToggle from "@/components/ui/ThemeToggle";
+import GlobalSearch from "@/components/search/GlobalSearch";
 
 const NAV_ITEMS = [
   { href: "/", label: "Standings", icon: BarChart2 },
@@ -73,9 +74,12 @@ export default function Navbar() {
             </Link>
           ))}
         </nav>
-        <div className="px-4 py-3 border-t border-sidebar-border flex items-center justify-between">
-          <span className="text-muted-foreground text-xs">OpenF1 · Jolpica · Open-Meteo</span>
-          <ThemeToggle />
+        <div className="px-4 py-3 border-t border-sidebar-border space-y-2">
+          <GlobalSearch />
+          <div className="flex items-center justify-between">
+            <span className="text-muted-foreground text-xs">OpenF1 · Jolpica · Open-Meteo</span>
+            <ThemeToggle />
+          </div>
         </div>
       </aside>
 
@@ -92,6 +96,7 @@ export default function Navbar() {
           />
           <span className="text-muted-foreground text-xs tracking-widest uppercase">Dashboard</span>
         </Link>
+        <GlobalSearch />
         <ThemeToggle />
       </header>
 

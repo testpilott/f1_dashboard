@@ -98,3 +98,65 @@ doc complete.
 
 **DoD:** all routes rate-limited + validated with tests; full suite + `npm run build`
 green at final coverage gate; every doc has a TL;DR and runnable commands.
+
+---
+
+## Post-handoff — Data & Features round ✅
+
+Features-first follow-up after the handoff review. See `docs/architecture.md`
+"Post-handoff additions" for endpoint/contract detail.
+
+- [x] **WS-1** Driver form & momentum chips on standings (`/api/form`, pure
+      `lib/stats/form.ts`) + medal-badge color tokens (defect #1 partial).
+- [x] **WS-2** Race Detail "Telemetry" tab (`/api/telemetry`, pure `lib/stats/pace.ts`
+      + `session-match.ts`) + fastest-lap/sprint `--accent-2` token (defect #1 partial).
+- [x] **WS-3** Compare season head-to-head (`/api/compare?view=season`, pure
+      `lib/stats/headToHead.ts`) + stray purple → token.
+- [x] **WS-4** iCal export (`/api/schedule/export`, pure `lib/ical.ts`) + the missing
+      `ScheduleClient` test (defect #2) + Sprint-badge token.
+- [x] **WS-5** Cleanup: `fetchWithTimeout` spec-aligned (defect #3); remaining
+      `drivers/page.tsx` colors → tokens (defect #1 done); `.claude/settings.json`
+      SessionStart hook (defect #4); `LapChart` rules-of-hooks bug + 2 purity errors
+      fixed; docs updated.
+
+**Status:** test suite 174 → **238** passing; `npm run test:ci` green (coverage well
+above the 80/75/80 gate). Lint errors 8 → **5** (remaining are pre-existing intentional
+SSR hydration guards — tracked in `docs/architecture.md` "Known lint debt").
+
+**Intentionally not done (tracked in `docs/architecture.md`):**
+- Weekend route stays parked (product decision) — telemetry value delivered via Race
+  Detail instead.
+- 5 `react-hooks/set-state-in-effect` lint errors — need a browser-verified
+  `useSyncExternalStore` refactor; advisory rule, not correctness.
+- `npm run build` SSG-vs-sandbox `403` — environmental; fix by marking data pages
+  dynamic (separate task).
+
+---
+
+## Tier-2/3 feature round ✅
+
+Previously-deferred features, all free-tier, no new heavy deps.
+
+- [x] **Historical season browsing** — `SeasonPicker` component; standings + schedule
+      pages accept `?season=YYYY` (`searchParams` prop); 2021–2026 supported; validates
+      with `/^\d{4}$/`; maps 2026 → `"current"` for Jolpica.
+- [x] **Adaptive caching** — `src/lib/cacheStrategy.ts`; race-weekend heuristic
+      (Fri/Sat/Sun = shorter ISR TTLs); all `jolpicaFetch` + `openF1Fetch` calls use
+      `adaptiveRevalidate(dataClass)` instead of hardcoded constants; 10 pure-function
+      tests in `cacheStrategy.test.ts`.
+- [x] **Global search** — `GET /api/search?q=` (rate-limited, `VALID_SEARCH_QUERY`
+      validated, 1 h revalidate); pure `src/lib/search.ts` scorer (prefix > infix,
+      no external dep); `GlobalSearch` command-palette component (Cmd/Ctrl+K, arrow
+      navigation, Enter to navigate, Escape to close) added to Navbar.
+- [x] **Constructor-vs-constructor compare** — `src/lib/stats/constructorH2H.ts`
+      (pure, 7 unit tests); `GET /api/compare?view=teams&constructorA=&constructorB=&
+      season=` branch (reuses `VALID_ID` + `VALID_SEASON`); new "Constructors" tab on
+      the compare page with selector cards + stat bars.
+- [x] **Team radio** — `OpenF1TeamRadio` type; `getTeamRadio()` in `openf1.ts`;
+      `GET /api/team-radio?year=&round=` (rate-limited, `VALID_YEAR`/`VALID_ROUND`,
+      session-resolved via `pickRaceSession`); `TeamRadioPanel.tsx` collapsible per
+      driver + `<audio controls preload="none">`; "Radio" tab on Race Detail (2023+
+      sessions only).
+
+**Test count:** 269 passing (31 test files). `npm run lint` 0 errors / 5 pre-existing
+advisory warnings. `npm run build` clean.

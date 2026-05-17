@@ -37,18 +37,18 @@ export default function LapChart({ sessionKey }: { sessionKey: number }) {
     staleTime: 30 * 60 * 1000,
   });
 
-  if (lapsLoading) return <Skeleton className="h-72 w-full" />;
-  if (!laps?.length) return <p className="text-muted-foreground text-sm">No lap data available.</p>;
-
-  // Build Nivo-format series data and filter outliers
+  // Build Nivo-format series data and filter outliers.
+  // NOTE: hooks must run unconditionally — keep this above the early returns.
   const nivoData = useMemo(() => {
+    const safeLaps = laps ?? [];
+    if (safeLaps.length === 0) return [];
     const driverMap = new Map(drivers?.map((d) => [d.driver_number, d]) ?? []);
-    const driverNumbers = [...new Set(laps.map((l) => l.driver_number))];
+    const driverNumbers = [...new Set(safeLaps.map((l) => l.driver_number))];
 
     // Pre-index laps for O(1) lookup
     const lapIndex = new Map<string, OpenF1Lap>();
-    for (const l of laps) lapIndex.set(`${l.lap_number}:${l.driver_number}`, l);
-    const maxLap = Math.max(...laps.map((l) => l.lap_number));
+    for (const l of safeLaps) lapIndex.set(`${l.lap_number}:${l.driver_number}`, l);
+    const maxLap = Math.max(...safeLaps.map((l) => l.lap_number));
 
     return driverNumbers.map((dNum) => {
       const d = driverMap.get(dNum);
@@ -75,6 +75,9 @@ export default function LapChart({ sessionKey }: { sessionKey: number }) {
       };
     });
   }, [laps, drivers]);
+
+  if (lapsLoading) return <Skeleton className="h-72 w-full" />;
+  if (!laps?.length) return <p className="text-muted-foreground text-sm">No lap data available.</p>;
 
   const theme = nivoTheme();
 

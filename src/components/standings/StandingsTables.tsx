@@ -15,6 +15,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import TeamLogo from "@/components/ui/TeamLogo";
 import { getTeamColor } from "@/lib/constants/teams";
+import type { DriverForm } from "@/lib/stats/form";
+import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 
 type StandingsData = {
   drivers: DriverStanding[];
@@ -27,11 +29,51 @@ async function fetchStandings(season = "current") {
   return res.json() as Promise<{ drivers: DriverStanding[]; constructors: ConstructorStanding[] }>;
 }
 
+async function fetchForm(season = "current") {
+  const res = await fetch(`/api/form?season=${season}`);
+  if (!res.ok) throw new Error("Failed to fetch form");
+  return res.json() as Promise<{ form: Record<string, DriverForm> }>;
+}
+
+const MEDAL: Record<number, string> = {
+  1: "bg-medal-gold text-medal-foreground",
+  2: "bg-medal-silver text-medal-foreground",
+  3: "bg-medal-bronze text-medal-foreground",
+};
+
 function PositionBadge({ pos }: { pos: number }) {
-  if (pos === 1) return <Badge className="bg-yellow-500 text-black font-bold w-7 h-7 flex items-center justify-center rounded-full p-0">1</Badge>;
-  if (pos === 2) return <Badge className="bg-slate-400 text-black font-bold w-7 h-7 flex items-center justify-center rounded-full p-0">2</Badge>;
-  if (pos === 3) return <Badge className="bg-amber-700 text-white font-bold w-7 h-7 flex items-center justify-center rounded-full p-0">3</Badge>;
-  return <span className="text-muted-foreground font-mono text-sm w-7 inline-flex justify-center">{pos}</span>;
+  const medal = MEDAL[pos];
+  if (medal)
+    return (
+      <Badge className={`${medal} font-bold w-7 h-7 flex items-center justify-center rounded-full p-0 tabular-nums`}>
+        {pos}
+      </Badge>
+    );
+  return <span className="text-muted-foreground font-mono text-sm w-7 inline-flex justify-center tabular-nums">{pos}</span>;
+}
+
+function FormChip({ form }: { form?: DriverForm }) {
+  if (!form || form.races === 0)
+    return <span className="text-muted-foreground/60 text-xs" aria-hidden="true">—</span>;
+
+  const { trend, avgPoints, races } = form;
+  const Icon = trend === "up" ? TrendingUp : trend === "down" ? TrendingDown : Minus;
+  const tone =
+    trend === "up"
+      ? "text-chart-5"
+      : trend === "down"
+        ? "text-destructive"
+        : "text-muted-foreground";
+
+  return (
+    <span
+      className={`inline-flex items-center gap-1 ${tone}`}
+      title={`Form over last ${races} race${races === 1 ? "" : "s"}: ${avgPoints.toFixed(1)} avg pts, trend ${trend}`}
+    >
+      <Icon className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+      <span className="font-mono text-xs tabular-nums">{avgPoints.toFixed(1)}</span>
+    </span>
+  );
 }
 
 function StandingsSkeleton() {
@@ -56,6 +98,15 @@ export default function StandingsTables({
     queryFn: () => fetchStandings(season),
     initialData,
   });
+
+  // Progressive enhancement: form chips hydrate independently of standings and
+  // never block or break the table if the form endpoint is slow or fails.
+  const { data: formData } = useQuery({
+    queryKey: ["driver-form", season],
+    queryFn: () => fetchForm(season),
+    staleTime: 5 * 60 * 1000,
+  });
+  const form = formData?.form ?? {};
 
   return (
     <Tabs defaultValue="drivers" className="w-full">
@@ -82,6 +133,7 @@ export default function StandingsTables({
                 <TableHead className="text-muted-foreground w-12">Pos</TableHead>
                 <TableHead className="text-muted-foreground">Driver</TableHead>
                 <TableHead className="text-muted-foreground">Team</TableHead>
+                <TableHead className="text-muted-foreground">Form</TableHead>
                 <TableHead className="text-muted-foreground text-right">Wins</TableHead>
                 <TableHead className="text-muted-foreground text-right">Pts</TableHead>
               </TableRow>
@@ -111,6 +163,9 @@ export default function StandingsTables({
                       </div>
                     </TableCell>
                     <TableCell className="py-2.5 text-muted-foreground text-sm">{team}</TableCell>
+                    <TableCell className="py-2.5">
+                      <FormChip form={form[d.Driver.driverId]} />
+                    </TableCell>
                     <TableCell className="py-2.5 text-right text-muted-foreground text-sm font-mono tabular-nums">{d.wins}</TableCell>
                     <TableCell className="py-2.5 text-right font-bold font-mono tabular-nums">{d.points}</TableCell>
                   </TableRow>

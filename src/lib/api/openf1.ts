@@ -11,14 +11,16 @@ import type {
   OpenF1Weather,
   OpenF1RaceControl,
   OpenF1StartingGrid,
+  OpenF1TeamRadio,
 } from "@/lib/types";
 import { fetchWithTimeout } from "@/lib/api/fetchWithTimeout";
+import { adaptiveRevalidate } from "@/lib/cacheStrategy";
 
 const OPENF1_BASE = "https://api.openf1.org/v1";
 
 async function openF1Fetch<T>(path: string): Promise<T> {
   const res = await fetchWithTimeout(`${OPENF1_BASE}${path}`, {
-    next: { revalidate: 60 }, // cache 1 min
+    next: { revalidate: adaptiveRevalidate("telemetry") },
     headers: { Accept: "application/json" },
   });
   if (!res.ok) throw new Error(`OpenF1 fetch failed: ${res.status} ${path}`);
@@ -101,4 +103,10 @@ export async function getTrackWeather(sessionKey: number): Promise<OpenF1Weather
 
 export async function getRaceControl(sessionKey: number): Promise<OpenF1RaceControl[]> {
   return openF1Fetch<OpenF1RaceControl[]>(`/race_control?session_key=${sessionKey}`);
+}
+
+// ─── Team radio ───────────────────────────────────────────────────────────────
+
+export async function getTeamRadio(sessionKey: number): Promise<OpenF1TeamRadio[]> {
+  return openF1Fetch<OpenF1TeamRadio[]>(`/team_radio?session_key=${sessionKey}`);
 }
