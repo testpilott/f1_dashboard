@@ -51,8 +51,8 @@ export default function NewsPage() {
               aria-pressed={filter === id}
               className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
                 filter === id
-                  ? "bg-red-600 text-white"
-                  : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-white"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-surface-3 text-muted-foreground hover:bg-accent hover:text-foreground"
               }`}
             >
               {label}
@@ -64,13 +64,13 @@ export default function NewsPage() {
       {isLoading && (
         <div className="space-y-3">
           {Array.from({ length: 10 }).map((_, i) => (
-            <Skeleton key={i} className="h-20 w-full bg-zinc-800" />
+            <Skeleton key={i} className="h-20 w-full" />
           ))}
         </div>
       )}
 
       {isError && (
-        <p className="text-zinc-500 text-sm py-8 text-center">
+        <p className="text-muted-foreground text-sm py-8 text-center">
           Failed to load news. Please refresh to try again.
         </p>
       )}
@@ -83,17 +83,17 @@ export default function NewsPage() {
               href={item.link}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-start gap-3 p-4 rounded-lg bg-zinc-900 border border-zinc-800 hover:border-zinc-700 transition-colors group"
+              className="flex items-start gap-3 p-4 rounded-lg bg-surface-2 border border-border hover:bg-accent transition-colors group"
             >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1 flex-wrap">
-                  <Badge className="bg-zinc-800 text-zinc-400 border-zinc-700 text-[10px] px-1.5 py-0">
+                  <Badge className="bg-surface-3 text-muted-foreground border-border text-[10px] px-1.5 py-0">
                     {item.source}
                   </Badge>
                   {item.pubDate && (() => {
                     try {
                       return (
-                        <span className="text-[10px] text-zinc-600">
+                        <span className="text-[10px] text-muted-foreground/50">
                           {formatDistanceToNow(new Date(item.pubDate), { addSuffix: true })}
                         </span>
                       );
@@ -102,18 +102,18 @@ export default function NewsPage() {
                     }
                   })()}
                 </div>
-                <p className="text-sm font-medium line-clamp-2 group-hover:text-white transition-colors">
+                <p className="text-sm font-medium line-clamp-2 group-hover:text-foreground transition-colors">
                   {item.title}
                 </p>
                 {item.contentSnippet && (
-                  <p className="text-xs text-zinc-500 mt-1 line-clamp-2">{item.contentSnippet}</p>
+                  <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{item.contentSnippet}</p>
                 )}
               </div>
-              <ExternalLink className="w-3.5 h-3.5 text-zinc-600 shrink-0 mt-0.5 group-hover:text-zinc-400 transition-colors" />
+              <ExternalLink className="w-3.5 h-3.5 text-muted-foreground/50 shrink-0 mt-0.5 group-hover:text-muted-foreground transition-colors" />
             </a>
           ))}
           {items.length === 0 && (
-            <p className="text-zinc-500 text-sm">No articles found for this filter.</p>
+            <p className="text-muted-foreground text-sm">No articles found for this filter.</p>
           )}
         </div>
       )}

@@ -1,4 +1,5 @@
 import type { WeatherForecast } from "@/lib/types";
+import { fetchWithTimeout } from "@/lib/api/fetchWithTimeout";
 
 const OPENMETEO_BASE = "https://api.open-meteo.com/v1";
 
@@ -33,7 +34,7 @@ export async function getWeatherForecast(
     `&timezone=${timezone}` +
     `&forecast_days=7`;
 
-  const res = await fetch(url, { next: { revalidate: 3600 } }); // cache 1 hour
+  const res = await fetchWithTimeout(url, { next: { revalidate: 3600 } }); // cache 1 hour
   if (!res.ok) throw new Error(`Open-Meteo fetch failed: ${res.status}`);
   return res.json() as Promise<WeatherForecast>;
 }

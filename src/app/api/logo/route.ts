@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { TEAM_LOGOS } from "@/lib/constants";
+import { rateLimited } from "@/lib/api/withRateLimit";
 
 /**
  * Redirects to the local static logo file for a given team.
@@ -9,6 +10,9 @@ import { TEAM_LOGOS } from "@/lib/constants";
  * GET /api/logo?team=Ferrari
  */
 export async function GET(req: Request) {
+  const blocked = rateLimited(req, "logo");
+  if (blocked) return blocked;
+
   const { searchParams } = new URL(req.url);
   const team = searchParams.get("team");
 

@@ -98,40 +98,40 @@ function SessionResults({
   const driverMap = new Map(drivers?.map((d) => [d.driver_number, d]) ?? []);
 
   if (resultsLoading || driversLoading) {
-    return <Skeleton className="h-64 w-full bg-zinc-800 mt-4" />;
+    return <Skeleton className="h-64 w-full mt-4" />;
   }
   if (resultsError || driversError) {
-    return <p className="text-zinc-500 text-sm mt-4">Failed to load session data.</p>;
+    return <p className="text-muted-foreground text-sm mt-4">Failed to load session data.</p>;
   }
   if (!results?.length) {
-    return <p className="text-zinc-500 text-sm mt-4">No results available yet for this session.</p>;
+    return <p className="text-muted-foreground text-sm mt-4">No results available yet for this session.</p>;
   }
 
   return (
     <div className="overflow-x-auto -mx-4 px-4">
     <Table className="mt-2">
       <TableHeader>
-        <TableRow className="border-zinc-800 hover:bg-transparent">
-          <TableHead className="text-zinc-500 w-12">Pos</TableHead>
-          <TableHead className="text-zinc-500">Driver</TableHead>
-          <TableHead className="text-zinc-500 text-right">
+        <TableRow className="border-border hover:bg-transparent">
+          <TableHead className="text-muted-foreground w-12">Pos</TableHead>
+          <TableHead className="text-muted-foreground">Driver</TableHead>
+          <TableHead className="text-muted-foreground text-right">
             {sessionType === "Race" || sessionType === "Sprint" ? "Gap" : "Time"}
           </TableHead>
-          <TableHead className="text-zinc-500 text-right w-10">Pts</TableHead>
+          <TableHead className="text-muted-foreground text-right w-10">Pts</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {results.map((r) => {
           const driver = driverMap.get(r.driver_number);
           return (
-            <TableRow key={r.driver_number} className="border-zinc-800 hover:bg-zinc-900/60">
+            <TableRow key={r.driver_number} className="border-border hover:bg-accent/40">
               <TableCell className="py-2 font-mono text-sm">
                 {r.position ?? "–"}
               </TableCell>
               <TableCell className="py-2">
                 <div className="flex items-center gap-2">
                   <TeamLogo team={driver?.team_name ?? ""} />
-                  <span className="font-mono text-xs text-zinc-500 w-8 shrink-0">
+                  <span className="font-mono text-xs text-muted-foreground w-8 shrink-0 tabular-nums">
                     {driver?.name_acronym ?? `#${r.driver_number}`}
                   </span>
                   <span className="text-sm">
@@ -139,7 +139,7 @@ function SessionResults({
                   </span>
                 </div>
               </TableCell>
-              <TableCell className="py-2 text-right font-mono text-sm text-zinc-300">
+              <TableCell className="py-2 text-right font-mono text-sm tabular-nums text-foreground/80">
                 {r.gap_to_leader != null
                   ? r.gap_to_leader === 0
                     ? "Leader"
@@ -150,7 +150,7 @@ function SessionResults({
                   ? formatDuration(r.duration)
                   : "–"}
               </TableCell>
-              <TableCell className="py-2 text-right text-sm text-zinc-400">
+              <TableCell className="py-2 text-right text-sm text-muted-foreground">
                 –
               </TableCell>
             </TableRow>
@@ -220,35 +220,35 @@ export default function WeekendClient({
 
       <div className="mb-6">
         <h1 className="text-2xl font-bold">{meeting.meeting_name}</h1>
-        <p className="text-zinc-500 text-sm mt-1">
+        <p className="text-muted-foreground text-sm mt-1">
           {meeting.circuit_short_name} · {meeting.year}
         </p>
       </div>
 
       {isLoading && (
         <div>
-          <Skeleton className="h-10 w-full bg-zinc-800 mb-4" />
-          <Skeleton className="h-64 w-full bg-zinc-800" />
+          <Skeleton className="h-10 w-full mb-4" />
+          <Skeleton className="h-64 w-full" />
         </div>
       )}
 
       {!isLoading && sorted.length === 0 && (
-        <p className="text-zinc-500">No session data available for this race weekend.</p>
+        <p className="text-muted-foreground">No session data available for this race weekend.</p>
       )}
 
       {!isLoading && sorted.length > 0 && (
         <Tabs defaultValue={defaultTab} key={activeMeetingKey ?? "latest"}>
           <div className="overflow-x-auto -mx-4 px-4">
-          <TabsList className="bg-zinc-900 flex-nowrap w-max min-w-full gap-1 mb-4">
+          <TabsList className="bg-surface-2 flex-nowrap w-max min-w-full gap-1 mb-4">
             {sorted.map((s) => (
               <TabsTrigger
                 key={s.session_key}
                 value={s.session_key.toString()}
-                className="data-[state=active]:bg-red-600 data-[state=active]:text-white text-xs"
+                className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs"
               >
                 {s.session_name}
                 {s.date_start && (
-                  <span className="ml-1 text-zinc-500 text-[10px]">
+                  <span className="ml-1 text-muted-foreground/50 text-[10px]">
                     {format(new Date(s.date_start), "d MMM")}
                   </span>
                 )}
@@ -261,7 +261,7 @@ export default function WeekendClient({
             <TabsContent key={s.session_key} value={s.session_key.toString()}>
               <div className="flex items-center gap-2 mb-2">
                 <h2 className="text-lg font-semibold">{s.session_name}</h2>
-                <Badge variant="outline" className="border-zinc-700 text-zinc-400 text-xs">
+                <Badge variant="outline" className="border-border text-muted-foreground text-xs">
                   {s.session_type}
                 </Badge>
               </div>

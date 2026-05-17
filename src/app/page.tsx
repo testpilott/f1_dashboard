@@ -36,8 +36,8 @@ export default async function HomePage() {
       {/* Right column — next race + quick links */}
       <aside className="space-y-6">
         <div>
-            <h2 className="text-base font-semibold text-zinc-400 mb-3">Next Race</h2>
-            <Suspense fallback={<div className="h-64 bg-zinc-900 border border-zinc-800 rounded-xl animate-pulse" />}>
+            <h2 className="text-base font-semibold text-muted-foreground mb-3">Next Race</h2>
+            <Suspense fallback={<div className="h-64 bg-surface-2 border border-border rounded-xl animate-pulse" />}>
               <NextRaceSection initialRace={initialRace} />
             </Suspense>
           </div>
@@ -51,10 +51,10 @@ export default async function HomePage() {
             <a
               key={href}
               href={href}
-              className="block bg-zinc-900 border border-zinc-800 hover:border-zinc-700 rounded-lg p-3 transition-colors"
+              className="block bg-surface-2 border border-border hover:bg-accent rounded-lg p-3 transition-colors"
             >
               <p className="text-sm font-semibold">{label}</p>
-              <p className="text-xs text-zinc-500 mt-0.5">{sub}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>
             </a>
           ))}
         </div>

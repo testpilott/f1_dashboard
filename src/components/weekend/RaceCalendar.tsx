@@ -64,12 +64,12 @@ export default function RaceCalendar({
   }
 
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 mb-6">
+    <div className="bg-surface-2 border border-border rounded-xl p-4 mb-6">
       {/* Month navigation */}
       <div className="flex items-center justify-between mb-3">
         <button
           onClick={() => setCurrentMonth((m) => subMonths(m, 1))}
-          className="p-1.5 rounded hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 transition-colors"
+          className="p-1.5 rounded hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
           aria-label="Previous month"
         >
           <ChevronLeft size={16} />
@@ -77,7 +77,7 @@ export default function RaceCalendar({
         <span className="text-sm font-semibold">{format(currentMonth, "MMMM yyyy")}</span>
         <button
           onClick={() => setCurrentMonth((m) => addMonths(m, 1))}
-          className="p-1.5 rounded hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 transition-colors"
+          className="p-1.5 rounded hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
           aria-label="Next month"
         >
           <ChevronRight size={16} />
@@ -87,7 +87,7 @@ export default function RaceCalendar({
       {/* Weekday headers */}
       <div className="grid grid-cols-7 mb-1">
         {WEEKDAYS.map((d) => (
-          <div key={d} className="text-center text-[11px] text-zinc-500 font-medium py-1">
+          <div key={d} className="text-center text-[11px] text-muted-foreground font-medium py-1">
             {d}
           </div>
         ))}
@@ -113,10 +113,10 @@ export default function RaceCalendar({
               : "";
 
           const bgClass = isActive
-            ? "bg-red-600 text-white"
+            ? "bg-primary text-primary-foreground"
             : meeting
-            ? "bg-red-950/70 text-red-200 hover:bg-red-900/60"
-            : "text-zinc-500 hover:bg-zinc-800/30";
+            ? "bg-primary/20 text-primary hover:bg-primary/30"
+            : "text-muted-foreground hover:bg-accent/20";
 
           return (
             <div
@@ -135,7 +135,7 @@ export default function RaceCalendar({
               <span
                 className={[
                   "w-6 h-6 flex items-center justify-center font-mono",
-                  today ? "rounded-full ring-1 ring-zinc-300 font-bold" : "",
+                  today ? "rounded-full ring-1 ring-foreground/60 font-bold" : "",
                 ]
                   .filter(Boolean)
                   .join(" ")}

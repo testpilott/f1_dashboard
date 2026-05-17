@@ -12,11 +12,12 @@ import type {
   OpenF1RaceControl,
   OpenF1StartingGrid,
 } from "@/lib/types";
+import { fetchWithTimeout } from "@/lib/api/fetchWithTimeout";
 
 const OPENF1_BASE = "https://api.openf1.org/v1";
 
 async function openF1Fetch<T>(path: string): Promise<T> {
-  const res = await fetch(`${OPENF1_BASE}${path}`, {
+  const res = await fetchWithTimeout(`${OPENF1_BASE}${path}`, {
     next: { revalidate: 60 }, // cache 1 min
     headers: { Accept: "application/json" },
   });

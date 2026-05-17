@@ -27,10 +27,10 @@ async function fetchWeatherForRace(country: string) {
 function CountdownSegment({ value, label }: { value: number; label: string }) {
   return (
     <span className="inline-flex items-baseline gap-0.5">
-      <span className="font-mono tabular-nums text-sm font-semibold text-zinc-100">
+      <span className="font-mono tabular-nums text-sm font-semibold text-foreground">
         {String(value).padStart(2, "0")}
       </span>
-      <span className="text-zinc-500 text-xs">{label}</span>
+      <span className="text-muted-foreground text-xs">{label}</span>
     </span>
   );
 }
@@ -50,7 +50,7 @@ function Countdown({ dateStr }: { dateStr: string }) {
   const diff = target - now;
 
   if (diff <= 0) {
-    return <p className="text-sm text-red-400 font-medium">Race underway</p>;
+    return <p className="text-sm text-primary font-medium">Race underway</p>;
   }
 
   const d = Math.floor(diff / 86_400_000);
@@ -92,13 +92,13 @@ export default function NextRaceCard({
   });
 
   if (isLoading) {
-    return <Skeleton className="h-48 w-full bg-zinc-800" />;
+    return <Skeleton className="h-48 w-full" />;
   }
 
   if (!race) {
     return (
-      <Card className="bg-zinc-900 border-zinc-800">
-        <CardContent className="pt-6 text-zinc-500">No upcoming races found.</CardContent>
+      <Card className="bg-surface-2 border-border">
+        <CardContent className="pt-6 text-muted-foreground">No upcoming races found.</CardContent>
       </Card>
     );
   }
@@ -121,12 +121,12 @@ export default function NextRaceCard({
   const circuitImgUrl = getCircuitImageUrl(race.Circuit.circuitId);
 
   return (
-    <Card className="bg-zinc-900 border-zinc-800 overflow-hidden">
-      <div className="h-1.5 bg-red-600 w-full" />
+    <Card className="bg-surface-2 border-border overflow-hidden">
+      <div className="h-1.5 bg-primary w-full" />
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-2">
           <div>
-            <p className="text-xs text-zinc-500 font-medium uppercase tracking-wider mb-1">
+            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider mb-1">
               Round {race.round} · {race.season}
             </p>
             <CardTitle className="text-lg leading-tight">{race.raceName}</CardTitle>
@@ -135,7 +135,7 @@ export default function NextRaceCard({
             {isSprint && (
               <Badge className="bg-purple-700 text-white text-xs">Sprint Weekend</Badge>
             )}
-            <Badge variant="outline" className="border-zinc-700 text-zinc-400 text-xs">
+            <Badge variant="outline" className="border-border text-muted-foreground text-xs">
               {format(raceDate, "d MMM yyyy")}
             </Badge>
             {circuitImgUrl && (
@@ -145,30 +145,30 @@ export default function NextRaceCard({
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
-        <div className="flex items-center gap-1.5 text-sm text-zinc-400">
-          <MapPin className="w-3.5 h-3.5 shrink-0 text-zinc-600" />
+        <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+          <MapPin className="w-3.5 h-3.5 shrink-0 text-muted-foreground/50" />
           <span>{race.Circuit.circuitName}</span>
-          <span className="text-zinc-600">·</span>
+          <span className="text-muted-foreground/50">·</span>
           <span>{race.Circuit.Location.locality}, {country}</span>
         </div>
 
-        <div className="flex items-center gap-1.5 text-sm text-zinc-400">
-          <Clock className="w-3.5 h-3.5 shrink-0 text-zinc-600" />
+        <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+          <Clock className="w-3.5 h-3.5 shrink-0 text-muted-foreground/50" />
           <Countdown dateStr={race.date} />
           {race.time && (
-            <span className="text-zinc-600 text-xs">({race.time.replace("Z", " UTC")})</span>
+            <span className="text-muted-foreground/50 text-xs">({race.time.replace("Z", " UTC")})</span>
           )}
         </div>
 
         {(raceTemp !== null || rainProb !== null) && (
-          <div className="flex items-center gap-3 pt-1 border-t border-zinc-800">
-            <Cloud className="w-3.5 h-3.5 shrink-0 text-zinc-600" />
-            <span className="text-sm text-zinc-400">Race day forecast:</span>
+          <div className="flex items-center gap-3 pt-1 border-t border-border">
+            <Cloud className="w-3.5 h-3.5 shrink-0 text-muted-foreground/50" />
+            <span className="text-sm text-muted-foreground">Race day forecast:</span>
             {raceCode != null && (
               <span className="text-sm">{getWeatherIcon(raceCode as number)} {getWeatherLabel(raceCode as number)}</span>
             )}
             {raceTemp != null && (
-              <span className="text-sm text-zinc-300">{Math.round(raceTemp as number)}°C</span>
+              <span className="text-sm text-foreground">{Math.round(raceTemp as number)}°C</span>
             )}
             {rainProb != null && rainProb > 20 && (
               <Badge className="bg-blue-900/60 text-blue-300 border-blue-800 text-xs">
@@ -179,7 +179,7 @@ export default function NextRaceCard({
         )}
 
         {coords && (
-          <p className="text-xs text-zinc-600">
+          <p className="text-xs text-muted-foreground/50">
             {coords.lat.toFixed(3)}°, {coords.lng.toFixed(3)}°
           </p>
         )}

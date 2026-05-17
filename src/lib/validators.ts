@@ -15,3 +15,6 @@ export const VALID_SESSION_KEY = /^(\d{1,8}|latest)$/;
 
 /** Safe identifier: lowercase letters, digits, hyphens, underscores (Ergast/OpenF1 format). */
 export const VALID_ID = /^[a-z0-9_-]{1,40}$/;
+
+/** Allowed values for the schedule route 'view' parameter. */
+export const VALID_VIEW: Set<string> = new Set(["next", "last"]);;

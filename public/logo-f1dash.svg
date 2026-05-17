@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 28" fill="none" aria-label="F1 Dashboard">
+  <text
+    x="0"
+    y="21"
+    font-family="system-ui, -apple-system, sans-serif"
+    font-size="22"
+    font-weight="900"
+    letter-spacing="-1"
+    fill="currentColor"
+  >F1</text>
+  <text
+    x="34"
+    y="21"
+    font-family="system-ui, -apple-system, sans-serif"
+    font-size="14"
+    font-weight="600"
+    letter-spacing="2"
+    fill="currentColor"
+    opacity="0.65"
+  >DASH</text>
+</svg>

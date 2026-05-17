@@ -26,7 +26,7 @@ function ProjectionRow({ driver, maxWinProb }: { driver: DriverProjection; maxWi
   const p90Scaled = Math.max(driver.projectedPoints.p90 * 1.1, 1);
 
   return (
-    <div className="rounded-lg bg-gradient-to-br from-zinc-900 to-zinc-950 border border-zinc-800 p-4 space-y-3 hover:border-zinc-700 transition-colors">
+    <div className="rounded-lg bg-surface-2 border border-border p-4 space-y-3 hover:bg-accent/10 transition-colors">
       {/* Header */}
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-2">
@@ -34,13 +34,13 @@ function ProjectionRow({ driver, maxWinProb }: { driver: DriverProjection; maxWi
             className="inline-block w-3 h-3 rounded-full"
             style={{ backgroundColor: driver.teamColour }}
           />
-          <span className="font-mono text-xs text-zinc-500 w-8">{driver.driverCode}</span>
+          <span className="font-mono text-xs text-muted-foreground w-8 tabular-nums">{driver.driverCode}</span>
           <span className="font-semibold text-sm min-w-0 truncate">{driver.fullName}</span>
-          <span className="text-xs text-zinc-500 shrink-0">{driver.teamName}</span>
+          <span className="text-xs text-muted-foreground shrink-0">{driver.teamName}</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-zinc-400 text-sm font-mono">{Math.round(driver.currentPoints)} pts</span>
-          <Badge className="bg-zinc-800 border-zinc-700 text-zinc-300 text-xs font-mono px-2">
+          <span className="text-muted-foreground text-sm font-mono tabular-nums">{Math.round(driver.currentPoints)} pts</span>
+          <Badge className="bg-surface-3 border-border text-foreground/80 text-xs font-mono px-2">
             P50: {Math.round(driver.projectedPoints.p50)}
           </Badge>
         </div>
@@ -48,7 +48,7 @@ function ProjectionRow({ driver, maxWinProb }: { driver: DriverProjection; maxWi
 
       {/* Point range bar */}
       <div
-        className="relative h-2 rounded bg-zinc-800 overflow-hidden cursor-help"
+        className="relative h-2 rounded bg-surface-3 overflow-hidden cursor-help"
         title={`P10: ${Math.round(driver.projectedPoints.p10)} pts · P50: ${Math.round(driver.projectedPoints.p50)} pts · P90: ${Math.round(driver.projectedPoints.p90)} pts`}
       >
             {/* p10–p90 range */}
@@ -79,10 +79,10 @@ function ProjectionRow({ driver, maxWinProb }: { driver: DriverProjection; maxWi
         ].map(({ label, value, display }) => (
           <div key={label}>
             <div className="flex justify-between text-[10px] mb-1">
-              <span className="text-zinc-500">{label}</span>
+              <span className="text-muted-foreground">{label}</span>
               <span className="font-mono">{display}</span>
             </div>
-            <div className="relative h-1.5 rounded-full bg-zinc-800 overflow-hidden">
+            <div className="relative h-1.5 rounded-full bg-surface-3 overflow-hidden">
               <div
                 className="absolute inset-y-0 left-0 rounded-full"
                 style={{
@@ -115,7 +115,7 @@ export default function ProjectionsPage() {
       <div className="mb-6">
         <h1 className="text-2xl font-bold">Championship Projections</h1>
         {data && (
-          <p className="text-zinc-500 text-sm mt-1">
+          <p className="text-muted-foreground text-sm mt-1">
             {data.totalSimulations.toLocaleString()} Monte Carlo simulations ·{" "}
             {data.remainingRaces} races remaining · generated{" "}
             {new Date(data.generatedAt).toLocaleTimeString()}
@@ -126,15 +126,15 @@ export default function ProjectionsPage() {
       {isLoading && (
         <div className="space-y-3">
           {Array.from({ length: 10 }).map((_, i) => (
-            <Skeleton key={i} className="h-28 w-full bg-zinc-800" />
+            <Skeleton key={i} className="h-28 w-full" />
           ))}
         </div>
       )}
 
       {isError && (
         <div className="flex items-center gap-3 py-8">
-          <p className="text-zinc-500 text-sm">Failed to compute projections.</p>
-          <button onClick={() => refetch()} className="text-xs text-red-400 hover:underline">
+          <p className="text-muted-foreground text-sm">Failed to compute projections.</p>
+          <button onClick={() => refetch()} className="text-xs text-primary hover:underline">
             Retry
           </button>
         </div>
@@ -148,9 +148,9 @@ export default function ProjectionsPage() {
         </div>
       )}
 
-      <div className="mt-6 p-4 rounded-lg bg-zinc-900 border border-zinc-800">
+      <div className="mt-6 p-4 rounded-lg bg-surface-2 border border-border">
         <h3 className="text-sm font-semibold mb-2">About the model</h3>
-        <p className="text-xs text-zinc-500 leading-relaxed">
+        <p className="text-xs text-muted-foreground leading-relaxed">
           Projections use a Monte Carlo simulation that runs {(10_000).toLocaleString()} race simulations
           for each remaining round. Each driver&apos;s expected finish is drawn from a normal
           distribution centred on their season average, with realistic variance. Points are awarded

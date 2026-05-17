@@ -58,13 +58,13 @@ export default function DriversPage() {
         >
           {isLoading &&
             Array.from({ length: 20 }).map((_, i) => (
-              <Skeleton key={i} className="h-24 bg-zinc-800 rounded-lg" />
+              <Skeleton key={i} className="h-24 rounded-lg" />
             ))}
 
           {isError && (
             <div className="col-span-full flex items-center gap-3 py-6">
-              <p className="text-zinc-500 text-sm">Failed to load drivers.</p>
-              <button onClick={() => refetch()} className="text-xs text-red-400 hover:underline">
+              <p className="text-muted-foreground text-sm">Failed to load drivers.</p>
+              <button onClick={() => refetch()} className="text-xs text-primary hover:underline">
                 Retry
               </button>
             </div>
@@ -82,12 +82,12 @@ export default function DriversPage() {
                   onClick={() => setSelected(isActive ? null : d)}
                   className={`rounded-lg border p-4 flex items-center gap-4 transition-all text-left w-full cursor-pointer ${
                     isActive
-                      ? "bg-zinc-800 border-zinc-600 ring-1 ring-zinc-600"
-                      : "bg-zinc-900 border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900/80"
+                      ? "bg-surface-3 border-ring ring-1 ring-ring"
+                      : "bg-surface-2 border-border hover:bg-accent/40"
                   }`}
                   style={{ borderLeftColor: color, borderLeftWidth: 3 }}
                 >
-                <div className="text-3xl font-black text-zinc-700 w-8 text-center tabular-nums shrink-0">
+                <div className="text-3xl font-black text-muted-foreground/40 w-8 text-center tabular-nums shrink-0">
                   {pos}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -105,11 +105,11 @@ export default function DriversPage() {
                   <p className="text-sm font-medium truncate">
                     {d.Driver.givenName} {d.Driver.familyName}
                   </p>
-                  <p className="text-xs text-zinc-500 truncate">{team}</p>
+                  <p className="text-xs text-muted-foreground truncate">{team}</p>
                 </div>
                 <div className="text-right shrink-0">
                   <p className="font-bold font-mono text-lg">{d.points}</p>
-                  <p className="text-[10px] text-zinc-600">pts</p>
+                  <p className="text-[10px] text-muted-foreground/50">pts</p>
                 </div>
                 </button>
                 {/* Mobile inline detail panel — shown directly below selected driver on small screens */}
@@ -173,7 +173,7 @@ function DriverDetailPanel({
   const staticData = getDriverStatic(driver.Driver.driverId);
 
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+    <div className="bg-surface-2 border border-border rounded-xl overflow-hidden">
       {/* ── Coloured header bar ── */}
       <div className="h-1 w-full" style={{ backgroundColor: color }} />
 
@@ -182,7 +182,7 @@ function DriverDetailPanel({
         <button
           onClick={onClose}
           aria-label="Close driver detail"
-          className="absolute top-3 right-3 p-1.5 rounded-lg text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 transition-colors"
+          className="absolute top-3 right-3 p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
         >
           <X size={16} />
         </button>
@@ -194,12 +194,12 @@ function DriverDetailPanel({
               <span className="font-mono text-sm font-bold" style={{ color }}>
                 {driver.Driver.code}
               </span>
-              <span className="text-zinc-600 text-sm">#{driver.Driver.permanentNumber}</span>
+              <span className="text-muted-foreground/50 text-sm">#{driver.Driver.permanentNumber}</span>
             </div>
             <h2 className="text-lg font-bold leading-tight">
               {driver.Driver.givenName} {driver.Driver.familyName}
             </h2>
-            <p className="text-sm text-zinc-400">{team}</p>
+            <p className="text-sm text-muted-foreground">{team}</p>
           </div>
         </div>
 
@@ -212,20 +212,20 @@ function DriverDetailPanel({
       </div>
 
       {/* ── Scrollable body ── */}
-      <div className="overflow-y-auto max-h-[calc(100vh-320px)] divide-y divide-zinc-800/60">
+      <div className="overflow-y-auto max-h-[calc(100vh-320px)] divide-y divide-border/60">
         {/* Bio */}
         <div className="px-5 py-3.5 space-y-1.5">
-          <div className="flex items-center gap-1.5 text-sm text-zinc-300">
-            <MapPin size={13} className="text-zinc-500 shrink-0" />
+          <div className="flex items-center gap-1.5 text-sm text-foreground/80">
+            <MapPin size={13} className="text-muted-foreground/50 shrink-0" />
             <span>
               {flag} {driver.Driver.nationality}
             </span>
             {age !== null && (
-              <span className="text-zinc-500 ml-1">· Age {age}</span>
+              <span className="text-muted-foreground ml-1">· Age {age}</span>
             )}
           </div>
           {staticData?.hometown && (
-            <p className="text-xs text-zinc-500 pl-5">{staticData.hometown}</p>
+            <p className="text-xs text-muted-foreground pl-5">{staticData.hometown}</p>
           )}
         </div>
 
@@ -234,11 +234,11 @@ function DriverDetailPanel({
           <div className="px-5 py-3.5">
             <div className="flex items-center gap-1.5 mb-2">
               <Zap size={13} className="text-yellow-500 shrink-0" />
-              <h3 className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">
+              <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                 Driving Style
               </h3>
             </div>
-            <p className="text-sm text-zinc-300 leading-relaxed">{staticData.style}</p>
+            <p className="text-sm text-foreground/80 leading-relaxed">{staticData.style}</p>
           </div>
         )}
 
@@ -247,7 +247,7 @@ function DriverDetailPanel({
           <div className="py-3.5">
             <div className="flex items-center gap-1.5 mb-3 px-5">
               <Radio size={13} className="text-green-500 shrink-0" />
-              <h3 className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">
+              <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                 Memorable Quotes
               </h3>
             </div>
@@ -255,15 +255,15 @@ function DriverDetailPanel({
               {staticData.quotes.map((quote, i) => (
                 <div
                   key={i}
-                  className="min-w-[220px] max-w-[260px] snap-start flex-shrink-0 bg-zinc-800/60 rounded-lg p-3"
+                  className="min-w-[220px] max-w-[260px] snap-start flex-shrink-0 bg-surface-3/60 rounded-lg p-3"
                 >
                   <blockquote
-                    className="text-sm text-zinc-200 italic border-l-2 pl-3 leading-relaxed"
+                    className="text-sm text-foreground/90 italic border-l-2 pl-3 leading-relaxed"
                     style={{ borderLeftColor: color }}
                   >
                     &ldquo;{quote.text}&rdquo;
                   </blockquote>
-                  <p className="text-[10px] text-zinc-500 pl-3 mt-1.5">
+                  <p className="text-[10px] text-muted-foreground pl-3 mt-1.5">
                     — {quote.source.race} &middot; {quote.source.year}
                   </p>
                 </div>
@@ -274,20 +274,20 @@ function DriverDetailPanel({
 
         {/* Latest news */}
         <div className="px-5 py-3.5">
-          <h3 className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider mb-3">
+          <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
             Latest News
           </h3>
 
           {newsLoading && (
             <div className="space-y-2">
               {Array.from({ length: 3 }).map((_, i) => (
-                <Skeleton key={i} className="h-11 bg-zinc-800 rounded" />
+                <Skeleton key={i} className="h-11 rounded" />
               ))}
             </div>
           )}
 
           {!newsLoading && (!news || news.length === 0) && (
-            <p className="text-xs text-zinc-500">No recent news found.</p>
+            <p className="text-xs text-muted-foreground">No recent news found.</p>
           )}
 
           {news && news.length > 0 && (
@@ -300,16 +300,16 @@ function DriverDetailPanel({
                     rel="noopener noreferrer"
                     className="group flex items-start gap-1.5"
                   >
-                    <span className="text-sm text-zinc-300 group-hover:text-zinc-100 line-clamp-2 leading-snug transition-colors flex-1">
+                    <span className="text-sm text-foreground/80 group-hover:text-foreground line-clamp-2 leading-snug transition-colors flex-1">
                       {item.title}
                     </span>
                     <ExternalLink
                       size={11}
-                      className="text-zinc-600 group-hover:text-zinc-400 shrink-0 mt-0.5 transition-colors"
+                      className="text-muted-foreground/50 group-hover:text-muted-foreground shrink-0 mt-0.5 transition-colors"
                     />
                   </a>
                   {item.pubDate && !isNaN(new Date(item.pubDate).getTime()) && (
-                    <p className="text-[10px] text-zinc-600 mt-0.5">
+                    <p className="text-[10px] text-muted-foreground/50 mt-0.5">
                       {formatDistanceToNow(new Date(item.pubDate), { addSuffix: true })}
                     </p>
                   )}
@@ -335,8 +335,8 @@ function StatBox({
   highlight?: boolean;
 }) {
   return (
-    <div className="bg-zinc-800/60 rounded-lg p-2.5 text-center">
-      <p className="text-[10px] text-zinc-500 uppercase tracking-wide mb-0.5">{label}</p>
+    <div className="bg-surface-3/60 rounded-lg p-2.5 text-center">
+      <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-0.5">{label}</p>
       <p className={`text-lg font-black font-mono ${highlight ? "text-yellow-400" : ""}`}>
         {value}
       </p>

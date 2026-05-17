@@ -36,27 +36,27 @@ function ResultTable({
   const data = initialData;
 
   if (!data || !Array.isArray(data) || data.length === 0) {
-    return <p className="text-zinc-500 text-sm mt-4">No {title.toLowerCase()} available.</p>;
+    return <p className="text-muted-foreground text-sm mt-4">No {title.toLowerCase()} available.</p>;
   }
 
   return (
     <div className="overflow-x-auto -mx-4 px-4">
     <Table className="mt-2">
       <TableHeader>
-        <TableRow className="border-zinc-800 hover:bg-transparent">
-          <TableHead className="text-zinc-500 w-12">Pos</TableHead>
-          <TableHead className="text-zinc-500">Driver</TableHead>
+        <TableRow className="border-border hover:bg-transparent">
+          <TableHead className="text-muted-foreground w-12">Pos</TableHead>
+          <TableHead className="text-muted-foreground">Driver</TableHead>
           {type === "qualifying" ? (
             <>
-              <TableHead className="text-zinc-500 text-right">Q1</TableHead>
-              <TableHead className="text-zinc-500 text-right">Q2</TableHead>
-              <TableHead className="text-zinc-500 text-right">Q3</TableHead>
+              <TableHead className="text-muted-foreground text-right">Q1</TableHead>
+              <TableHead className="text-muted-foreground text-right">Q2</TableHead>
+              <TableHead className="text-muted-foreground text-right">Q3</TableHead>
             </>
           ) : (
             <>
-              <TableHead className="text-zinc-500 hidden sm:table-cell">Constructor</TableHead>
-              <TableHead className="text-zinc-500 text-right">Time / Status</TableHead>
-              <TableHead className="text-zinc-500 text-right w-12">Pts</TableHead>
+              <TableHead className="text-muted-foreground hidden sm:table-cell">Constructor</TableHead>
+              <TableHead className="text-muted-foreground text-right">Time / Status</TableHead>
+              <TableHead className="text-muted-foreground text-right w-12">Pts</TableHead>
             </>
           )}
         </TableRow>
@@ -64,28 +64,28 @@ function ResultTable({
       <TableBody>
         {type === "qualifying"
           ? (data as QualifyingResult[]).map((r) => (
-            <TableRow key={r.Driver.driverId} className="border-zinc-800 hover:bg-zinc-900/60">
-              <TableCell className="py-2 font-mono text-sm">{r.position}</TableCell>
+            <TableRow key={r.Driver.driverId} className="border-border hover:bg-accent/40">
+              <TableCell className="py-2 font-mono text-sm tabular-nums">{r.position}</TableCell>
               <TableCell className="py-2">
                 <div className="flex items-center gap-2">
                   <TeamLogo team={r.Constructor?.name ?? ""} />
-                  <span className="font-mono text-xs text-zinc-500 w-8">{r.Driver.code}</span>
+                  <span className="font-mono text-xs text-muted-foreground w-8 tabular-nums">{r.Driver.code}</span>
                   <span className="text-sm">
                     {r.Driver.givenName} {r.Driver.familyName}
                   </span>
                 </div>
               </TableCell>
-              <TableCell className="py-2 text-right font-mono text-xs text-zinc-400">{r.Q1 ?? "–"}</TableCell>
-              <TableCell className="py-2 text-right font-mono text-xs text-zinc-400">{r.Q2 ?? "–"}</TableCell>
-              <TableCell className="py-2 text-right font-mono text-xs text-zinc-300">{r.Q3 ?? "–"}</TableCell>
+              <TableCell className="py-2 text-right font-mono text-xs text-muted-foreground tabular-nums">{r.Q1 ?? "–"}</TableCell>
+              <TableCell className="py-2 text-right font-mono text-xs text-muted-foreground tabular-nums">{r.Q2 ?? "–"}</TableCell>
+              <TableCell className="py-2 text-right font-mono text-xs tabular-nums">{r.Q3 ?? "–"}</TableCell>
             </TableRow>
           ))
           : (data as RaceResult[]).map((r) => (
-            <TableRow key={r.Driver.driverId} className="border-zinc-800 hover:bg-zinc-900/60">
-              <TableCell className="py-2 font-mono text-sm">
+            <TableRow key={r.Driver.driverId} className="border-border hover:bg-accent/40">
+              <TableCell className="py-2 font-mono text-sm tabular-nums">
                 {r.positionText && /^[A-Z]$/.test(r.positionText) && r.positionText !== "1" ? (
                   <Tooltip>
-                    <TooltipTrigger render={<Badge className="bg-red-900/50 text-red-400 border-red-900 text-xs px-1.5 cursor-help" />}>
+                    <TooltipTrigger render={<Badge className="bg-destructive/20 text-destructive border-destructive/30 text-xs px-1.5 cursor-help" />}>
                       {getStatusLabel(r.positionText)}
                     </TooltipTrigger>
                     <TooltipContent>{getStatusTooltip(r.positionText)}</TooltipContent>
@@ -97,7 +97,7 @@ function ResultTable({
               <TableCell className="py-2">
                 <div className="flex items-center gap-2">
                   <TeamLogo team={r.Constructor?.name ?? ""} />
-                  <span className="font-mono text-xs text-zinc-500 w-8 shrink-0">{r.Driver.code}</span>
+                  <span className="font-mono text-xs text-muted-foreground w-8 shrink-0 tabular-nums">{r.Driver.code}</span>
                   <span className="text-sm">
                     {r.Driver.givenName} {r.Driver.familyName}
                   </span>
@@ -106,10 +106,10 @@ function ResultTable({
                   )}
                 </div>
               </TableCell>
-              <TableCell className="py-2 text-zinc-400 text-sm hidden sm:table-cell">
+              <TableCell className="py-2 text-muted-foreground text-sm hidden sm:table-cell">
                 {r.Constructor?.name ?? ""}
               </TableCell>
-              <TableCell className="py-2 text-right font-mono text-xs text-zinc-400">
+              <TableCell className="py-2 text-right font-mono text-xs text-muted-foreground tabular-nums">
                 {"Time" in r ? r.Time?.time ?? r.status : "–"}
               </TableCell>
               <TableCell className="py-2 text-right text-sm font-bold">
@@ -137,26 +137,26 @@ export default function RaceDetailClient({
       <div className="mb-6">
         {raceInfo ? (
           <>
-            <p className="text-xs text-zinc-500 uppercase tracking-wider mb-1">
+            <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">
               Round {raceInfo.round} · {raceInfo.season}
             </p>
             <h1 className="text-2xl font-bold">{raceInfo.raceName}</h1>
-            <p className="text-zinc-500 text-sm mt-1">
+            <p className="text-muted-foreground text-sm mt-1">
               {raceInfo.Circuit.circuitName} · {raceInfo.Circuit.Location.locality},{" "}
               {raceInfo.Circuit.Location.country}
             </p>
           </>
         ) : (
-          <p className="text-zinc-500 text-sm">Race details unavailable.</p>
+          <p className="text-muted-foreground text-sm">Race details unavailable.</p>
         )}
       </div>
 
       <Tabs defaultValue="race">
-        <TabsList className="bg-zinc-900 mb-4">
-          <TabsTrigger value="race" className="data-[state=active]:bg-red-600 data-[state=active]:text-white">
+        <TabsList className="bg-surface-2 mb-4">
+          <TabsTrigger value="race" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             Race
           </TabsTrigger>
-          <TabsTrigger value="qualifying" className="data-[state=active]:bg-red-600 data-[state=active]:text-white">
+          <TabsTrigger value="qualifying" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             Qualifying
           </TabsTrigger>
           {hasSprint && (

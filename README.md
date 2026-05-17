@@ -1,22 +1,54 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# F1 Dashboard
+
+A real-time Formula 1 dashboard built with Next.js 16, React 19, and TypeScript. Displays live standings, race schedule, driver comparisons, championship projections, and race telemetry.
+
+## Features
+
+- **Live standings** — Driver and constructor championship tables
+- **Race schedule** — Full season calendar with upcoming and past races
+- **Race detail** — Qualifying, race, and sprint results with lap-time charts and tyre strategy
+- **Driver comparison** — Head-to-head season stats and per-circuit history
+- **Championship projections** — Monte Carlo simulation (10 000 runs) with P10/P50/P90 point bands
+- **News feed** — Aggregated F1 news from multiple RSS sources
+- **Race weekend** — Live session results for any meeting
+
+## Stack
+
+| Layer | Technology |
+|---|---|
+| Framework | Next.js 16 (App Router, React 19) |
+| Language | TypeScript |
+| Styling | Tailwind v4 + shadcn/ui, OKLCH design tokens |
+| Charts | Nivo (`@nivo/line`, `@nivo/bar`) |
+| Server state | React Query v5 |
+| Data | Jolpica/Ergast, OpenF1, Open-Meteo |
+| Testing | Vitest 2.x (172 tests) |
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev        # http://localhost:3000
+npm test           # run test suite
+npm run build      # production build
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Architecture
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+All external API calls are server-side and proxied through `/api/*` routes. Client components use `@tanstack/react-query` with server-provided `initialData` to avoid loading spinners on first paint.
+
+Design tokens are defined once in `src/app/globals.css` using OKLCH and consumed via Tailwind utility classes. Charts read CSS variables at runtime via `nivoTheme()` / `chartColors()` in `src/lib/charts/theme.ts`.
+
+Rate limiting is applied to every `/api/*` route via `rateLimited()` from `src/lib/api/withRateLimit.ts`. All user-supplied query parameters are validated against allowlists in `src/lib/validators.ts`.
+
+## Security
+
+- All `/api/*` routes are rate-limited (in-memory sliding window)
+- Query parameters validated against strict regex/Set allowlists
+- CSP headers: `default-src 'self'`, `connect-src 'self'`, `img-src 'self' data: blob: https://media.formula1.com`
+- `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, HSTS enabled
+- No external image sources beyond official F1 CDN
+
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 

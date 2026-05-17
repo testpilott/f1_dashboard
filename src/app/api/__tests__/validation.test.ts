@@ -13,6 +13,7 @@ import {
   VALID_MEETING_KEY,
   VALID_SESSION_KEY,
   VALID_ID,
+  VALID_VIEW,
 } from "@/lib/validators";
 
 // projections route re-uses VALID_SEASON
@@ -274,5 +275,21 @@ describe("projections bar-width division-by-zero guard", () => {
     expect(isNaN(bar)).toBe(false);
     expect(isFinite(bar)).toBe(true);
     expect(bar).toBe(0);
+  });
+});
+
+// ─── VALID_VIEW (schedule route) ─────────────────────────────────────────────
+
+describe("VALID_VIEW set (/api/schedule)", () => {
+  it("accepts 'next' and 'last'", () => {
+    expect(VALID_VIEW.has("next")).toBe(true);
+    expect(VALID_VIEW.has("last")).toBe(true);
+  });
+
+  it("rejects anything else", () => {
+    expect(VALID_VIEW.has("current")).toBe(false);
+    expect(VALID_VIEW.has("all")).toBe(false);
+    expect(VALID_VIEW.has("")).toBe(false);
+    expect(VALID_VIEW.has("next; rm -rf /")).toBe(false);
   });
 });

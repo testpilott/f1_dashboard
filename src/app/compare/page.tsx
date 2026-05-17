@@ -57,10 +57,10 @@ function StatBar({
     <div className="space-y-1">
       <div className="flex justify-between text-xs font-mono">
         <span style={{ color: colorA }} className={a > b ? "font-bold" : ""}>{a}</span>
-        <span className="text-zinc-500 text-[10px] uppercase tracking-wider">{label}</span>
+        <span className="text-muted-foreground/50 text-[10px] uppercase tracking-wider">{label}</span>
         <span style={{ color: colorB }} className={b > a ? "font-bold" : ""}>{b}</span>
       </div>
-      <div className="flex h-2 rounded overflow-hidden bg-zinc-800">
+      <div className="flex h-2 rounded overflow-hidden bg-surface-3">
         <div style={{ width: `${pctA}%`, backgroundColor: colorA }} className="transition-all" />
         <div style={{ flex: 1, backgroundColor: colorB }} className="transition-all" />
       </div>
@@ -72,12 +72,12 @@ function Pos({
   pos, status, fastest, color,
 }: { pos: number | null; status?: string; fastest?: boolean; color: string }) {
   if (pos === null && status && !["Finished", ""].includes(status)) {
-    return <span className="text-xs text-zinc-500 font-mono">{status.slice(0, 3)}</span>;
+    return <span className="text-xs text-muted-foreground font-mono tabular-nums">{status.slice(0, 3)}</span>;
   }
-  if (!pos) return <span className="text-xs text-zinc-700">—</span>;
+  if (!pos) return <span className="text-xs text-muted-foreground/30">—</span>;
   return (
     <span className="inline-flex items-center gap-0.5">
-      <span className="text-sm font-bold font-mono" style={{ color: pos <= 3 ? color : "#e4e4e7" }}>
+      <span className="text-sm font-bold font-mono tabular-nums" style={{ color: pos <= 3 ? color : "var(--foreground)" }}>
         P{pos}
       </span>
       {fastest && <span className="text-[9px] text-purple-400 leading-none">⚡</span>}
@@ -123,24 +123,24 @@ export default function ComparePage() {
   return (
     <div>
       <h1 className="text-2xl font-bold mb-1">Driver Head-to-Head</h1>
-      <p className="text-zinc-500 text-sm mb-6">Season stats + circuit history for the last 4 years</p>
+      <p className="text-muted-foreground text-sm mb-6">Season stats + circuit history for the last 4 years</p>
 
       {/* ── Selectors ── */}
       <div className="space-y-4 mb-8">
         {standLoading ? (
-          <Skeleton className="h-9 w-full bg-zinc-800" />
+          <Skeleton className="h-9 w-full" />
         ) : (
           <div className="flex items-end gap-3 flex-wrap">
             <div className="flex-1 min-w-36">
-              <p className="text-[10px] text-zinc-500 uppercase tracking-wider mb-1">Driver A</p>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Driver A</p>
               <Select value={driverAId} onValueChange={(v) => v && setDriverAId(v)}>
                 <SelectTrigger
-                  className="w-full bg-zinc-900 border-zinc-700"
+                  className="w-full bg-surface-2 border-border"
                   style={colorA ? { borderTopColor: colorA, borderTopWidth: 2 } : undefined}
                 >
                   <SelectValue placeholder="Select Driver A…" />
                 </SelectTrigger>
-                <SelectContent className="bg-zinc-900 border-zinc-700">
+                <SelectContent className="bg-surface-2 border-border">
                   {standings?.map((d) => (
                     <SelectItem
                       key={d.Driver.driverId}
@@ -154,18 +154,18 @@ export default function ComparePage() {
               </Select>
             </div>
 
-            <span className="text-zinc-600 font-bold mb-2 shrink-0">vs</span>
+            <span className="text-muted-foreground/50 font-bold mb-2 shrink-0">vs</span>
 
             <div className="flex-1 min-w-36">
-              <p className="text-[10px] text-zinc-500 uppercase tracking-wider mb-1">Driver B</p>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Driver B</p>
               <Select value={driverBId} onValueChange={(v) => v && setDriverBId(v)}>
                 <SelectTrigger
-                  className="w-full bg-zinc-900 border-zinc-700"
+                  className="w-full bg-surface-2 border-border"
                   style={colorB ? { borderTopColor: colorB, borderTopWidth: 2 } : undefined}
                 >
                   <SelectValue placeholder="Select Driver B…" />
                 </SelectTrigger>
-                <SelectContent className="bg-zinc-900 border-zinc-700">
+                <SelectContent className="bg-surface-2 border-border">
                   {standings?.map((d) => (
                     <SelectItem
                       key={d.Driver.driverId}
@@ -183,14 +183,14 @@ export default function ComparePage() {
 
         {bothSelected && !schedLoading && schedule && (
           <div>
-            <p className="text-[10px] text-zinc-500 uppercase tracking-wider mb-1">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
               Compare at circuit (optional)
             </p>
             <Select value={circuitId} onValueChange={(v) => v && setCircuitId(v)}>
-              <SelectTrigger className="bg-zinc-900 border-zinc-700 w-full sm:w-[420px]">
+              <SelectTrigger className="bg-surface-2 border-border w-full sm:w-[420px]">
                 <SelectValue placeholder="🏁 Pick a circuit to see track history…" />
               </SelectTrigger>
-              <SelectContent className="bg-zinc-900 border-zinc-700">
+              <SelectContent className="bg-surface-2 border-border">
                 {schedule.map((race) => (
                   <SelectItem key={race.Circuit.circuitId} value={race.Circuit.circuitId}>
                     {race.Circuit.Location.country} — {race.Circuit.circuitName}
@@ -204,9 +204,9 @@ export default function ComparePage() {
 
       {/* ── Empty prompt ── */}
       {!bothSelected && !standLoading && (
-        <div className="text-center py-16 text-zinc-500">
-          <p className="text-5xl mb-4">🏎️</p>
-          <p className="font-semibold text-zinc-400 text-lg">
+        <div className="text-center py-16 text-muted-foreground">
+          <p className="text-5xl mb-4">🏗️</p>
+          <p className="font-semibold text-foreground text-lg">
             {!driverAId && !driverBId
               ? "Select two drivers above to compare"
               : "Now pick a second driver to start the comparison"}
@@ -228,7 +228,7 @@ export default function ComparePage() {
               return (
                 <div
                   key={d.Driver.driverId}
-                  className="rounded-lg bg-zinc-900 border border-zinc-800 p-4"
+                  className="rounded-lg bg-surface-2 border border-border p-4"
                   style={{ borderTopColor: color, borderTopWidth: 3 }}
                 >
                   <div className="flex items-center gap-3">
@@ -248,7 +248,7 @@ export default function ComparePage() {
                       <p className="text-sm font-semibold">
                         {d.Driver.givenName} {d.Driver.familyName}
                       </p>
-                      <p className="text-xs text-zinc-500">{team}</p>
+                      <p className="text-xs text-muted-foreground">{team}</p>
                     </div>
                   </div>
                 </div>
@@ -257,8 +257,8 @@ export default function ComparePage() {
           </div>
 
           {/* Season stat bars */}
-          <div className="rounded-lg bg-zinc-900 border border-zinc-800 p-5 space-y-4">
-            <p className="text-xs text-zinc-500 uppercase tracking-wider">2026 Season</p>
+          <div className="rounded-lg bg-surface-2 border border-border p-5 space-y-4">
+            <p className="text-xs text-muted-foreground uppercase tracking-wider">2026 Season</p>
             <StatBar
               label="Points"
               a={parseFloat(driverA.points)}
@@ -284,28 +284,28 @@ export default function ComparePage() {
 
           {/* Circuit history */}
           {circuitId && (
-            <div className="rounded-lg bg-zinc-900 border border-zinc-800 p-5">
+            <div className="rounded-lg bg-surface-2 border border-border p-5">
               <h2 className="text-base font-semibold mb-0.5">
                 🏁 {selectedCircuit?.Circuit.circuitName ?? circuitId}
               </h2>
-              <p className="text-xs text-zinc-500 mb-4">
+              <p className="text-xs text-muted-foreground mb-4">
                 Last 4 seasons · race finish &amp; qualifying position
               </p>
 
               {compareLoading && (
                 <div className="space-y-2">
                   {[1, 2, 3, 4].map((i) => (
-                    <Skeleton key={i} className="h-10 bg-zinc-800" />
+                    <Skeleton key={i} className="h-10" />
                   ))}
                 </div>
               )}
 
               {compareError && (
-                <p className="text-zinc-500 text-sm">Could not load circuit history.</p>
+                <p className="text-muted-foreground text-sm">Could not load circuit history.</p>
               )}
 
               {compareData && compareData.history.length === 0 && (
-                <p className="text-zinc-500 text-sm">
+                <p className="text-muted-foreground text-sm">
                   No data found — this may be a brand-new venue or neither driver competed
                   here in the last 4 seasons.
                 </p>
@@ -334,15 +334,15 @@ export default function ComparePage() {
                         { label: "Best quali", vA: bqA < 99 ? `P${bqA}` : "—", vB: bqB < 99 ? `P${bqB}` : "—" },
                         { label: "Best race lap", vA: bestLapA ?? "—", vB: bestLapB ?? "—" },
                       ].map(({ label, vA, vB }) => (
-                        <div key={label} className="rounded bg-zinc-800/60 px-3 py-2 text-center">
-                          <p className="text-[10px] text-zinc-500 uppercase tracking-wider mb-1">
+                        <div key={label} className="rounded bg-surface-3/60 px-3 py-2 text-center">
+                          <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
                             {label}
                           </p>
                           <div className="flex items-baseline justify-center gap-1.5">
                             <span className="text-sm font-bold font-mono" style={{ color: colorA }}>
                               {vA}
                             </span>
-                            <span className="text-[10px] text-zinc-600">vs</span>
+                            <span className="text-[10px] text-muted-foreground/50">vs</span>
                             <span className="text-sm font-bold font-mono" style={{ color: colorB }}>
                               {vB}
                             </span>
@@ -355,7 +355,7 @@ export default function ComparePage() {
                     <div className="overflow-x-auto">
                       <table className="w-full text-sm min-w-[400px]">
                         <thead>
-                          <tr className="text-[10px] text-zinc-600 uppercase tracking-wider">
+                          <tr className="text-[10px] text-muted-foreground/50 uppercase tracking-wider">
                             <th className="text-left pb-2 font-normal w-14">Year</th>
                             <th className="text-center pb-2 font-normal" style={{ color: colorA + "bb" }}>
                               {driverA.Driver.code} Race
@@ -375,9 +375,9 @@ export default function ComparePage() {
                           {hist.map((row) => (
                             <tr
                               key={row.year}
-                              className="border-t border-zinc-800/60 hover:bg-zinc-800/30 transition-colors"
+                              className="border-t border-border/40 hover:bg-accent/20 transition-colors"
                             >
-                              <td className="py-2 font-mono text-zinc-400 text-xs">{row.year}</td>
+                              <td className="py-2 font-mono text-muted-foreground text-xs tabular-nums">{row.year}</td>
                               <td className="py-2 text-center">
                                 <Pos
                                   pos={row.a.race?.position ?? null}
@@ -408,9 +408,9 @@ export default function ComparePage() {
 
                     {/* Best quali times */}
                     {(bqTimeA || bqTimeB) && (
-                      <div className="mt-4 pt-4 border-t border-zinc-800 flex gap-6 text-sm">
+                      <div className="mt-4 pt-4 border-t border-border flex gap-6 text-sm">
                         <div>
-                          <p className="text-[10px] text-zinc-600 uppercase tracking-wider mb-0.5">
+                          <p className="text-[10px] text-muted-foreground/50 uppercase tracking-wider mb-0.5">
                             Best quali time
                           </p>
                           <span className="font-mono" style={{ color: colorA }}>
@@ -418,7 +418,7 @@ export default function ComparePage() {
                           </span>
                         </div>
                         <div>
-                          <p className="text-[10px] text-zinc-600 uppercase tracking-wider mb-0.5">
+                          <p className="text-[10px] text-muted-foreground/50 uppercase tracking-wider mb-0.5">
                             &nbsp;
                           </p>
                           <span className="font-mono" style={{ color: colorB }}>
@@ -434,7 +434,7 @@ export default function ComparePage() {
           )}
 
           {bothSelected && !circuitId && (
-            <p className="text-center text-zinc-500 text-sm py-4">
+            <p className="text-center text-muted-foreground text-sm py-4">
               ↑ Select a circuit above to compare track-specific history
             </p>
           )}

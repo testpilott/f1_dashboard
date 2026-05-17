@@ -30,8 +30,8 @@ export default function TireStrategy({ sessionKey }: { sessionKey: number }) {
     staleTime: 30 * 60 * 1000,
   });
 
-  if (isLoading) return <Skeleton className="h-64 w-full bg-zinc-800" />;
-  if (!stints?.length) return <p className="text-zinc-500 text-sm">No stint data available.</p>;
+  if (isLoading) return <Skeleton className="h-64 w-full" />;
+  if (!stints?.length) return <p className="text-muted-foreground text-sm">No stint data available.</p>;
 
   const driverMap = new Map(drivers?.map((d) => [d.driver_number, d]) ?? []);
 
@@ -56,7 +56,7 @@ export default function TireStrategy({ sessionKey }: { sessionKey: number }) {
         {/* Legend */}
         <div className="flex items-center gap-3 mb-3 flex-wrap">
           {(["SOFT", "MEDIUM", "HARD", "INTERMEDIATE", "WET"] as const).map((c) => (
-            <div key={c} className="flex items-center gap-1.5 text-xs text-zinc-400">
+            <div key={c} className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <span
                 className="inline-block w-3 h-3 rounded-sm"
                 style={{ backgroundColor: TYRE_COLORS[c] }}
@@ -75,12 +75,12 @@ export default function TireStrategy({ sessionKey }: { sessionKey: number }) {
 
             return (
               <div key={dNum} className="flex items-center gap-2">
-                <span className="w-8 text-xs font-mono text-zinc-500 shrink-0 text-right">
+                <span className="w-8 text-xs font-mono text-muted-foreground shrink-0 text-right tabular-nums">
                   {code}
                 </span>
                 {/* Bar track */}
                 <div
-                  className="relative h-6 flex-1 rounded overflow-hidden bg-zinc-800"
+                  className="relative h-6 flex-1 rounded overflow-hidden bg-surface-3"
                   style={{ minWidth: 0 }}
                 >
                   {driverStints.map((stint, idx) => {
@@ -99,13 +99,13 @@ export default function TireStrategy({ sessionKey }: { sessionKey: number }) {
                               left: `${start}%`,
                               width: `calc(${width}% - 1px)`,
                               backgroundColor: color,
-                              borderRight: "1px solid #18181b",
+                              borderRight: "1px solid var(--border)",
                             }}
                           />
                         </TooltipTrigger>
-                        <TooltipContent side="top" className="bg-zinc-900 border-zinc-700 text-xs">
+                        <TooltipContent side="top" className="bg-surface-2 border-border text-xs">
                           <p className="font-semibold">{compound}</p>
-                          <p className="text-zinc-400">
+                          <p className="text-muted-foreground">
                             Laps {stint.lap_start}–{stint.lap_end}
                             {stint.tyre_age_at_start != null && (
                               <span className="ml-1">({stint.tyre_age_at_start} laps old)</span>
@@ -128,7 +128,7 @@ export default function TireStrategy({ sessionKey }: { sessionKey: number }) {
             return (
               <div
                 key={i}
-                className="flex-1 text-center text-[9px] text-zinc-600"
+                className="flex-1 text-center text-[9px] text-muted-foreground/50"
                 style={{ marginLeft: i === 0 ? 0 : undefined }}
               >
                 {lap}

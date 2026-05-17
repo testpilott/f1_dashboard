@@ -1,12 +1,24 @@
 import { NextResponse } from "next/server";
 import { getSchedule, getNextRace, getLastRace } from "@/lib/api/jolpica";
+import { rateLimited } from "@/lib/api/withRateLimit";
+import { VALID_SEASON, VALID_VIEW } from "@/lib/validators";
 
 export const revalidate = 3600; // 1 hour
 
 export async function GET(req: Request) {
+  const blocked = rateLimited(req, "schedule");
+  if (blocked) return blocked;
+
   const { searchParams } = new URL(req.url);
   const season = searchParams.get("season") ?? "current";
-  const view = searchParams.get("view"); // "next" | "last" | undefined
+  const view = searchParams.get("view");
+
+  if (!VALID_SEASON.test(season)) {
+    return NextResponse.json({ error: "Invalid season" }, { status: 400 });
+  }
+  if (view !== null && !VALID_VIEW.has(view)) {
+    return NextResponse.json({ error: "Invalid view" }, { status: 400 });
+  }
 
   try {
     if (view === "next") {

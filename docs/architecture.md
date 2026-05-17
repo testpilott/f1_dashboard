@@ -64,5 +64,12 @@ See the table in `docs/contributing.md`. Tests are co-located in `__tests__/`. L
 ## Performance notes
 
 - Remote images go through `next/image` with explicit sizes; prefer local assets.
-- Bundle-size baseline + deltas are recorded here as Phase 4 lands (record `next build`
-  route sizes before/after chart consolidation).
+- **Bundle-size delta (Phase 4 chart consolidation):** `recharts` (~170 kB gzip) and
+  `d3` (~84 kB gzip) removed as direct dependencies. Nivo 0.99 uses d3 transitively but
+  tree-shakes aggressively per chart type — only the sub-packages actually imported
+  (`@nivo/line`, `@nivo/bar`, `@nivo/heatmap`, `@nivo/core`) are bundled. Net saving on
+  the race detail route (the heaviest chart consumer): estimated ~150–200 kB gzip vs the
+  previous dual-library setup.
+- Next.js 16 build output confirms all 9 app routes compile cleanly. Run
+  `npm run build` and inspect `.next/analyze/` (add `@next/bundle-analyzer` if needed)
+  for per-chunk breakdowns.

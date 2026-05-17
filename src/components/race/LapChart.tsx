@@ -4,16 +4,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import type { OpenF1Lap, OpenF1Driver } from "@/lib/types";
 import { getTeamColor } from "@/lib/constants";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from "recharts";
+import { nivoTheme } from "@/lib/charts/theme";
+import { ResponsiveLine } from "@nivo/line";
 import { Skeleton } from "@/components/ui/skeleton";
 
 async function fetchLaps(sessionKey: number) {
@@ -33,31 +25,6 @@ function lapTimeToSeconds(ms: number | null | undefined): number | null {
   return ms / 1000;
 }
 
-interface ChartPoint {
-  lap: number;
-  [driverCode: string]: number | null;
-}
-
-// Custom tooltip
-function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: { name: string; value: number; color: string }[]; label?: number }) {
-  if (!active || !payload?.length) return null;
-  return (
-    <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-3 text-xs shadow-lg">
-      <p className="font-semibold mb-1 text-zinc-300">Lap {label}</p>
-      {payload
-        .filter((p) => p.value != null)
-        .sort((a, b) => a.value - b.value)
-        .map((p) => (
-          <div key={p.name} className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: p.color }} />
-            <span className="text-zinc-400">{p.name}</span>
-            <span className="font-mono ml-auto">{p.value.toFixed(3)}s</span>
-          </div>
-        ))}
-    </div>
-  );
-}
-
 export default function LapChart({ sessionKey }: { sessionKey: number }) {
   const { data: laps, isLoading: lapsLoading } = useQuery({
     queryKey: ["laps", sessionKey],
@@ -70,79 +37,103 @@ export default function LapChart({ sessionKey }: { sessionKey: number }) {
     staleTime: 30 * 60 * 1000,
   });
 
-  if (lapsLoading) return <Skeleton className="h-72 w-full bg-zinc-800" />;
-  if (!laps?.length) return <p className="text-zinc-500 text-sm">No lap data available.</p>;
+  if (lapsLoading) return <Skeleton className="h-72 w-full" />;
+  if (!laps?.length) return <p className="text-muted-foreground text-sm">No lap data available.</p>;
 
-  // Build chart data and filter outliers — memoized to avoid O(n²) work on every render.
-  const { lapData, driverNumbers, driverMap } = useMemo(() => {
-    const map = new Map(drivers?.map((d) => [d.driver_number, d]) ?? []);
-    const dNums = [...new Set(laps.map((l) => l.driver_number))];
-    const maxLap = Math.max(...laps.map((l) => l.lap_number));
+  // Build Nivo-format series data and filter outliers
+  const nivoData = useMemo(() => {
+    const driverMap = new Map(drivers?.map((d) => [d.driver_number, d]) ?? []);
+    const driverNumbers = [...new Set(laps.map((l) => l.driver_number))];
 
-    // Pre-index for O(1) lookup instead of O(N) laps.find() inside the double loop.
+    // Pre-index laps for O(1) lookup
     const lapIndex = new Map<string, OpenF1Lap>();
     for (const l of laps) lapIndex.set(`${l.lap_number}:${l.driver_number}`, l);
+    const maxLap = Math.max(...laps.map((l) => l.lap_number));
 
-    // Build chart data
-    const data: ChartPoint[] = [];
-    for (let lap = 1; lap <= maxLap; lap++) {
-      const point: ChartPoint = { lap };
-      for (const dNum of dNums) {
-        const lapEntry = lapIndex.get(`${lap}:${dNum}`);
-        const d = map.get(dNum);
-        const code = d?.name_acronym ?? `#${dNum}`;
-        point[code] = lapTimeToSeconds(lapEntry?.lap_duration);
-      }
-      data.push(point);
-    }
+    return driverNumbers.map((dNum) => {
+      const d = driverMap.get(dNum);
+      const code = d?.name_acronym ?? `#${dNum}`;
+      const color = getTeamColor(d?.team_name ?? "");
 
-    // Filter outlier lap times per driver (remove anything > 1.5× the driver median)
-    const codes = dNums.map((n) => map.get(n)?.name_acronym ?? `#${n}`);
-    for (const code of codes) {
-      const times = data.map((p) => p[code]).filter((v): v is number => v != null);
-      if (!times.length) continue;
-      times.sort((a, b) => a - b);
-      const median = times[Math.floor(times.length / 2)];
-      data.forEach((p) => {
-        const v = p[code];
-        if (v != null && v > median * 1.5) p[code] = null;
+      // Collect raw lap times
+      const points = Array.from({ length: maxLap }, (_, i) => {
+        const lapEntry = lapIndex.get(`${i + 1}:${dNum}`);
+        return { lap: i + 1, time: lapTimeToSeconds(lapEntry?.lap_duration) };
       });
-    }
 
-    return { lapData: data, driverNumbers: dNums, driverMap: map };
+      // Filter outliers: remove laps > 1.5× driver median
+      const validTimes = points.map((p) => p.time).filter((t): t is number => t != null);
+      validTimes.sort((a, b) => a - b);
+      const median = validTimes[Math.floor(validTimes.length / 2)] ?? 0;
+
+      return {
+        id: code,
+        color,
+        data: points
+          .filter((p) => p.time != null && p.time <= median * 1.5)
+          .map((p) => ({ x: p.lap, y: p.time as number })),
+      };
+    });
   }, [laps, drivers]);
+
+  const theme = nivoTheme();
 
   return (
     <div className="w-full h-72">
-      <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={lapData} margin={{ top: 4, right: 8, left: -8, bottom: 4 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
-          <XAxis dataKey="lap" tick={{ fill: "#71717a", fontSize: 11 }} label={{ value: "Lap", position: "insideBottom", offset: -2, fill: "#71717a", fontSize: 11 }} />
-          <YAxis tick={{ fill: "#71717a", fontSize: 11 }} tickFormatter={(v) => `${v.toFixed(0)}s`} width={40} />
-          <Tooltip content={<CustomTooltip />} />
-          <Legend
-            wrapperStyle={{ fontSize: "11px", paddingTop: "8px" }}
-            formatter={(value) => <span style={{ color: "#a1a1aa" }}>{value}</span>}
-          />
-          {driverNumbers.map((dNum) => {
-            const d = driverMap.get(dNum);
-            const code = d?.name_acronym ?? `#${dNum}`;
-            const color = getTeamColor(d?.team_name ?? "");
-            return (
-              <Line
-                key={dNum}
-                type="monotone"
-                dataKey={code}
-                stroke={color}
-                strokeWidth={1.5}
-                dot={false}
-                connectNulls={false}
-                isAnimationActive={false}
-              />
-            );
-          })}
-        </LineChart>
-      </ResponsiveContainer>
+      <ResponsiveLine
+        data={nivoData}
+        theme={theme}
+        colors={{ datum: "color" }}
+        margin={{ top: 8, right: 24, bottom: 48, left: 44 }}
+        xScale={{ type: "linear", min: 1, max: "auto" }}
+        yScale={{ type: "linear", min: "auto", max: "auto", nice: true }}
+        axisBottom={{
+          legend: "Lap",
+          legendOffset: 38,
+          legendPosition: "middle",
+          tickSize: 0,
+          tickPadding: 6,
+        }}
+        axisLeft={{
+          tickSize: 0,
+          tickPadding: 6,
+          format: (v) => `${Number(v).toFixed(0)}s`,
+        }}
+        lineWidth={1.5}
+        enablePoints={false}
+        useMesh={true}
+        enableSlices="x"
+        enableCrosshair={true}
+        sliceTooltip={({ slice }) => (
+          <div className="bg-surface-2 border border-border rounded-lg p-3 text-xs shadow-lg">
+            <p className="font-semibold mb-1 text-foreground/80">Lap {slice.id}</p>
+            {[...slice.points]
+              .sort((a, b) => (a.data.y as number) - (b.data.y as number))
+              .map((point) => (
+                <div key={point.id} className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: point.color }} />
+                  <span className="text-muted-foreground">{point.seriesId}</span>
+                  <span className="font-mono ml-auto tabular-nums">{(point.data.y as number).toFixed(3)}s</span>
+                </div>
+              ))}
+          </div>
+        )}
+        legends={[
+          {
+            anchor: "bottom",
+            direction: "row",
+            justify: false,
+            translateX: 0,
+            translateY: 44,
+            itemWidth: 56,
+            itemHeight: 12,
+            itemsSpacing: 4,
+            symbolSize: 8,
+            symbolShape: "circle",
+          },
+        ]}
+      />
     </div>
   );
 }
+

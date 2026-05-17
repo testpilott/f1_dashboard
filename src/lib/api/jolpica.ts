@@ -6,11 +6,12 @@ import type {
   QualifyingResult,
   SprintResult,
 } from "@/lib/types";
+import { fetchWithTimeout } from "@/lib/api/fetchWithTimeout";
 
 const JOLPICA_BASE = "https://api.jolpi.ca/ergast/f1";
 
 async function jolpicaFetch<T>(path: string): Promise<T> {
-  const res = await fetch(`${JOLPICA_BASE}${path}`, {
+  const res = await fetchWithTimeout(`${JOLPICA_BASE}${path}`, {
     next: { revalidate: 300 }, // cache 5 min
     headers: { Accept: "application/json" },
   });

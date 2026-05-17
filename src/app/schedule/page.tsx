@@ -15,7 +15,7 @@ export default async function SchedulePage() {
       <h1 className="text-2xl font-bold mb-6">2026 Race Calendar</h1>
 
       {!races.length ? (
-        <p className="text-zinc-500">No schedule data available.</p>
+        <p className="text-muted-foreground">No schedule data available.</p>
       ) : (
         <div className="space-y-2">
           {races.map((race: Race) => {
@@ -30,11 +30,11 @@ export default async function SchedulePage() {
                 href={`/race/${race.season}/${race.round}`}
                 className={`flex items-center gap-4 px-4 py-3 rounded-lg border transition-all hover:scale-[1.01] hover:shadow-md ${
                   past
-                    ? "border-zinc-800 bg-zinc-900/50 opacity-60 hover:opacity-80"
-                    : "border-zinc-700 bg-gradient-to-r from-zinc-900 to-zinc-950 hover:border-zinc-500 hover:from-zinc-800"
+                    ? "border-border bg-surface-2/50 opacity-60 hover:opacity-80"
+                    : "border-border bg-gradient-to-r from-surface-2 to-background hover:bg-accent hover:border-border/60"
                 }`}
               >
-                <span className="font-mono text-sm text-zinc-500 w-6 shrink-0">
+                <span className="font-mono text-sm text-muted-foreground w-6 shrink-0 tabular-nums">
                   {race.round}
                 </span>
                 {circuitImgUrl ? (
@@ -47,7 +47,7 @@ export default async function SchedulePage() {
                 </span>
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-sm truncate">{race.raceName}</p>
-                  <p className="text-xs text-zinc-500 truncate">
+                  <p className="text-xs text-muted-foreground truncate">
                     {race.Circuit.circuitName} · {race.Circuit.Location.locality}
                   </p>
                 </div>
@@ -58,11 +58,11 @@ export default async function SchedulePage() {
                     </Badge>
                   )}
                   {past && (
-                    <Badge variant="outline" className="border-zinc-700 text-zinc-500 text-xs px-1.5">
+                    <Badge variant="outline" className="border-border text-muted-foreground text-xs px-1.5">
                       Done
                     </Badge>
                   )}
-                  <span className="text-sm text-zinc-400 tabular-nums">
+                  <span className="text-sm text-muted-foreground tabular-nums">
                     {format(raceDate, "d MMM")}
                   </span>
                 </div>

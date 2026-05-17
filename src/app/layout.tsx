@@ -39,9 +39,9 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${titilliumWeb.variable} ${exo2.variable} ${geistMono.variable} h-full antialiased`}
+      className={`dark ${titilliumWeb.variable} ${exo2.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-white text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
+      <body className="min-h-full flex flex-col bg-background text-foreground">
         <Providers>
           <Navbar />
           {/* Offset for desktop sidebar + mobile top/bottom bars */}
