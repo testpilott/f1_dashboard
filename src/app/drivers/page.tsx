@@ -303,7 +303,7 @@ function DriverDetailPanel({
                       className="text-zinc-600 group-hover:text-zinc-400 shrink-0 mt-0.5 transition-colors"
                     />
                   </a>
-                  {item.pubDate && (
+                  {item.pubDate && !isNaN(new Date(item.pubDate).getTime()) && (
                     <p className="text-[10px] text-zinc-600 mt-0.5">
                       {formatDistanceToNow(new Date(item.pubDate), { addSuffix: true })}
                     </p>
