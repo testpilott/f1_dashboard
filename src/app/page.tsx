@@ -43,7 +43,6 @@ export default async function HomePage() {
           </div>
         <div className="grid grid-cols-2 gap-3">
           {[
-            { href: "/weekend", label: "Race Weekend", sub: "Sessions & results" },
             { href: "/schedule", label: "Calendar", sub: "Full 2026 schedule" },
             { href: "/projections", label: "Projections", sub: "Monte Carlo sim" },
             { href: "/news", label: "News", sub: "Latest F1 news" },
