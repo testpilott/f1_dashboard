@@ -17,6 +17,7 @@ interface TelemetryResponse {
   available: boolean;
   reason?: string;
   race?: string;
+  sessionName?: string;
   drivers?: TelemetryDriver[];
 }
 
@@ -90,6 +91,13 @@ export default function TelemetryPanel({
 
   return (
     <div className="space-y-6 mt-2">
+      <p className="text-xs text-muted-foreground">
+        Showing{" "}
+        <span className="font-semibold text-foreground">
+          {data.sessionName ?? "Race"}
+        </span>{" "}
+        session telemetry · stint pace &amp; tyre degradation from OpenF1.
+      </p>
       {data.drivers.map((d) => (
         <section key={d.driverNumber}>
           <div className="flex items-center gap-2 mb-2">

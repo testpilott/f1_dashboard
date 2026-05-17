@@ -50,6 +50,10 @@ made. Tests for valid/invalid/injection cases live in
 
 - `default-src 'self'` — baseline allowlist
 - `connect-src 'self'` — client JS may only call same-origin routes
+- `media-src 'self' https://livetiming.formula1.com` — team-radio audio streams
+  directly from the F1 live-timing CDN (the host of OpenF1's `team_radio`
+  `recording_url`); it is not proxied through `/api/*` because it is a static
+  audio asset, not a JSON API response
 - `img-src 'self' data:` — only local images (the Wikimedia logo CDN was removed in
   Phase 2 when the logo was made local)
 - `script-src 'self' 'unsafe-inline' 'unsafe-eval'` — required for Next.js HMR in dev;

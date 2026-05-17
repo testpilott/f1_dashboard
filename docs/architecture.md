@@ -92,6 +92,17 @@ Pure logic lives in `src/lib/stats/{form,pace,headToHead,session-match,construct
 unit-tested in the `node` project). `fetchWithTimeout` now throws on non-OK responses
 (spec-aligned; the per-fetcher `res.ok` checks remain as defence-in-depth).
 
+### Sprint-weekend session resolution
+
+OpenF1 returns the Sprint race as `session_type: "Race"` with
+`session_name: "Sprint"` (the Grand Prix is `session_name: "Race"`), and the
+Sprint appears first chronologically. `pickRaceSession` therefore disambiguates
+on `session_name`: among the country-matched race sessions it prefers the one
+named `"Race"`, falling back to the first match for non-sprint weekends. Without
+this, the Telemetry and Team-Radio tabs would surface Sprint data on sprint
+weekends. Both `/api/telemetry` and `/api/team-radio` echo the resolved
+`sessionName` so the UI states which session is shown.
+
 ### Adaptive caching
 
 `src/lib/cacheStrategy.ts` exports `adaptiveRevalidate(dataClass, now?)` which halves

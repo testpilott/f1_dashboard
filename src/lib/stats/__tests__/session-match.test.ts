@@ -7,10 +7,11 @@ function sess(
   country: string,
   type: OpenF1Session["session_type"] = "Race",
   cancelled = false,
+  name?: string,
 ): OpenF1Session {
   return {
     session_key: key,
-    session_name: type,
+    session_name: name ?? type,
     session_type: type,
     date_start: "",
     date_end: "",
@@ -44,6 +45,24 @@ describe("pickRaceSession", () => {
       sess(3, "Brazil", "Race"),
     ];
     expect(pickRaceSession(sessions, "Brazil")).toBe(3);
+  });
+
+  it("prefers the Grand Prix over the Sprint on a sprint weekend", () => {
+    // Real OpenF1: the Sprint is session_type "Race" with session_name
+    // "Sprint", and it appears before the Grand Prix chronologically.
+    const sessions = [
+      sess(10, "Brazil", "Race", false, "Sprint"),
+      sess(11, "Brazil", "Race", false, "Race"),
+    ];
+    expect(pickRaceSession(sessions, "Brazil")).toBe(11);
+  });
+
+  it("still resolves a non-sprint weekend (only a Race session)", () => {
+    const sessions = [
+      sess(20, "Italy", "Qualifying", false, "Qualifying"),
+      sess(21, "Italy", "Race", false, "Race"),
+    ];
+    expect(pickRaceSession(sessions, "Italy")).toBe(21);
   });
 
   it("falls back to a partial country match", () => {

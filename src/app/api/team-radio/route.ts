@@ -65,7 +65,14 @@ export async function GET(req: Request) {
       };
     });
 
-    return NextResponse.json({ available: true, sessionKey, items });
+    const matched = sessions.find((s) => s.session_key === sessionKey);
+
+    return NextResponse.json({
+      available: true,
+      sessionKey,
+      sessionName: matched?.session_name ?? "Race",
+      items,
+    });
   } catch (err) {
     console.error("[/api/team-radio] Error:", err);
     return NextResponse.json({ error: "Failed to load team radio" }, { status: 500 });

@@ -35,12 +35,23 @@ export function pickRaceSession(
     (s) => s.session_type === "Race" && !s.is_cancelled,
   );
 
-  const exact = races.find((s) => normalise(s.country_name) === target);
-  if (exact) return exact.session_key;
+  // On a sprint weekend OpenF1 returns two session_type="Race" entries for the
+  // same country — the Sprint (session_name "Sprint", earlier) and the Grand
+  // Prix (session_name "Race"). Always pick the Grand Prix.
+  const isGrandPrix = (s: OpenF1Session) =>
+    s.session_name.trim().toLowerCase() === "race";
 
-  const partial = races.find((s) => {
+  const exact = races.filter((s) => normalise(s.country_name) === target);
+  if (exact.length > 0) {
+    return (exact.find(isGrandPrix) ?? exact[0]).session_key;
+  }
+
+  const partial = races.filter((s) => {
     const c = normalise(s.country_name);
     return c.includes(target) || target.includes(c);
   });
-  return partial ? partial.session_key : null;
+  if (partial.length > 0) {
+    return (partial.find(isGrandPrix) ?? partial[0]).session_key;
+  }
+  return null;
 }

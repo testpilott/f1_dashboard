@@ -16,7 +16,7 @@ interface DriverRadio {
   clips: RadioClip[];
 }
 
-async function fetchRadio(year: string, round: string): Promise<{ available: boolean; reason?: string; items?: DriverRadio[] }> {
+async function fetchRadio(year: string, round: string): Promise<{ available: boolean; reason?: string; sessionName?: string; items?: DriverRadio[] }> {
   const res = await fetch(`/api/team-radio?year=${year}&round=${round}`);
   if (!res.ok) throw new Error("Failed to load team radio");
   return res.json();
@@ -110,6 +110,7 @@ export default function TeamRadioPanel({ year, round }: { year: string; round: s
   return (
     <div className="mt-4 space-y-3">
       <p className="text-xs text-muted-foreground">
+        <span className="font-semibold text-foreground">{data.sessionName ?? "Race"}</span> session ·{" "}
         {totalClips} clip{totalClips !== 1 ? "s" : ""} across {items.length} driver{items.length !== 1 ? "s" : ""}
       </p>
       {items.map((driver) => (

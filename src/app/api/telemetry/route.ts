@@ -69,10 +69,13 @@ export async function GET(req: Request) {
       .filter((d) => d.stints.length > 0)
       .sort((a, b) => a.acronym.localeCompare(b.acronym));
 
+    const matched = sessions.find((s) => s.session_key === sessionKey);
+
     return NextResponse.json({
       available: result.length > 0,
       race: race.raceName,
       sessionKey,
+      sessionName: matched?.session_name ?? "Race",
       drivers: result,
     });
   } catch (err) {
