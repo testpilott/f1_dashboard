@@ -1,0 +1,75 @@
+# Testing Guide
+
+> **TL;DR** — TDD is mandatory. Write the test first (or alongside), run `npm test`
+> (must exit 0) before every commit. Logic/API tests run in **Node**; component tests
+> run in **jsdom**. Mock at the fetch boundary — never hit the real network, never test
+> Next.js routing itself.
+
+## Commands
+
+```bash
+npm test            # run everything once (both projects)
+npm run test:watch  # watch mode
+npm run test:ci     # run + enforce coverage thresholds (used in CI / pre-push)
+```
+
+## Two test projects
+
+We use two Vitest projects so server logic and React components run in the right
+environment:
+
+| Project | Environment | Includes | Coverage scope |
+|---|---|---|---|
+| `node` | `node` | `src/lib/**/__tests__/*.test.ts`, `src/app/api/**/__tests__/*.test.ts` | `src/lib/**/*.ts` |
+| `dom`  | `jsdom` | `src/components/**/__tests__/*.test.tsx`, `src/app/**/__tests__/*.test.tsx` | `src/components/**` |
+
+- File extension convention: **`.test.ts`** for node logic, **`.test.tsx`** for
+  component (jsdom) tests. The project an file belongs to is decided by its path/glob.
+- `vitest.setup.ts` registers `@testing-library/jest-dom` matchers for the `dom` project.
+
+## Writing a logic test (node)
+
+Co-locate under `src/lib/<area>/__tests__/`. Cover happy path **and** an edge/failure.
+For guard/transform patterns, inline-test the pattern directly — see
+`src/app/api/__tests__/fetcher-guards.test.ts` as the reference style.
+
+## Writing a component test (jsdom)
+
+```tsx
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import Navbar from "@/components/layout/Navbar";
+
+it("marks the active route", () => {
+  render(<Navbar />);                       // mock next/navigation if needed
+  expect(screen.getByRole("navigation")).toBeInTheDocument();
+});
+```
+
+- Mock data at the **fetch / React Query boundary** (e.g. wrap in a `QueryClientProvider`
+  with seeded cache, or mock the fetcher module). Do not perform real network calls.
+- For pages, test the **client component**, not the server `page.tsx` routing.
+
+## Coverage gate
+
+Thresholds live in `vitest.config.ts` under `coverage.thresholds`. Targets:
+
+| Scope | Start (Phase 0) | Final (Phase 5) |
+|---|---|---|
+| `src/lib/**` (logic/API) | 80% lines/branches | 85% |
+| `src/components/**` | 70% | 80% |
+
+`npm run test:ci` fails the build if coverage drops below the gate. Raise tests, don't
+lower the gate.
+
+## What NOT to test
+
+- Next.js routing/framework internals.
+- Real external network calls (mock at the boundary).
+- Pure visual rendering pixels (assert structure/roles/text, not styles).
+
+## Definition of Done for any change
+
+1. New/changed code has ≥ 1 positive test and ≥ 1 edge/failure test.
+2. `npm test` exits 0.
+3. Coverage gate (`npm run test:ci`) passes.
