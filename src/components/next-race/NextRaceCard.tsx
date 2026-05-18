@@ -114,14 +114,8 @@ export default function NextRaceCard({
   const circuitImgUrl = getCircuitImageUrl(race.Circuit.circuitId);
 
   return (
-    <Card className="relative bg-surface-2 border-border overflow-hidden">
+    <Card className="bg-surface-2 border-border overflow-hidden">
       <div className="h-1.5 bg-primary w-full" />
-      {circuitImgUrl && (
-        <div className="pointer-events-none absolute right-2 top-1/2 z-0 hidden -translate-y-1/2 opacity-20 sm:block">
-          <CircuitThumb url={circuitImgUrl} country={country} size={160} />
-        </div>
-      )}
-      <div className="relative z-10">
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-2">
           <div>
@@ -140,6 +134,13 @@ export default function NextRaceCard({
           </div>
         </div>
       </CardHeader>
+      {circuitImgUrl && (
+        <div className="px-6 pb-2">
+          <div className="flex justify-center rounded-md border border-border bg-surface-3/40 py-2">
+            <CircuitThumb url={circuitImgUrl} country={country} size={132} />
+          </div>
+        </div>
+      )}
       <CardContent className="space-y-3">
         <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
           <MapPin className="w-3.5 h-3.5 shrink-0 text-muted-foreground/50" />
@@ -180,7 +181,6 @@ export default function NextRaceCard({
           </p>
         )}
       </CardContent>
-      </div>
     </Card>
   );
 }
