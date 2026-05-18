@@ -7,6 +7,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import TeamLogo from "@/components/ui/TeamLogo";
 import TelemetryPanel from "@/components/race/TelemetryPanel";
 import TeamRadioPanel from "@/components/race/TeamRadioPanel";
+import CircuitMap from "@/components/race/CircuitMap";
 import { getStatusLabel, getStatusTooltip, RADIO_AVAILABLE_FROM, RADIO_AVAILABLE_THROUGH } from "@/lib/constants";
 import {
   Table,
@@ -178,6 +179,11 @@ export default function RaceDetailClient({
               Radio
             </TabsTrigger>
           )}
+          {raceInfo && (
+            <TabsTrigger value="circuit" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              Circuit
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="race">
@@ -211,6 +217,11 @@ export default function RaceDetailClient({
         {raceInfo && hasRadio && (
           <TabsContent value="radio">
             <TeamRadioPanel year={raceInfo.season} round={raceInfo.round} />
+          </TabsContent>
+        )}
+        {raceInfo && (
+          <TabsContent value="circuit">
+            <CircuitMap year={raceInfo.season} round={raceInfo.round} />
           </TabsContent>
         )}
       </Tabs>

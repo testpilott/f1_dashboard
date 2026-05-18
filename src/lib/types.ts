@@ -3,3 +3,4 @@
 export * from "./types/jolpica";
 export * from "./types/openf1";
 export * from "./types/domain";
+export * from "./types/multiviewer";
