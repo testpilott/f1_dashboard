@@ -4,10 +4,13 @@ import type { QualifyingResult, RaceResult } from "@/lib/types";
 
 export default async function RaceDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ year: string; round: string }>;
+  searchParams: Promise<{ tab?: string }>;
 }) {
   const { year, round } = await params;
+  const { tab } = await searchParams;
   const races = await getSchedule(year);
   const raceInfo = races.find((race) => race.round === round) ?? null;
 
@@ -19,6 +22,7 @@ export default async function RaceDetailPage({
 
   return (
     <RaceDetailClient
+      initialTab={tab}
       initialData={{
         raceInfo,
         raceResults: raceResults.status === "fulfilled" ? (raceResults.value as RaceResult[]) : [],

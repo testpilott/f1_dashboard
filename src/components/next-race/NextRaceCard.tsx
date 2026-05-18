@@ -5,6 +5,7 @@ import type { Race, WeatherForecast } from "@/lib/types";
 import { useNow } from "@/lib/hooks/useNow";
 import { CIRCUIT_COORDS, getWeatherIcon, getWeatherLabel, getCircuitImageUrl } from "@/lib/constants";
 import CircuitThumb from "@/components/schedule/CircuitThumb";
+import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -136,9 +137,13 @@ export default function NextRaceCard({
       </CardHeader>
       {circuitImgUrl && (
         <div className="px-6 pb-2">
-          <div className="flex justify-center rounded-md border border-border bg-surface-3/40 py-2">
+          <Link
+            href={`/race/${race.season}/${race.round}?tab=circuit`}
+            className="block rounded-md border border-border bg-surface-3/40 py-2 flex justify-center hover:border-primary/60 hover:bg-surface-3/70 transition-colors cursor-pointer"
+            title="View circuit map"
+          >
             <CircuitThumb url={circuitImgUrl} country={country} size={132} />
-          </div>
+          </Link>
         </div>
       )}
       <CardContent className="space-y-3">

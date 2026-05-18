@@ -128,8 +128,10 @@ function ResultTable({
 
 export default function RaceDetailClient({
   initialData,
+  initialTab,
 }: {
   initialData: RaceDetailData;
+  initialTab?: string;
 }) {
   const raceInfo = initialData.raceInfo;
 
@@ -156,7 +158,7 @@ export default function RaceDetailClient({
         )}
       </div>
 
-      <Tabs defaultValue="race">
+      <Tabs defaultValue={initialTab === "circuit" ? "circuit" : "race"}>
         <TabsList className="bg-surface-2 mb-4">
           <TabsTrigger value="race" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             Race
