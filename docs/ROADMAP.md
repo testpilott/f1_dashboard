@@ -158,6 +158,11 @@ Previously-deferred features, all free-tier, no new heavy deps.
       driver + `<audio controls preload="none">`; "Radio" tab on Race Detail (2023+
       sessions only).
 
+**Test count:** 269 passing (31 test files). `npm run lint` 0 errors / 5 pre-existing
+advisory warnings. `npm run build` clean.
+
+---
+
 ## Six-feature handoff round status ✅
 
 - [x] WS-1 Schedule past/upcoming divider
@@ -167,8 +172,33 @@ Previously-deferred features, all free-tier, no new heavy deps.
 - [x] WS-5 Driver headshot photos
 - [x] WS-6 Drivers season + career expanded stats
 
-Current focus has shifted from feature implementation to regression hardening
-(route/component tests) and verification discipline after changes.
-
-**Latest verification snapshot (2026-05-21, updated):** 372 passing tests (43 test files).
+**Latest verification snapshot (2026-05-21):** 372 passing tests (43 test files).
 `npm run build` passes. `npm run lint` reports **0 errors, 0 warnings**.
+
+---
+
+## Feature expansion — 9 features, 8 phases (in progress)
+
+Detailed implementation guide for a junior engineer: `docs/HANDOFF.md`.
+See `docs/architecture.md` "Feature-expansion additions" for new routes and patterns.
+
+| Phase | Feature | Status |
+|---|---|---|
+| 1 | **Bug-fix sweep** — correct nationality flags, championships via `driverStandings/1.json`, constructor H2H season scope | ☐ |
+| 2 | **Wikidata layer** — `/api/wikidata` server-side proxy for birthplace + photo | ☐ |
+| 3 | **Driver card enrichment** — birthplace city with Wikipedia link, optional photo | ☐ |
+| 4 | **Season selector across pages** — `/drivers`, `/standings`, `/results` accept `?season=YYYY` | ☐ |
+| 5 | **Deep historical compare** — circuit H2H back to each driver's debut, batched + cached | ☐ |
+| 6 | **Circuit intelligence** — race start times (venue/Eastern/local) + circuit records panel | ☐ |
+| 7 | **Telemetry fallback** — Jolpica lap-time chart + pit markers for pre-2023 races | ☐ |
+| 8 | **Favorite drivers** — star toggle, localStorage, favorites-first sort | ☐ |
+
+**New lib modules:** `src/lib/season.ts`, `src/lib/favorites.ts`,
+`src/lib/constants/nationality.ts`, `src/lib/time/raceTime.ts`,
+`src/lib/api/wikidata.ts`, `src/lib/stats/{driverEnrichment,compareHistory,
+circuitRecords,lapAnalysis}.ts`.
+
+**New routes:** `/api/wikidata`, `/api/circuit-records`, `/api/race-laps`.
+
+**Constraints:** free-tier only, no new heavy deps, all 9 existing routes preserved,
+TDD + coverage gate throughout.
