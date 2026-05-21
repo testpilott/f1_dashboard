@@ -13,7 +13,7 @@ const BASE: Record<DataClass, number> = {
   telemetry: 60,
   news: 900,
   results: 3600,
-  projections: 3600,
+  projections: 86400,
   form: 300,
 };
 
@@ -24,7 +24,7 @@ const RACE_WEEKEND: Record<DataClass, number> = {
   telemetry: 30,
   news: 300,
   results: 120,
-  projections: 3600,
+  projections: 86400,
   form: 60,
 };
 
