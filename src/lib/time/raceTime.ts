@@ -1,5 +1,8 @@
 import { CIRCUIT_COORDS } from "@/lib/constants/circuits";
 
+// CIRCUIT_COORDS is keyed by country name ("Italy", "Monaco"), so this map
+// provides circuitId → IANA timezone for the common F1 circuits whose Jolpica
+// circuitId differs from any single country key.
 const CIRCUIT_TIMEZONES: Record<string, string> = {
   monza: "Europe/Rome",
   monaco: "Europe/Monaco",

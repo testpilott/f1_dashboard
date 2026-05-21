@@ -146,7 +146,7 @@ export function runProjections(
   schedule: Race[],
   completedRound: number
 ): ChampionshipProjection {
-  const currentSeason = parseInt(schedule[0]?.season ?? "2026", 10);
+  const currentSeason = parseInt(schedule[0]?.season ?? String(new Date().getUTCFullYear()), 10);
   const completedRaces = schedule.filter((r) => parseInt(r.round, 10) <= completedRound);
   const remainingRaces = schedule.filter((r) => parseInt(r.round, 10) > completedRound);
 

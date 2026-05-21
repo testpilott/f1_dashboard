@@ -72,14 +72,3 @@ export const TEAM_LOGOS: Record<string, string> = {
 export function getTeamLogo(teamName: string): string | undefined {
   return TEAM_LOGOS[teamName];
 }
-
-/**
- * Builds the official F1 CDN driver headshot URL.
- * Pattern: {FamilyName}{GivenInitial}.png  e.g. "VerstappenM"
- * Year defaults to "2026". Falls back gracefully if image is missing.
- */
-export function getDriverPhotoUrl(familyName: string, givenName: string, year = "2026"): string {
-  const surname = familyName.replace(/[\s-]/g, "");
-  const initial = (givenName.charAt(0) ?? "").toUpperCase();
-  return `https://media.formula1.com/image/upload/f_auto,c_limit,q_auto,w_320/content/dam/fom-website/drivers/${year}Drivers/${surname}${initial}.png`;
-}

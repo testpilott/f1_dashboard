@@ -1,5 +1,19 @@
 const FIRST_YEAR = 1950;
-const CURRENT_YEAR = 2026;
+
+/**
+ * Returns the active F1 season year derived from the current date.
+ * F1 seasons typically start in early-to-mid March; before March we treat
+ * the prior calendar year as "current" to avoid empty dropdowns / 404s
+ * against the new season's data that hasn't published yet.
+ */
+function getCurrentSeasonYear(): number {
+  const now = new Date();
+  const year = now.getUTCFullYear();
+  const month = now.getUTCMonth(); // 0 = Jan
+  return month < 2 ? year - 1 : year;
+}
+
+const CURRENT_YEAR = getCurrentSeasonYear();
 
 /** All valid season option values, descending (most recent first). */
 export const SEASON_OPTIONS: string[] = Array.from(
