@@ -11,6 +11,7 @@
  */
 
 import { fetchWithTimeout } from "@/lib/api/fetchWithTimeout";
+import { withRetry } from "@/lib/api/retry";
 import type { WikidataDriverProfile } from "@/lib/types/wikidata";
 
 // ── Constants ──────────────────────────────────────────────────────────────
@@ -136,11 +137,13 @@ export async function fetchQidForTitle(title: string): Promise<string | null> {
     format: "json",
     origin: "*",
   });
-  const res = await fetchWithTimeout(`${WIKIDATA_API}?${params.toString()}`);
-  const data = (await res.json()) as Record<string, unknown>;
-  const results = data.search;
-  if (!Array.isArray(results) || results.length === 0) return null;
-  return extractQid(results[0]);
+  return withRetry(async () => {
+    const res = await fetchWithTimeout(`${WIKIDATA_API}?${params.toString()}`);
+    const data = (await res.json()) as Record<string, unknown>;
+    const results = data.search;
+    if (!Array.isArray(results) || results.length === 0) return null;
+    return extractQid(results[0]);
+  });
 }
 
 /**
@@ -154,10 +157,12 @@ export async function fetchEntityClaims(qid: string): Promise<unknown> {
     format: "json",
     origin: "*",
   });
-  const res = await fetchWithTimeout(`${WIKIDATA_API}?${params.toString()}`);
-  const data = (await res.json()) as Record<string, unknown>;
-  const entities = data.entities as Record<string, unknown> | undefined;
-  return entities?.[qid] ?? null;
+  return withRetry(async () => {
+    const res = await fetchWithTimeout(`${WIKIDATA_API}?${params.toString()}`);
+    const data = (await res.json()) as Record<string, unknown>;
+    const entities = data.entities as Record<string, unknown> | undefined;
+    return entities?.[qid] ?? null;
+  });
 }
 
 /**
@@ -172,10 +177,12 @@ export async function fetchPlaceEntity(qid: string): Promise<unknown> {
     format: "json",
     origin: "*",
   });
-  const res = await fetchWithTimeout(`${WIKIDATA_API}?${params.toString()}`);
-  const data = (await res.json()) as Record<string, unknown>;
-  const entities = data.entities as Record<string, unknown> | undefined;
-  return entities?.[qid] ?? null;
+  return withRetry(async () => {
+    const res = await fetchWithTimeout(`${WIKIDATA_API}?${params.toString()}`);
+    const data = (await res.json()) as Record<string, unknown>;
+    const entities = data.entities as Record<string, unknown> | undefined;
+    return entities?.[qid] ?? null;
+  });
 }
 
 /**

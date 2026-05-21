@@ -1,5 +1,6 @@
 import type { WeatherForecast } from "@/lib/types";
 import { fetchWithTimeout } from "@/lib/api/fetchWithTimeout";
+import { withRetry } from "@/lib/api/retry";
 
 const OPENMETEO_BASE = "https://api.open-meteo.com/v1";
 
@@ -34,9 +35,11 @@ export async function getWeatherForecast(
     `&timezone=${timezone}` +
     `&forecast_days=7`;
 
-  const res = await fetchWithTimeout(url, { next: { revalidate: 3600 } }); // cache 1 hour
-  if (!res.ok) throw new Error(`Open-Meteo fetch failed: ${res.status}`);
-  return res.json() as Promise<WeatherForecast>;
+  return withRetry(async () => {
+    const res = await fetchWithTimeout(url, { next: { revalidate: 3600 } }); // cache 1 hour
+    if (!res.ok) throw new Error(`Open-Meteo fetch failed: ${res.status}`);
+    return res.json() as Promise<WeatherForecast>;
+  });
 }
 
 export async function getHistoricalWeather(
@@ -51,7 +54,9 @@ export async function getHistoricalWeather(
     `&start_date=${startDate}&end_date=${endDate}` +
     `&hourly=temperature_2m,precipitation`;
 
-  const res = await fetchWithTimeout(url, { next: { revalidate: 86400 } }); // cache 24 hours
-  if (!res.ok) throw new Error(`Open-Meteo historical fetch failed: ${res.status}`);
-  return res.json();
+  return withRetry(async () => {
+    const res = await fetchWithTimeout(url, { next: { revalidate: 86400 } }); // cache 24 hours
+    if (!res.ok) throw new Error(`Open-Meteo historical fetch failed: ${res.status}`);
+    return res.json();
+  });
 }
