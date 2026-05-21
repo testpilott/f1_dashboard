@@ -5,7 +5,7 @@ import { VALID_YEAR, VALID_ROUND } from "@/lib/validators";
 import { getRaceLaps, getRacePitstops } from "@/lib/api/jolpica";
 import { buildLapSeries, mapPitstops } from "@/lib/stats/lapAnalysis";
 
-export const revalidate = 6 * 3600;
+export const revalidate = 21600;
 
 export async function GET(req: Request) {
   const blocked = rateLimited(req, "race-laps");

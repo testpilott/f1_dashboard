@@ -6,7 +6,7 @@ import { VALID_ID } from "@/lib/validators";
 import { getAllRaceResultsAtCircuit } from "@/lib/api/jolpica";
 import { computeCircuitRecords } from "@/lib/stats/circuitRecords";
 
-export const revalidate = 6 * 3600;
+export const revalidate = 21600;
 
 export async function GET(req: Request) {
   const blocked = rateLimited(req, "circuit-records");
