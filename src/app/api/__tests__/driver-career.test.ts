@@ -89,13 +89,13 @@ describe("GET /api/driver-career", () => {
     });
   });
 
-  it("returns 500 when championship lookup fails", async () => {
+  it("returns partial career totals when championship lookup fails", async () => {
     vi.mocked(getDriverCareerChampionships).mockRejectedValue(new Error("championship lookup failed"));
 
     const res = await GET(makeApiRequest("/api/driver-career", { driverId: "hamilton" }));
     const body = await res.json();
 
-    expect(res.status).toBe(500);
-    expect(body.error).toMatch(/internal server error/i);
+    expect(res.status).toBe(200);
+    expect(body.career.championships).toBeNull();
   });
 });

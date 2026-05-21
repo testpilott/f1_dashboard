@@ -193,7 +193,15 @@ export default function DriverDetailPanel({
               <StatBox label="Wins" value={String(careerData.wins)} highlight={careerData.wins > 0} />
               <StatBox label="Podiums" value={String(careerData.podiums)} highlight={careerData.podiums > 0} />
               <StatBox label="Fastest" value={String(careerData.fastestLaps)} />
-              <StatBox label="Champs" value={careerData.championships > 0 ? String(careerData.championships) : "—"} highlight={careerData.championships > 0} />
+              <StatBox
+                label="Champs"
+                value={
+                  typeof careerData.championships === "number" && careerData.championships > 0
+                    ? String(careerData.championships)
+                    : "—"
+                }
+                highlight={typeof careerData.championships === "number" && careerData.championships > 0}
+              />
             </div>
           )}
         </div>

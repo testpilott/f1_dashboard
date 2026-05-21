@@ -12,7 +12,8 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:ci": "vitest run --coverage",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "smoke:api": "node tools/smoke-api.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.1",

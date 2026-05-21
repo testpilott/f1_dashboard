@@ -29,3 +29,18 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Smoke critical APIs (local server)
+        run: |
+          npm run start -- -p 3000 > /tmp/next-start.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID' EXIT
+
+          for i in {1..40}; do
+            if curl -sSf http://127.0.0.1:3000 >/dev/null; then
+              break
+            fi
+            sleep 1
+          done
+
+          SMOKE_BASE_URL=http://127.0.0.1:3000 npm run smoke:api

@@ -1,0 +1,31 @@
+name: Production Smoke
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+    inputs:
+      baseUrl:
+        description: "Base URL to smoke check"
+        required: false
+        default: "https://f1-dashboard-lilac.vercel.app"
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Run production smoke checks
+        env:
+          SMOKE_BASE_URL: ${{ github.event.inputs.baseUrl || 'https://f1-dashboard-lilac.vercel.app' }}
+          SMOKE_RETRIES: "4"
+          SMOKE_RETRY_DELAY_MS: "1500"
+        run: node tools/smoke-api.mjs

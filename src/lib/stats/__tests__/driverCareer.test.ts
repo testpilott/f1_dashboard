@@ -24,7 +24,7 @@ describe("buildDriverCareerStats", () => {
     expect(result.podiums).toBe(0);
     expect(result.starts).toBe(0);
     expect(result.fastestLaps).toBe(0);
-    expect(result.championships).toBe(0);
+    expect(result.championships).toBeNull();
   });
 
   it("treats non-numeric totals as 0", () => {
@@ -44,5 +44,10 @@ describe("buildDriverCareerStats", () => {
   it("handles partial fields — podiums uses available values", () => {
     const result = buildDriverCareerStats({ wins: "5", p2: "10" });
     expect(result.podiums).toBe(15); // p3 defaults to 0
+  });
+
+  it("treats non-numeric championships as unknown", () => {
+    const result = buildDriverCareerStats({ championships: "n/a" });
+    expect(result.championships).toBeNull();
   });
 });
