@@ -8,7 +8,7 @@ import type { DriverSeasonSummary } from "@/lib/stats/driverSeason";
 import type { WikidataDriverProfile } from "@/lib/types/wikidata";
 import { getTeamColor, getFlagByDemonym } from "@/lib/constants";
 import { getDriverStatic } from "@/lib/drivers-static";
-import { resolveBirthplace, resolvePhotoUrl } from "@/lib/stats/driverEnrichment";
+import { resolveBirthplace } from "@/lib/stats/driverEnrichment";
 import DriverBirthplace from "@/components/drivers/DriverBirthplace";
 import { DriverSeasonStats } from "@/components/stats/DriverSeasonStats";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -57,7 +57,6 @@ export default function DriverDetailPanel({
   const flag = getFlagByDemonym(driver.Driver.nationality);
   const staticData = getDriverStatic(driver.Driver.driverId);
   const birthplace = resolveBirthplace(wikidataProfile ?? null, staticData?.hometown ?? null);
-  const photoUrl = resolvePhotoUrl(wikidataProfile ?? null);
 
   return (
     <div className="bg-surface-2 border border-border rounded-xl overflow-hidden">
@@ -73,15 +72,6 @@ export default function DriverDetailPanel({
         </button>
 
         <div className="flex items-center gap-3 mb-4">
-          {photoUrl && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={photoUrl}
-              alt={`${driver.Driver.givenName} ${driver.Driver.familyName}`}
-              className="w-16 h-16 rounded-full object-cover shrink-0 border border-border"
-              loading="lazy"
-            />
-          )}
           <TeamLogo team={team} size={36} />
           <div>
             <div className="flex items-center gap-2">
