@@ -64,8 +64,9 @@ describe("computeCircuitRecords", () => {
     const out = computeCircuitRecords(races);
     expect(out.mostWins?.driverId).toBe("hamilton");
     expect(out.mostWins?.count).toBe(2);
-    expect(out.mostPoles?.driverId).toBe("hamilton");
     expect(out.mostPoles?.count).toBe(1);
+    expect(out.mostPoles?.name).toContain("Hamilton");
+    expect(out.mostPoles?.name).toContain("Leclerc");
     expect(out.fastestLap?.time).toBe("1:21.000");
     expect(out.fastestLap?.year).toBe(2025);
   });
@@ -77,5 +78,41 @@ describe("computeCircuitRecords", () => {
   it("returns null fields when results are empty", () => {
     const out = computeCircuitRecords([makeRace("2024", [])]);
     expect(out).toEqual({ mostWins: null, mostPoles: null, fastestLap: null });
+  });
+
+  it("represents ties for top counts", () => {
+    const races: Race[] = [
+      makeRace("2024", [
+        {
+          number: "1",
+          position: "1",
+          positionText: "1",
+          points: "25",
+          Driver: { driverId: "hamilton", permanentNumber: "44", code: "HAM", url: "", givenName: "Lewis", familyName: "Hamilton", dateOfBirth: "1985-01-07", nationality: "British" },
+          Constructor: { constructorId: "mercedes", url: "", name: "Mercedes", nationality: "German" },
+          grid: "2",
+          laps: "53",
+          status: "Finished",
+        },
+      ]),
+      makeRace("2025", [
+        {
+          number: "1",
+          position: "1",
+          positionText: "1",
+          points: "25",
+          Driver: { driverId: "schumacher", permanentNumber: "1", code: "MSC", url: "", givenName: "Michael", familyName: "Schumacher", dateOfBirth: "1969-01-03", nationality: "German" },
+          Constructor: { constructorId: "ferrari", url: "", name: "Ferrari", nationality: "Italian" },
+          grid: "3",
+          laps: "53",
+          status: "Finished",
+        },
+      ]),
+    ];
+
+    const out = computeCircuitRecords(races);
+    expect(out.mostWins?.count).toBe(1);
+    expect(out.mostWins?.name).toContain("Hamilton");
+    expect(out.mostWins?.name).toContain("Schumacher");
   });
 });

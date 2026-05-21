@@ -21,15 +21,15 @@ export function formatInZone(iso: string, tz: string): string | null {
   try {
     const date = new Date(iso);
     if (isNaN(date.getTime())) return null;
-    return new Intl.DateTimeFormat("en-US", {
+    return new Intl.DateTimeFormat("en-GB", {
       weekday: "short",
       month: "short",
       day: "numeric",
-      hour: "numeric",
+      hour: "2-digit",
       minute: "2-digit",
       hour12: false,
       timeZone: tz,
-      timeZoneName: "short",
+      timeZoneName: "shortOffset",
     }).format(date);
   } catch {
     return null;
@@ -56,15 +56,15 @@ export function buildRaceStartTimes(
   dateStr: string,
   timeStr: string | null,
   circuitId: string
-): { venue: string | null; eastern: string | null } {
-  if (!dateStr || !timeStr) return { venue: null, eastern: null };
+): { venue: string | null; utc: string | null } {
+  if (!dateStr || !timeStr) return { venue: null, utc: null };
 
   const iso = `${dateStr}T${timeStr}`;
   const tz = CIRCUIT_TIMEZONES[circuitId] || CIRCUIT_COORDS[circuitId]?.timezone;
-  if (!tz) return { venue: null, eastern: null };
+  if (!tz) return { venue: null, utc: null };
 
   return {
     venue: formatInZone(iso, tz),
-    eastern: formatInZone(iso, "America/New_York"),
+    utc: formatInZone(iso, "UTC"),
   };
 }

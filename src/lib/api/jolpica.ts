@@ -149,10 +149,54 @@ export async function getDriverSeasons(driverId: string): Promise<number[]> {
 
 /** Returns all historical race entries for a circuit (all seasons). */
 export async function getAllRaceResultsAtCircuit(circuitId: string): Promise<Race[]> {
-  const data = await jolpicaFetch<{
-    MRData: { RaceTable: { Races: Race[] } };
-  }>(`/circuits/${encodeURIComponent(circuitId)}/results.json?limit=1000`, "results");
-  return data.MRData.RaceTable.Races ?? [];
+  const limit = 100;
+  let offset = 0;
+  let total = Number.POSITIVE_INFINITY;
+  const racesByKey = new Map<string, Race>();
+
+  while (offset < total) {
+    const data = await jolpicaFetch<{
+      MRData: {
+        total: string;
+        offset: string;
+        limit: string;
+        RaceTable: { Races: Race[] };
+      };
+    }>(`/circuits/${encodeURIComponent(circuitId)}/results.json?limit=${limit}&offset=${offset}`, "results");
+
+    const races = data.MRData.RaceTable.Races ?? [];
+    for (const race of races) {
+      const key = `${race.season}-${race.round}`;
+      const existing = racesByKey.get(key);
+      if (!existing) {
+        racesByKey.set(key, {
+          ...race,
+          Results: [...(race.Results ?? [])],
+        });
+        continue;
+      }
+
+      const seen = new Set((existing.Results ?? []).map((r) => `${r.number}:${r.Driver?.driverId ?? ""}`));
+      const incoming = (race.Results ?? []).filter(
+        (r) => !seen.has(`${r.number}:${r.Driver?.driverId ?? ""}`)
+      );
+      existing.Results = [...(existing.Results ?? []), ...incoming];
+    }
+
+    const parsedTotal = parseInt(data.MRData.total ?? "0", 10);
+    const parsedOffset = parseInt(data.MRData.offset ?? String(offset), 10);
+    const parsedLimit = parseInt(data.MRData.limit ?? String(limit), 10);
+    total = isNaN(parsedTotal) ? 0 : parsedTotal;
+    offset = parsedOffset + (isNaN(parsedLimit) ? limit : parsedLimit);
+
+    if (races.length === 0) break;
+  }
+
+  return Array.from(racesByKey.values()).sort((a, b) => {
+    const seasonDiff = parseInt(a.season, 10) - parseInt(b.season, 10);
+    if (seasonDiff !== 0) return seasonDiff;
+    return parseInt(a.round, 10) - parseInt(b.round, 10);
+  });
 }
 
 /** Fetch all lap timing pages for a race. */

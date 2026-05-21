@@ -25,14 +25,14 @@ describe("formatInZone", () => {
 });
 
 describe("buildRaceStartTimes", () => {
-  it("returns venue/eastern times for valid input", () => {
+  it("returns venue/utc times for valid input", () => {
     const out = buildRaceStartTimes("2026-09-06", "13:00:00Z", "monza");
     expect(out.venue).not.toBeNull();
-    expect(out.eastern).not.toBeNull();
+    expect(out.utc).not.toBeNull();
   });
 
   it("returns nulls when time is missing", () => {
-    expect(buildRaceStartTimes("2026-09-06", null, "monza")).toEqual({ venue: null, eastern: null });
+    expect(buildRaceStartTimes("2026-09-06", null, "monza")).toEqual({ venue: null, utc: null });
   });
 });
 

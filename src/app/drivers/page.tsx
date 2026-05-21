@@ -1,13 +1,12 @@
 "use client";
 
-import { Fragment, Suspense, useMemo, useState } from "react";
+import { Fragment, Suspense, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
 import type { DriverStanding, NewsItem } from "@/lib/types";
 import type { WikidataDriverProfile } from "@/lib/types/wikidata";
 import { getTeamColor } from "@/lib/constants";
 import { normalizeSeason, seasonLabel } from "@/lib/season";
-import { sortFavoritesFirst } from "@/lib/favorites";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import SeasonPicker from "@/components/ui/SeasonPicker";
@@ -54,7 +53,7 @@ function DriversPageInner() {
   const searchParams = useSearchParams();
   const season = normalizeSeason(searchParams.get("season"));
   const [selected, setSelected] = useState<DriverStanding | null>(null);
-  const { favorites, hydrated, toggle, isFavorite: isFav } = useFavorites();
+  const { hydrated, toggle, isFavorite: isFav } = useFavorites();
 
   const { data: drivers, isLoading, isError, refetch } = useQuery({
     queryKey: ["driver-standings", season],
@@ -98,11 +97,7 @@ function DriversPageInner() {
     staleTime: 24 * 60 * 60 * 1000,
   });
 
-  const sortedDrivers = useMemo(() => {
-    const base = drivers ?? [];
-    if (!hydrated) return base;
-    return sortFavoritesFirst(base, (d) => d.Driver.driverId, favorites);
-  }, [drivers, favorites, hydrated]);
+  const displayDrivers = drivers ?? [];
 
   return (
     <div>
@@ -131,7 +126,7 @@ function DriversPageInner() {
             </div>
           )}
 
-          {sortedDrivers.map((d) => {
+          {displayDrivers.map((d) => {
             const team = d.Constructors[0]?.name ?? "Unknown";
             const color = getTeamColor(team);
             const pos = parseInt(d.position, 10);
@@ -143,17 +138,19 @@ function DriversPageInner() {
                 <div className="relative">
                   <button
                     onClick={() => setSelected(isActive ? null : d)}
-                    className={`rounded-lg border px-3.5 py-2.5 sm:px-4 sm:py-3 flex items-center gap-2.5 sm:gap-3 transition-all text-left w-full cursor-pointer ${
+                    className={`rounded-lg border px-4 py-3.5 sm:px-5 sm:py-4 flex items-center gap-3 sm:gap-4 transition-all text-left w-full cursor-pointer min-h-[112px] ${
                       isActive
                         ? "bg-surface-3 border-ring ring-1 ring-ring"
-                        : "bg-surface-2 border-border hover:bg-accent/40"
+                        : favorite
+                          ? "bg-surface-2 border-medal-gold/70 ring-1 ring-medal-gold/40 hover:bg-accent/40"
+                          : "bg-surface-2 border-border hover:bg-accent/40"
                     }`}
                     style={{ borderLeftColor: color, borderLeftWidth: 3 }}
                   >
                     <div className="text-2xl sm:text-3xl font-black text-muted-foreground/40 w-7 sm:w-8 text-center tabular-nums shrink-0">
                       {pos}
                     </div>
-                    <DriverHeadshot driver={d} photos={photos ?? []} size={44} />
+                    <DriverHeadshot driver={d} photos={photos ?? []} size={56} />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-0.5">
                         <span className="font-mono text-xs font-bold" style={{ color }}>
@@ -175,16 +172,13 @@ function DriversPageInner() {
                       <p className="text-[10px] text-muted-foreground/50">pts</p>
                     </div>
                   </button>
-                  <FavoriteStar
-                    driverId={d.Driver.driverId}
-                    isFavorite={favorite}
-                    onToggle={() => toggle(d.Driver.driverId)}
-                  />
-                  {favorite && (
-                    <span className="absolute left-2 top-2 text-[10px] font-semibold text-medal-gold bg-medal-gold/15 border border-medal-gold/30 rounded px-1 py-0.5">
-                      Fav
-                    </span>
-                  )}
+                  <div className="absolute right-2 bottom-2">
+                    <FavoriteStar
+                      driverId={d.Driver.driverId}
+                      isFavorite={favorite}
+                      onToggle={() => toggle(d.Driver.driverId)}
+                    />
+                  </div>
                 </div>
 
                 {isActive && (

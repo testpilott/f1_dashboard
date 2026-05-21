@@ -154,7 +154,7 @@ export default function RaceDetailClient({
   const hasRadio = season >= RADIO_AVAILABLE_FROM && season <= RADIO_AVAILABLE_THROUGH;
 
   const startTimes = useMemo(() => {
-    if (!raceInfo) return { venue: null, eastern: null };
+    if (!raceInfo) return { venue: null, utc: null };
     return buildRaceStartTimes(
       raceInfo.date,
       raceInfo.time ?? null,
@@ -209,7 +209,7 @@ export default function RaceDetailClient({
             <div className="mt-3 space-y-2">
               <RaceStartTimes
                 venue={startTimes.venue}
-                eastern={startTimes.eastern}
+                utc={startTimes.utc}
                 browserLocal={browserLocal}
               />
               {circuitRecordsLoading ? (

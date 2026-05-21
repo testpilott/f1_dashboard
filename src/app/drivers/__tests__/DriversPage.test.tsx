@@ -127,8 +127,8 @@ describe("<DriversPage />", () => {
   it("renders a larger driver portrait when headshot is available", async () => {
     render(withQuery(<DriversPage />));
     const portrait = await screen.findByRole("img", { name: /max verstappen/i });
-    expect(portrait).toHaveAttribute("width", "44");
-    expect(portrait).toHaveAttribute("height", "44");
+    expect(portrait).toHaveAttribute("width", "56");
+    expect(portrait).toHaveAttribute("height", "56");
   });
 
   it("renders team-logo fallback at portrait size when no headshot is available", async () => {
@@ -137,7 +137,7 @@ describe("<DriversPage />", () => {
 
     await screen.findByText(/Verstappen/i);
     const teamBadge = screen.getByTitle("Red Bull Racing");
-    expect(teamBadge).toHaveStyle({ width: "44px", height: "44px" });
+    expect(teamBadge).toHaveStyle({ width: "56px", height: "56px" });
   });
 
   it("shows error state when fetch fails", async () => {

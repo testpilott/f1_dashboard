@@ -53,13 +53,28 @@ export function computeCircuitRecords(races: Race[]): CircuitRecords {
   }
 
   const maxByCount = (m: Map<string, { name: string; count: number }>) => {
-    let best: { driverId: string; name: string; count: number } | null = null;
+    let bestCount = -1;
+    const leaders: { driverId: string; name: string; count: number }[] = [];
+
     for (const [driverId, data] of m.entries()) {
-      if (!best || data.count > best.count) {
-        best = { driverId, name: data.name, count: data.count };
+      if (data.count > bestCount) {
+        bestCount = data.count;
+        leaders.length = 0;
+        leaders.push({ driverId, name: data.name, count: data.count });
+      } else if (data.count === bestCount) {
+        leaders.push({ driverId, name: data.name, count: data.count });
       }
     }
-    return best;
+
+    if (leaders.length === 0) return null;
+    if (leaders.length === 1) return leaders[0];
+
+    const sorted = [...leaders].sort((a, b) => a.name.localeCompare(b.name));
+    return {
+      driverId: sorted.map((d) => d.driverId).join("|"),
+      name: sorted.map((d) => d.name).join(" / "),
+      count: sorted[0].count,
+    };
   };
 
   return {
