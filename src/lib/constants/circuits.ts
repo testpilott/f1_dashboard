@@ -31,8 +31,12 @@ export const CIRCUIT_COORDS: Record<string, { lat: number; lng: number; timezone
 // Keys are Jolpica circuitId values (unique per circuit, returned by /current.json).
 // Using circuitId instead of country avoids collisions where multiple races share
 // a country (e.g. USA → Miami/Austin/Las Vegas, Spain → Barcelona/Madrid).
+// FOM hosts these outline images under season-specific folders and filenames, so this
+// asset season must be reviewed and bumped when the next season's assets are published.
 
-const CDN_BASE = "https://media.formula1.com/image/upload/common/f1/2026/track";
+const CIRCUIT_ASSET_SEASON = "2026";
+
+const CDN_BASE = `https://media.formula1.com/image/upload/common/f1/${CIRCUIT_ASSET_SEASON}/track`;
 
 const CIRCUIT_IMAGE_SLUGS: Record<string, string> = {
   albert_park: "melbourne",      // Australian GP
@@ -62,5 +66,5 @@ const CIRCUIT_IMAGE_SLUGS: Record<string, string> = {
 export function getCircuitImageUrl(circuitId: string): string | null {
   const slug = CIRCUIT_IMAGE_SLUGS[circuitId];
   if (!slug) return null;
-  return `${CDN_BASE}/2026track${slug}blackoutline.svg`;
+  return `${CDN_BASE}/${CIRCUIT_ASSET_SEASON}track${slug}blackoutline.svg`;
 }

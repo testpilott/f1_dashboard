@@ -88,7 +88,7 @@ export default function TireStrategy({ sessionKey }: { sessionKey: number }) {
                     const end = ((stint.lap_end ?? stint.lap_start ?? 1)) / maxLap * 100;
                     const width = end - start;
                     const compound = stint.compound ?? "UNKNOWN";
-                    const color = TYRE_COLORS[compound as keyof typeof TYRE_COLORS] ?? "#666";
+                    const color = TYRE_COLORS[compound as keyof typeof TYRE_COLORS] ?? "var(--muted-foreground)";
 
                     return (
                       <Tooltip key={idx}>

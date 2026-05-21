@@ -12,6 +12,7 @@ import { rateLimited } from "@/lib/api/withRateLimit";
 import { VALID_ID, VALID_SEASON, VALID_COMPARE_VIEW } from "@/lib/validators";
 import { seasonHeadToHead } from "@/lib/stats/headToHead";
 import { constructorHeadToHead } from "@/lib/stats/constructorH2H";
+import { REVALIDATE_6H } from "@/lib/cacheStrategy";
 import {
   computeComparisonYears,
   chunk,
@@ -54,7 +55,7 @@ const getCircuitHistoryCached = unstable_cache(
     return history;
   },
   ["compare-circuit"],
-  { revalidate: 6 * 3600 },
+  { revalidate: REVALIDATE_6H },
 );
 
 export async function GET(req: Request) {
@@ -93,7 +94,7 @@ export async function GET(req: Request) {
       const stats = seasonHeadToHead(races, seasonDriverA, seasonDriverB);
       return NextResponse.json({ view: "season", season, driverA: seasonDriverA, driverB: seasonDriverB, stats });
     } catch (err) {
-      return serverError("compare?view=season", err);
+        return serverError("compare-season", err);
     }
   }
 
@@ -144,7 +145,7 @@ export async function GET(req: Request) {
 
       return NextResponse.json({ view: "teams", season, constructorA, constructorB, stats, context });
     } catch (err) {
-      return serverError("compare?view=teams", err);
+      return serverError("compare-teams", err);
     }
   }
 
@@ -164,7 +165,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json({ circuitId, driverA: circuitDriverA, driverB: circuitDriverB, history });
   } catch (err) {
-    return serverError("compare?view=circuit", err);
+    return serverError("compare-circuit", err);
   }
 }
 

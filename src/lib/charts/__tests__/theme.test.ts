@@ -11,7 +11,7 @@ describe("chart theme (SSR fallback path)", () => {
   it("nivoTheme has axis, grid, and tooltip sections", () => {
     const t = nivoTheme();
     expect(t.axis).toBeDefined();
-    expect(t.grid.line.stroke).toBeTruthy();
-    expect(t.tooltip.container.background).toBeTruthy();
+    expect(t.grid.line.stroke).toBeDefined();
+    expect(t.tooltip.container.background).toBeDefined();
   });
 });

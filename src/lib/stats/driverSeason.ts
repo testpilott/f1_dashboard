@@ -1,4 +1,4 @@
-import type { Race, RaceResult } from "@/lib/types";
+import type { Race } from "@/lib/types";
 import { isDnf } from "@/lib/stats/common";
 import { parseGrid, parsePoints, parsePosition } from "@/lib/stats/parsing";
 

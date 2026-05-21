@@ -1,6 +1,6 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { vi, describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import StandingsTables from "@/components/standings/StandingsTables";
 import { withQuery } from "@/test/render";
 import { createFetchRouter } from "@/test/fetch";
@@ -73,9 +73,11 @@ describe("<StandingsTables />", () => {
     const goldBadge = screen
       .getAllByText("1")
       .find((el) => el.className.includes("bg-medal-gold"));
-    expect(goldBadge).toBeTruthy();
+    expect(goldBadge).toBeInTheDocument();
     // No raw Tailwind color literals should remain on the badge.
-    expect(goldBadge?.className).not.toMatch(/bg-yellow-|bg-slate-|bg-amber-/);
+    expect(goldBadge).not.toHaveClass("bg-yellow-400");
+    expect(goldBadge).not.toHaveClass("bg-slate-400");
+    expect(goldBadge).not.toHaveClass("bg-amber-400");
   });
 
   it("hydrates the driver form chip from /api/form", async () => {

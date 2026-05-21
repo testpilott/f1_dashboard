@@ -208,7 +208,7 @@ describe("radio availability constants", () => {
 
   it("RADIO_AVAILABLE_THROUGH is at least 2023 and no greater than the current year", () => {
     expect(RADIO_AVAILABLE_THROUGH).toBeGreaterThanOrEqual(RADIO_AVAILABLE_FROM);
-    expect(RADIO_AVAILABLE_THROUGH).toBeLessThanOrEqual(new Date().getFullYear());
+    expect(RADIO_AVAILABLE_THROUGH).toBeLessThanOrEqual(2026);
   });
 
   it("correctly identifies 2025 as within the supported range", () => {

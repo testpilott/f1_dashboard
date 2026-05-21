@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { badRequest } from "@/lib/api/routeHelpers";
+import { badRequest, logRouteError } from "@/lib/api/routeHelpers";
 import { rateLimited } from "@/lib/api/withRateLimit";
 import { VALID_YEAR, VALID_ROUND } from "@/lib/validators";
 import { getSchedule } from "@/lib/api/jolpica";
@@ -67,7 +67,7 @@ export async function GET(req: Request) {
       rotation: typeof info.rotation === "number" ? info.rotation : 0,
     });
   } catch (err) {
-    console.error("[/api/circuit-info] Error:", err);
+    logRouteError("circuit-info", err);
     return NextResponse.json({ available: false, reason: "Circuit data temporarily unavailable" });
   }
 }

@@ -5,6 +5,7 @@ import { rateLimited } from "@/lib/api/withRateLimit";
 import { VALID_ID } from "@/lib/validators";
 import { getAllRaceResultsAtCircuit } from "@/lib/api/jolpica";
 import { computeCircuitRecords } from "@/lib/stats/circuitRecords";
+import { REVALIDATE_6H } from "@/lib/cacheStrategy";
 
 export const revalidate = 21600;
 
@@ -26,7 +27,7 @@ export async function GET(req: Request) {
         return computeCircuitRecords(allRaces);
       },
       ["circuit-records", circuitId],
-      { revalidate: 6 * 3600 }
+      { revalidate: REVALIDATE_6H }
     );
 
     const records = await getCached(circuitId);

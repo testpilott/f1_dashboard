@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   isFavorite,
   parseFavorites,
@@ -8,19 +8,18 @@ import {
   STORAGE_KEY,
   toggleFavorite,
 } from "@/lib/favorites";
+import { useIsClient } from "@/lib/hooks/useIsClient";
 
 export function useFavorites() {
-  const [favorites, setFavorites] = useState<string[]>([]);
-  const [hydrated, setHydrated] = useState(false);
-
-  useEffect(() => {
+  const [favorites, setFavorites] = useState<string[]>(() => {
+    if (typeof window === "undefined") return [];
     try {
-      setFavorites(parseFavorites(localStorage.getItem(STORAGE_KEY)));
+      return parseFavorites(window.localStorage.getItem(STORAGE_KEY));
     } catch {
-      setFavorites([]);
+      return [];
     }
-    setHydrated(true);
-  }, []);
+  });
+  const hydrated = useIsClient();
 
   function toggle(driverId: string) {
     setFavorites((prev) => {

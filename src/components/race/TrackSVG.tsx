@@ -192,10 +192,10 @@ export default function TrackSVG({
         const pt = rotatePoint(snapped.x, -snapped.y, cx, cy, rotationDeg);
         const flagColor =
           marker.meta.flag === "RED"
-            ? "#ef4444"
+            ? "var(--incident-red)"
             : marker.meta.flag === "YELLOW" || marker.meta.flag === "DOUBLE YELLOW"
-              ? "#f59e0b"
-              : "var(--f1-red, #e10600)";
+              ? "var(--incident-yellow)"
+              : "var(--incident-default)";
 
         return (
           <g

@@ -7,25 +7,34 @@ export type DataClass =
   | "projections"
   | "form";
 
+export const REVALIDATE_30S = 30;
+export const REVALIDATE_1M = 60;
+export const REVALIDATE_2M = 120;
+export const REVALIDATE_5M = 300;
+export const REVALIDATE_15M = 900;
+export const REVALIDATE_1H = 3600;
+export const REVALIDATE_6H = 21600;
+export const REVALIDATE_24H = 86400;
+
 const BASE: Record<DataClass, number> = {
-  standings: 300,
-  schedule: 3600,
-  telemetry: 60,
-  news: 900,
-  results: 3600,
-  projections: 86400,
-  form: 300,
+  standings: REVALIDATE_5M,
+  schedule: REVALIDATE_1H,
+  telemetry: REVALIDATE_1M,
+  news: REVALIDATE_15M,
+  results: REVALIDATE_1H,
+  projections: REVALIDATE_24H,
+  form: REVALIDATE_5M,
 };
 
 // Race weekends (Fri–Sun): serve fresher data for live-changing fields.
 const RACE_WEEKEND: Record<DataClass, number> = {
-  standings: 60,
-  schedule: 3600, // schedule doesn't change mid-weekend
-  telemetry: 30,
-  news: 300,
-  results: 120,
-  projections: 86400,
-  form: 60,
+  standings: REVALIDATE_1M,
+  schedule: REVALIDATE_1H, // schedule doesn't change mid-weekend
+  telemetry: REVALIDATE_30S,
+  news: REVALIDATE_5M,
+  results: REVALIDATE_2M,
+  projections: REVALIDATE_24H,
+  form: REVALIDATE_1M,
 };
 
 function isRaceWeekend(now: Date): boolean {

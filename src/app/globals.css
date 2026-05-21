@@ -111,6 +111,29 @@
   --accent-2: oklch(0.55 0.20 300);
   --accent-2-foreground: oklch(0.99 0 0);
 
+  --sector-1: oklch(0.72 0.16 160);
+  --sector-1-foreground: oklch(0.52 0.12 160);
+  --sector-1-muted: oklch(0.72 0.16 160 / 18%);
+  --sector-1-border: oklch(0.72 0.16 160 / 45%);
+
+  --sector-2: oklch(0.78 0.16 82);
+  --sector-2-foreground: oklch(0.66 0.14 82);
+  --sector-2-muted: oklch(0.78 0.16 82 / 18%);
+  --sector-2-border: oklch(0.78 0.16 82 / 45%);
+
+  --sector-3: oklch(0.69 0.13 245);
+  --sector-3-foreground: oklch(0.56 0.11 245);
+  --sector-3-muted: oklch(0.69 0.13 245 / 18%);
+  --sector-3-border: oklch(0.69 0.13 245 / 45%);
+
+  --incident-red: oklch(0.63 0.21 25);
+  --incident-yellow: oklch(0.79 0.16 82);
+  --incident-default: var(--f1-red);
+
+  --rain-badge-bg: oklch(0.71 0.08 240 / 22%);
+  --rain-badge-border: oklch(0.62 0.08 240 / 45%);
+  --rain-badge-foreground: oklch(0.45 0.08 240);
+
   --radius: 0.5rem;
   --speed-fast: 120ms;
   --speed: 200ms;
@@ -173,6 +196,29 @@
   /* Secondary accent (violet) — lifted for dark broadcast contrast */
   --accent-2: oklch(0.66 0.20 300);
   --accent-2-foreground: oklch(0.99 0 0);
+
+  --sector-1: oklch(0.79 0.16 160);
+  --sector-1-foreground: oklch(0.84 0.14 160);
+  --sector-1-muted: oklch(0.79 0.16 160 / 20%);
+  --sector-1-border: oklch(0.79 0.16 160 / 48%);
+
+  --sector-2: oklch(0.84 0.16 82);
+  --sector-2-foreground: oklch(0.88 0.13 82);
+  --sector-2-muted: oklch(0.84 0.16 82 / 20%);
+  --sector-2-border: oklch(0.84 0.16 82 / 48%);
+
+  --sector-3: oklch(0.78 0.14 245);
+  --sector-3-foreground: oklch(0.83 0.12 245);
+  --sector-3-muted: oklch(0.78 0.14 245 / 20%);
+  --sector-3-border: oklch(0.78 0.14 245 / 48%);
+
+  --incident-red: oklch(0.71 0.19 25);
+  --incident-yellow: oklch(0.86 0.16 82);
+  --incident-default: var(--f1-red);
+
+  --rain-badge-bg: oklch(0.74 0.08 240 / 24%);
+  --rain-badge-border: oklch(0.74 0.08 240 / 44%);
+  --rain-badge-foreground: oklch(0.90 0.05 240);
 
   --sidebar: var(--surface-1);
   --sidebar-foreground: var(--foreground);

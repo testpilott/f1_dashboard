@@ -21,7 +21,7 @@ const mockProjection: ChampionshipProjection = {
   ],
   totalSimulations: 10000,
   remainingRaces: 10,
-  generatedAt: new Date().toISOString(),
+  generatedAt: "2026-05-21T00:00:00Z",
 };
 
 function wrapper({ children }: { children: React.ReactNode }) {

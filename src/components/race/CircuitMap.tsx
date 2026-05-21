@@ -1,5 +1,6 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { X } from "lucide-react";
@@ -26,34 +27,44 @@ const SECTORS = [
   {
     id: 1,
     label: "S1",
-    color: "#10b981",
-    dimColor: "rgba(16,185,129,0.18)",
-    textClass: "text-emerald-400",
-    ringClass: "ring-emerald-500/60",
-    btnActiveClass: "bg-emerald-500/20 border-emerald-500/50 text-emerald-300",
-    chipClass: "bg-emerald-500/15 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/25",
+    color: "var(--sector-1)",
+    dimColor: "var(--sector-1-muted)",
+    foreground: "var(--sector-1-foreground)",
+    border: "var(--sector-1-border)",
   },
   {
     id: 2,
     label: "S2",
-    color: "#f59e0b",
-    dimColor: "rgba(245,158,11,0.18)",
-    textClass: "text-amber-400",
-    ringClass: "ring-amber-500/60",
-    btnActiveClass: "bg-amber-500/20 border-amber-500/50 text-amber-300",
-    chipClass: "bg-amber-500/15 border-amber-500/40 text-amber-400 hover:bg-amber-500/25",
+    color: "var(--sector-2)",
+    dimColor: "var(--sector-2-muted)",
+    foreground: "var(--sector-2-foreground)",
+    border: "var(--sector-2-border)",
   },
   {
     id: 3,
     label: "S3",
-    color: "#3b82f6",
-    dimColor: "rgba(59,130,246,0.18)",
-    textClass: "text-blue-400",
-    ringClass: "ring-blue-500/60",
-    btnActiveClass: "bg-blue-500/20 border-blue-500/50 text-blue-300",
-    chipClass: "bg-blue-500/15 border-blue-500/40 text-blue-400 hover:bg-blue-500/25",
+    color: "var(--sector-3)",
+    dimColor: "var(--sector-3-muted)",
+    foreground: "var(--sector-3-foreground)",
+    border: "var(--sector-3-border)",
   },
 ] as const;
+
+function activeSectorStyle(sector: (typeof SECTORS)[number]): CSSProperties {
+  return {
+    backgroundColor: sector.dimColor,
+    borderColor: sector.border,
+    color: sector.foreground,
+  };
+}
+
+function chipSectorStyle(sector: (typeof SECTORS)[number]): CSSProperties {
+  return {
+    backgroundColor: sector.dimColor,
+    borderColor: sector.border,
+    color: sector.foreground,
+  };
+}
 
 interface IncidentsPayload {
   available: boolean;
@@ -258,10 +269,8 @@ export default function CircuitMap({ year, round }: { year: string; round: strin
               <div className="flex items-center gap-2 mb-1.5">
                 <button
                   onClick={() => toggleSector(s.id as SectorId)}
-                  className={cn(
-                    "text-xs font-bold px-2.5 py-0.5 rounded border cursor-pointer select-none transition-colors",
-                    s.allSelected ? s.btnActiveClass : s.chipClass,
-                  )}
+                  className="text-xs font-bold px-2.5 py-0.5 rounded border cursor-pointer select-none transition-colors hover:brightness-110"
+                  style={s.allSelected ? activeSectorStyle(s) : chipSectorStyle(s)}
                 >
                   {s.label}
                 </button>
@@ -278,10 +287,18 @@ export default function CircuitMap({ year, round }: { year: string; round: strin
                       className={cn(
                         "flex items-center justify-center w-10 h-8 rounded border text-xs font-mono font-semibold tabular-nums transition-all cursor-pointer select-none",
                         isSelected
-                          ? s.btnActiveClass
+                          ? "hover:brightness-110"
                           : "border-border bg-surface-3 text-foreground/70 hover:bg-surface-2",
                       )}
-                      style={isSelected ? { borderColor: s.color, color: s.color } : undefined}
+                      style={
+                        isSelected
+                          ? {
+                              backgroundColor: s.dimColor,
+                              borderColor: s.border,
+                              color: s.foreground,
+                            }
+                          : undefined
+                      }
                     >
                       T{c.number}
                     </button>

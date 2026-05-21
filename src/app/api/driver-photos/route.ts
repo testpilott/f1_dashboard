@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logRouteError } from "@/lib/api/routeHelpers";
 import { rateLimited } from "@/lib/api/withRateLimit";
 import { getDriversForSession } from "@/lib/api/openf1";
 
@@ -18,8 +19,8 @@ export async function GET(req: Request) {
     }));
     return NextResponse.json({ photos });
   } catch (err) {
-    console.error("[/api/driver-photos] Error:", err);
-    // Graceful degradation: empty photos array, page falls back to team logos
+    // Graceful degradation: empty photos array, page falls back to team logos.
+    logRouteError("driver-photos", err);
     return NextResponse.json({ photos: [] });
   }
 }

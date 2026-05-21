@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { Race, QualifyingResult, RaceResult } from "@/lib/types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -14,6 +14,7 @@ import CircuitMap from "@/components/race/CircuitMap";
 import CircuitRecords from "@/components/race/CircuitRecords";
 import RaceStartTimes from "@/components/race/RaceStartTimes";
 import type { CircuitRecords as CircuitRecordsType } from "@/lib/stats/circuitRecords";
+import { useIsClient } from "@/lib/hooks/useIsClient";
 import { buildRaceStartTimes } from "@/lib/time/raceTime";
 import { getStatusLabel, getStatusTooltip, RADIO_AVAILABLE_FROM, RADIO_AVAILABLE_THROUGH } from "@/lib/constants";
 import {
@@ -152,6 +153,7 @@ export default function RaceDetailClient({
   const hasSprint = Boolean(raceInfo?.Sprint);
   const season = Number(raceInfo?.season ?? 0);
   const hasRadio = season >= RADIO_AVAILABLE_FROM && season <= RADIO_AVAILABLE_THROUGH;
+  const isClient = useIsClient();
 
   const startTimes = useMemo(() => {
     if (!raceInfo) return { venue: null, utc: null };
@@ -162,18 +164,11 @@ export default function RaceDetailClient({
     );
   }, [raceInfo]);
 
-  const [browserLocal, setBrowserLocal] = useState<string | null>(null);
-  useEffect(() => {
-    if (!raceInfo?.time) {
-      setBrowserLocal(null);
-      return;
-    }
+  const browserLocal = useMemo(() => {
+    if (!isClient || !raceInfo?.time) return null;
     const d = new Date(`${raceInfo.date}T${raceInfo.time}`);
-    if (isNaN(d.getTime())) {
-      setBrowserLocal(null);
-      return;
-    }
-    setBrowserLocal(
+    if (isNaN(d.getTime())) return null;
+    return (
       new Intl.DateTimeFormat(undefined, {
         weekday: "short",
         month: "short",
@@ -184,7 +179,7 @@ export default function RaceDetailClient({
         timeZoneName: "short",
       }).format(d)
     );
-  }, [raceInfo]);
+  }, [isClient, raceInfo]);
 
   const { data: circuitRecords, isLoading: circuitRecordsLoading } = useQuery({
     queryKey: ["circuit-records", raceInfo?.Circuit.circuitId],

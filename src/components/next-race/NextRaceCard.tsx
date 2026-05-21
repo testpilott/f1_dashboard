@@ -173,7 +173,14 @@ export default function NextRaceCard({
               <span className="text-sm text-foreground">{Math.round(raceTemp as number)}°C</span>
             )}
             {rainProb != null && rainProb > 20 && (
-              <Badge className="bg-blue-900/60 text-blue-300 border-blue-800 text-xs">
+              <Badge
+                className="text-xs"
+                style={{
+                  backgroundColor: "var(--rain-badge-bg)",
+                  borderColor: "var(--rain-badge-border)",
+                  color: "var(--rain-badge-foreground)",
+                }}
+              >
                 {rainProb}% rain
               </Badge>
             )}

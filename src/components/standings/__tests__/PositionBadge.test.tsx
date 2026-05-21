@@ -6,12 +6,12 @@ describe("<PositionBadge />", () => {
   it("renders medal styling for podium positions", () => {
     const { container } = render(<PositionBadge pos={1} />);
     expect(screen.getByText("1")).toBeInTheDocument();
-    expect(container.querySelector(".bg-medal-gold")).toBeTruthy();
+    expect(container.querySelector(".bg-medal-gold")).toBeInTheDocument();
   });
 
   it("renders plain text styling for non-podium positions", () => {
     const { container } = render(<PositionBadge pos={7} />);
     expect(screen.getByText("7")).toBeInTheDocument();
-    expect(container.querySelector(".bg-medal-gold")).toBeFalsy();
+    expect(container.querySelector(".bg-medal-gold")).not.toBeInTheDocument();
   });
 });

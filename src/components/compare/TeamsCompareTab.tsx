@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import type { ConstructorH2HResult } from "@/lib/stats/constructorH2H";
 import type { ConstructorStanding } from "@/lib/types";
 import { getTeamColor } from "@/lib/constants";
@@ -10,6 +10,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import StatBar from "@/components/compare/StatBar";
+
+const CURRENT_YEAR = new Date().getFullYear();
+const TEAM_SEASON_OPTIONS = Array.from({ length: 6 }, (_, i) => String(CURRENT_YEAR - i));
 
 interface ConstructorContext {
   position: number | null;
@@ -39,7 +42,7 @@ async function fetchTeamsCompare(
 export default function TeamsCompareTab() {
   const [constructorAId, setConstructorAId] = useState("");
   const [constructorBId, setConstructorBId] = useState("");
-  const [teamsSeason, setTeamsSeason] = useState(String(new Date().getFullYear()));
+  const [teamsSeason, setTeamsSeason] = useState(String(CURRENT_YEAR));
 
   const { data: constructorStandings } = useQuery({
     queryKey: ["compare-constructor-standings", teamsSeason],
@@ -47,30 +50,22 @@ export default function TeamsCompareTab() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const bothTeamsSelected = Boolean(constructorAId && constructorBId);
-  const constructorA = constructorStandings?.find((c) => c.Constructor.constructorId === constructorAId);
-  const constructorB = constructorStandings?.find((c) => c.Constructor.constructorId === constructorBId);
-  const teamColorA = getTeamColor(constructorA?.Constructor.name ?? "");
-  const teamColorB = getTeamColor(constructorB?.Constructor.name ?? "");
-
   // Reset selections when the chosen season no longer contains the selected team
   const knownIds = constructorStandings?.map((c) => c.Constructor.constructorId) ?? [];
   const constructorAValid = !constructorAId || knownIds.includes(constructorAId);
   const constructorBValid = !constructorBId || knownIds.includes(constructorBId);
 
-  useEffect(() => {
-    if (constructorStandings && constructorAId && !knownIds.includes(constructorAId)) {
-      setConstructorAId("");
-    }
-    if (constructorStandings && constructorBId && !knownIds.includes(constructorBId)) {
-      setConstructorBId("");
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [constructorStandings]);
+  const selectedConstructorAId = constructorAValid ? constructorAId : "";
+  const selectedConstructorBId = constructorBValid ? constructorBId : "";
+  const bothTeamsSelected = Boolean(selectedConstructorAId && selectedConstructorBId);
+  const constructorA = constructorStandings?.find((c) => c.Constructor.constructorId === selectedConstructorAId);
+  const constructorB = constructorStandings?.find((c) => c.Constructor.constructorId === selectedConstructorBId);
+  const teamColorA = getTeamColor(constructorA?.Constructor.name ?? "");
+  const teamColorB = getTeamColor(constructorB?.Constructor.name ?? "");
 
   const { data: teamsData, isLoading: teamsLoading } = useQuery({
-    queryKey: ["teams-compare", constructorAId, constructorBId, teamsSeason],
-    queryFn: () => fetchTeamsCompare(constructorAId, constructorBId, teamsSeason),
+    queryKey: ["teams-compare", selectedConstructorAId, selectedConstructorBId, teamsSeason],
+    queryFn: () => fetchTeamsCompare(selectedConstructorAId, selectedConstructorBId, teamsSeason),
     enabled: bothTeamsSelected,
     staleTime: 5 * 60 * 1000,
   });
@@ -80,14 +75,14 @@ export default function TeamsCompareTab() {
       <div className="flex items-end gap-3 flex-wrap mb-8">
         <div className="flex-1 min-w-36">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Constructor A</p>
-          <Select value={constructorAId} onValueChange={(v) => v && setConstructorAId(v)}>
+            <Select value={selectedConstructorAId} onValueChange={(v) => v && setConstructorAId(v)}>
             <SelectTrigger className="w-full bg-surface-2 border-border" style={teamColorA ? { borderTopColor: teamColorA, borderTopWidth: 2 } : undefined}>
               <SelectValue placeholder="Select Team A…" />
               {!constructorAValid && <span className="text-[10px] text-destructive ml-1">Did not compete in {teamsSeason}</span>}
             </SelectTrigger>
             <SelectContent className="bg-surface-2 border-border">
               {constructorStandings?.map((c) => (
-                <SelectItem key={c.Constructor.constructorId} value={c.Constructor.constructorId} disabled={c.Constructor.constructorId === constructorBId}>
+                  <SelectItem key={c.Constructor.constructorId} value={c.Constructor.constructorId} disabled={c.Constructor.constructorId === selectedConstructorBId}>
                   P{c.position} · {c.Constructor.name}
                 </SelectItem>
               ))}
@@ -97,14 +92,14 @@ export default function TeamsCompareTab() {
         <span className="text-muted-foreground/50 font-bold mb-2 shrink-0">vs</span>
         <div className="flex-1 min-w-36">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Constructor B</p>
-          <Select value={constructorBId} onValueChange={(v) => v && setConstructorBId(v)}>
+          <Select value={selectedConstructorBId} onValueChange={(v) => v && setConstructorBId(v)}>
             <SelectTrigger className="w-full bg-surface-2 border-border" style={teamColorB ? { borderTopColor: teamColorB, borderTopWidth: 2 } : undefined}>
               <SelectValue placeholder="Select Team B…" />
               {!constructorBValid && <span className="text-[10px] text-destructive ml-1">Did not compete in {teamsSeason}</span>}
             </SelectTrigger>
             <SelectContent className="bg-surface-2 border-border">
               {constructorStandings?.map((c) => (
-                <SelectItem key={c.Constructor.constructorId} value={c.Constructor.constructorId} disabled={c.Constructor.constructorId === constructorAId}>
+                <SelectItem key={c.Constructor.constructorId} value={c.Constructor.constructorId} disabled={c.Constructor.constructorId === selectedConstructorAId}>
                   P{c.position} · {c.Constructor.name}
                 </SelectItem>
               ))}
@@ -116,14 +111,12 @@ export default function TeamsCompareTab() {
           <Select value={teamsSeason} onValueChange={(v) => {
             if (!v) return;
             setTeamsSeason(v);
-            // Reset selections that won't exist in the new season — resolved
-            // after the standings re-fetch via knownIds check below
           }}>
             <SelectTrigger className="bg-surface-2 border-border w-28">
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="bg-surface-2 border-border">
-              {Array.from({ length: 6 }, (_, i) => String(new Date().getFullYear() - i)).map((yr) => (
+              {TEAM_SEASON_OPTIONS.map((yr) => (
                 <SelectItem key={yr} value={yr}>{yr}</SelectItem>
               ))}
             </SelectContent>
@@ -179,8 +172,8 @@ export default function TeamsCompareTab() {
                   <p className="text-xs text-muted-foreground uppercase tracking-wider mb-3">Championship context — {teamsSeason}</p>
                   <div className="grid grid-cols-2 gap-3">
                     {[
-                      { ctx: teamsData.context.a, name: constructorA?.Constructor.name ?? constructorAId, color: teamColorA },
-                      { ctx: teamsData.context.b, name: constructorB?.Constructor.name ?? constructorBId, color: teamColorB },
+                      { ctx: teamsData.context.a, name: constructorA?.Constructor.name ?? selectedConstructorAId, color: teamColorA },
+                      { ctx: teamsData.context.b, name: constructorB?.Constructor.name ?? selectedConstructorBId, color: teamColorB },
                     ].map(({ ctx, name, color }) => (
                       <div key={name} className="rounded bg-surface-3/60 p-3 space-y-2">
                         <p className="text-xs font-semibold truncate" style={{ color }}>{name}</p>

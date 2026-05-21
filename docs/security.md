@@ -74,6 +74,9 @@ are processed by `next/image`. Currently empty (all images are local).
 
 - **Rate-limit persistence:** move to a shared store (Redis/Upstash) before multi-replica
   deployment.
+- **Route-key uniqueness:** `rateLimited(req, routeKey)` assumes each `routeKey` is globally
+  unique across `/api/*`. Reusing a key would merge unrelated routes into the same bucket;
+  keep names stable and unique, and add a startup/CI check if route count grows.
 - **CSP nonce:** replace `unsafe-inline`/`unsafe-eval` in script-src with a per-request
   nonce for stricter XSS protection.
 - **Subresource integrity:** if any external CDN scripts are added in the future, pin

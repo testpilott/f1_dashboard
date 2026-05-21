@@ -73,6 +73,16 @@ lower the gate.
 - Real external network calls (mock at the boundary).
 - Pure visual rendering pixels (assert structure/roles/text, not styles).
 
+## Test Smells To Avoid
+
+| Smell | Why it is bad | What to do instead |
+|---|---|---|
+| `toBeTruthy()` on a DOM query | Hides what actually failed and can pass for the wrong reason | Use `toBeInTheDocument()`, `toHaveTextContent()`, `toHaveClass()`, or explicit shape assertions |
+| `new Date()`, `Date.now()`, `Math.random()` in fixtures/assertions | Makes tests non-deterministic and year-rollover prone | Use fixed literals or `vi.useFakeTimers()` + `vi.setSystemTime()` |
+| API route with only a happy-path test | Misses the real breakpoints: validation and upstream failure | Cover `400` invalid input, `200` success shape, and `500`/documented graceful degradation |
+| Mocking the function under test | Verifies the mock, not the code | Mock only the dependency boundary (fetcher/module) and assert the function/route output |
+| Real network access in tests | Flaky, slow, and violates repo policy | Mock at the fetch boundary or test the pure transform directly |
+
 ## Definition of Done for any change
 
 1. New/changed code has ≥ 1 positive test and ≥ 1 edge/failure test.
