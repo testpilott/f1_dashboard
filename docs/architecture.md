@@ -86,9 +86,14 @@ New same-origin, rate-limited, input-validated endpoints (all free-tier, no DB/a
 | `GET /api/schedule/export?season=` | RFC-5545 `.ics` calendar download | `VALID_SEASON` |
 | `GET /api/search?q=` | Global driver/constructor/circuit/race search (pure scorer, no external dep) | `VALID_SEARCH_QUERY` |
 | `GET /api/team-radio?year=&round=` | OpenF1 team-radio clip list for the Race Detail "Radio" tab (2023+ only) | `VALID_YEAR`, `VALID_ROUND` |
+| `GET /api/wikidata?wikiUrl=` | Server-side Wikidata proxy — resolves a driver's Wikipedia URL to QID, birthplace city, and optional photo URL. All Wikipedia/Wikidata calls are server-side; CSP `connect-src 'self'` unchanged. | `VALID_WIKI_TITLE` (extracted from the URL) |
+| `GET /api/circuit-records?circuitId=` | Historical circuit records: most wins, most poles, fastest-lap holder. Wrapped in 6-hour `unstable_cache`. | `VALID_ID` |
+| `GET /api/race-laps?year=&round=` | Jolpica lap-time + pit-stop data for the Telemetry tab fallback (used when OpenF1 has no data, i.e. pre-2023). | `VALID_YEAR`, `VALID_ROUND` |
 
 Pure logic lives in `src/lib/stats/{form,pace,headToHead,session-match,constructorH2H}.ts`,
-`src/lib/ical.ts`, `src/lib/search.ts`, and `src/lib/cacheStrategy.ts` (each
+`src/lib/ical.ts`, `src/lib/search.ts`, `src/lib/cacheStrategy.ts`,
+`src/lib/season.ts`, `src/lib/favorites.ts`, and
+`src/lib/stats/{driverEnrichment,compareHistory,circuitRecords,lapAnalysis}.ts` (each
 unit-tested in the `node` project). `fetchWithTimeout` now throws on non-OK responses
 (spec-aligned; the per-fetcher `res.ok` checks remain as defence-in-depth).
 
@@ -117,6 +122,38 @@ Standings and schedule pages accept a `?season=YYYY` URL param (validated
 `/^\d{4}$/`). The `SeasonPicker` client component pushes the param via `router.push`,
 triggering a full server re-render with the chosen season. `2026` maps to `"current"`
 for Jolpica compatibility.
+
+### Feature-expansion additions (Phase 1–8, see `docs/HANDOFF.md`)
+
+Nine UX/data features delivered across eight phases. Key architectural notes:
+
+**Wikidata server-side proxy (`/api/wikidata`):** All calls to `en.wikipedia.org` and
+`www.wikidata.org` are server-side inside this route. The browser never calls external
+APIs; CSP `connect-src 'self'` does **not** change. Driver photos use
+`commons.wikimedia.org` redirects — if enabled, add `commons.wikimedia.org` and
+`upload.wikimedia.org` to both `images.remotePatterns` in `next.config.ts` and the
+`img-src` CSP directive. Wikidata profiles are wrapped in `unstable_cache` with a
+30-day TTL (`["wikidata-driver", wikiUrl]` as cache key).
+
+**Circuit records / race laps (`/api/circuit-records`, `/api/race-laps`):** Both routes
+use 6-hour `unstable_cache`. `getRaceLaps` paginates Jolpica's lap endpoint
+(limit=100, loop until exhausted). `lapTimeToMs` in `src/lib/time/raceTime.ts` is
+shared by both `circuitRecords.ts` and `lapAnalysis.ts`.
+
+**Historical comparison:** `HISTORY_YEARS` (4-year hardcoded cap) removed; replaced
+with `getDriverSeasons` + `computeComparisonYears` from `src/lib/stats/compareHistory.ts`.
+Jolpica calls are batched 5-at-a-time. The circuit-history compute is wrapped in 6-hour
+`unstable_cache`.
+
+**Favorites (client-only):** `src/lib/favorites.ts` is a pure module (no browser API
+calls), tested in the `node` Vitest project. The `useFavorites` hook follows the SSR-safe
+localStorage pattern (CC-4 in HANDOFF.md): constant default → mount effect reads storage
+→ `hydrated` flag gates sort → all accesses in try/catch.
+
+**Season selector:** `src/lib/season.ts` centralises `normalizeSeason`, `seasonLabel`,
+and `SEASON_OPTIONS`. The `SeasonPicker` component (already existing) is reused on
+`/drivers`, `/standings`, and `/results`. All `useSearchParams` consumers sit under
+`<Suspense>` boundaries as required by Next.js 16.
 
 ### Intentional decision: Weekend route parked
 
