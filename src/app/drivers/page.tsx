@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, Fragment } from "react";
+import Image from "next/image";
 import { useQuery } from "@tanstack/react-query";
 import type { DriverStanding, NewsItem } from "@/lib/types";
 import { getTeamColor, getFlag } from "@/lib/constants";
+import { getDriverPhotoUrl } from "@/lib/constants/teams";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import TeamLogo from "@/components/ui/TeamLogo";
@@ -25,6 +27,27 @@ async function fetchDriverNews(lastName: string): Promise<NewsItem[]> {
   return Array.isArray(d.items) ? d.items : [];
 }
 
+type DriverSeasonRace = {
+  round: number;
+  raceName: string;
+  grid: number;
+  position: number | null;
+  points: number;
+  status: string;
+  fastestLap: boolean;
+};
+
+type DriverSeasonData = {
+  races: DriverSeasonRace[];
+  totals: { starts: number; wins: number; podiums: number; dnfs: number; fastestLaps: number; points: number };
+};
+
+async function fetchDriverSeason(driverId: string): Promise<DriverSeasonData> {
+  const res = await fetch(`/api/driver-season?season=current&driverId=${encodeURIComponent(driverId)}`);
+  if (!res.ok) throw new Error("Failed to load season stats");
+  return res.json() as Promise<DriverSeasonData>;
+}
+
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function DriversPage() {
@@ -43,6 +66,13 @@ export default function DriversPage() {
     queryFn: () => fetchDriverNews(selected!.Driver.familyName),
     enabled: !!selected,
     staleTime: 15 * 60 * 1000,
+  });
+
+  const { data: seasonStats, isLoading: seasonLoading } = useQuery({
+    queryKey: ["driver-season", "current", selected?.Driver.driverId],
+    queryFn: () => fetchDriverSeason(selected!.Driver.driverId),
+    enabled: !!selected,
+    staleTime: 60 * 60 * 1000,
   });
 
   return (
@@ -92,7 +122,7 @@ export default function DriversPage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <TeamLogo team={team} size={20} />
+                    <DriverHeadshot driver={d} size={24} />
                     <span className="font-mono text-xs font-bold" style={{ color }}>
                       {d.Driver.code}
                     </span>
@@ -119,6 +149,8 @@ export default function DriversPage() {
                       driver={d}
                       news={news}
                       newsLoading={newsLoading}
+                      seasonStats={seasonStats}
+                      seasonLoading={seasonLoading}
                       onClose={() => setSelected(null)}
                     />
                   </div>
@@ -135,6 +167,8 @@ export default function DriversPage() {
               driver={selected}
               news={news}
               newsLoading={newsLoading}
+              seasonStats={seasonStats}
+              seasonLoading={seasonLoading}
               onClose={() => setSelected(null)}
             />
           </div>
@@ -150,11 +184,15 @@ function DriverDetailPanel({
   driver,
   news,
   newsLoading,
+  seasonStats,
+  seasonLoading,
   onClose,
 }: {
   driver: DriverStanding;
   news?: NewsItem[];
   newsLoading: boolean;
+  seasonStats?: DriverSeasonData;
+  seasonLoading: boolean;
   onClose: () => void;
 }) {
   const team = driver.Constructors[0]?.name ?? "Unknown";
@@ -274,6 +312,59 @@ function DriverDetailPanel({
           </div>
         )}
 
+        {/* Season stats */}
+        <div className="px-5 py-3.5">
+          <div className="flex items-center gap-1.5 mb-3">
+            <Zap size={13} className="text-[var(--f1-red)] shrink-0" />
+            <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+              This Season
+            </h3>
+          </div>
+          {seasonLoading && (
+            <div className="grid grid-cols-3 gap-2">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <Skeleton key={i} className="h-12 rounded-lg" />
+              ))}
+            </div>
+          )}
+          {seasonStats && (
+            <>
+              <div className="grid grid-cols-3 gap-2 mb-3">
+                <StatBox label="Starts" value={String(seasonStats.totals.starts)} />
+                <StatBox label="Wins" value={String(seasonStats.totals.wins)} highlight={seasonStats.totals.wins > 0} />
+                <StatBox label="Podiums" value={String(seasonStats.totals.podiums)} highlight={seasonStats.totals.podiums > 0} />
+                <StatBox label="DNFs" value={String(seasonStats.totals.dnfs)} />
+                <StatBox label="Fastest" value={String(seasonStats.totals.fastestLaps)} />
+                <StatBox label="Points" value={String(seasonStats.totals.points)} />
+              </div>
+              {seasonStats.races.length > 0 && (
+                <div className="space-y-1 max-h-48 overflow-y-auto">
+                  {seasonStats.races.map((r) => (
+                    <div key={r.round} className="flex items-center justify-between text-xs py-1 border-b border-border/30 last:border-0">
+                      <span className="text-muted-foreground/60 font-mono w-5 shrink-0">{r.round}</span>
+                      <span className="flex-1 truncate text-foreground/80 mx-2">
+                        {r.raceName.replace(" Grand Prix", " GP")}
+                        {r.fastestLap && <Zap size={9} className="inline ml-1 text-[var(--f1-red)]" />}
+                      </span>
+                      <span className="font-mono shrink-0">
+                        {r.position === null ? (
+                          <span className="text-destructive">DNF</span>
+                        ) : r.position <= 3 ? (
+                          <span className="font-bold" style={{ color: r.position === 1 ? "#C9A84C" : r.position === 2 ? "#A8A9AD" : "#CD7F32" }}>
+                            P{r.position}
+                          </span>
+                        ) : (
+                          <span className="text-foreground/70">P{r.position}</span>
+                        )}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
         {/* Latest news */}
         <div className="px-5 py-3.5">
           <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
@@ -326,6 +417,26 @@ function DriverDetailPanel({
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
+
+function DriverHeadshot({ driver, size = 24 }: { driver: DriverStanding; size?: number }) {
+  const [errored, setErrored] = useState(false);
+  const team = driver.Constructors[0]?.name ?? "Unknown";
+  const url = getDriverPhotoUrl(driver.Driver.familyName, driver.Driver.givenName);
+
+  if (errored) return <TeamLogo team={team} size={size} />;
+
+  return (
+    <Image
+      src={url}
+      alt={`${driver.Driver.givenName} ${driver.Driver.familyName}`}
+      width={size}
+      height={size}
+      className="rounded-full object-cover shrink-0"
+      onError={() => setErrored(true)}
+      unoptimized
+    />
+  );
+}
 
 function StatBox({
   label,

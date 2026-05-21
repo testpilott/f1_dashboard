@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { DriverStanding, ConstructorStanding } from "@/lib/types";
 import {
@@ -16,7 +17,39 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import TeamLogo from "@/components/ui/TeamLogo";
 import { getTeamColor } from "@/lib/constants/teams";
 import type { DriverForm } from "@/lib/stats/form";
-import { TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, X, Zap } from "lucide-react";
+
+// ─── Driver season types ──────────────────────────────────────────────────────
+
+type DriverSeasonRace = {
+  round: number;
+  raceName: string;
+  grid: number;
+  position: number | null;
+  points: number;
+  status: string;
+  fastestLap: boolean;
+};
+
+type DriverSeasonData = {
+  season: string;
+  driverId: string;
+  races: DriverSeasonRace[];
+  totals: {
+    starts: number;
+    wins: number;
+    podiums: number;
+    dnfs: number;
+    fastestLaps: number;
+    points: number;
+  };
+};
+
+async function fetchDriverSeason(season: string, driverId: string): Promise<DriverSeasonData> {
+  const res = await fetch(`/api/driver-season?season=${season}&driverId=${encodeURIComponent(driverId)}`);
+  if (!res.ok) throw new Error("Failed to fetch driver season data");
+  return res.json() as Promise<DriverSeasonData>;
+}
 
 type StandingsData = {
   drivers: DriverStanding[];
@@ -86,6 +119,199 @@ function StandingsSkeleton() {
   );
 }
 
+// ─── Driver season modal ──────────────────────────────────────────────────────
+
+function DriverSeasonModal({
+  driver,
+  season,
+  onClose,
+}: {
+  driver: DriverStanding;
+  season: string;
+  onClose: () => void;
+}) {
+  const team = driver.Constructors[0]?.name ?? "Unknown";
+  const color = getTeamColor(team);
+
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["driver-season", season, driver.Driver.driverId],
+    queryFn: () => fetchDriverSeason(season, driver.Driver.driverId),
+    staleTime: 60 * 60 * 1000,
+  });
+
+  // Close on Escape key
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [onClose]);
+
+  // Prevent body scroll while open
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, []);
+
+  return (
+    /* Backdrop */
+    <div
+      className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center"
+      onClick={onClose}
+      aria-hidden="true"
+    >
+      {/* Panel */}
+      <div
+        className="bg-surface-1 border border-border rounded-t-xl sm:rounded-xl w-full sm:max-w-lg max-h-[85vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="driver-modal-title"
+      >
+        {/* Team color stripe */}
+        <div className="h-1 w-full rounded-t-xl" style={{ backgroundColor: color }} />
+
+        {/* Header */}
+        <div className="flex items-center justify-between p-5 pb-3">
+          <div className="flex items-center gap-3">
+            <TeamLogo team={team} size={32} />
+            <div>
+              <span className="font-mono text-xs font-bold" style={{ color }}>
+                {driver.Driver.code}
+              </span>
+              <h2
+                id="driver-modal-title"
+                className="text-lg font-bold leading-tight"
+              >
+                {driver.Driver.givenName} {driver.Driver.familyName}
+              </h2>
+              <p className="text-xs text-muted-foreground">{team}</p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            aria-label="Close"
+            className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+          >
+            <X size={16} />
+          </button>
+        </div>
+
+        {/* Season label */}
+        <p className="px-5 pb-2 text-xs text-muted-foreground uppercase tracking-wider font-semibold">
+          {season === "current" ? "Current Season" : `${season} Season`}
+        </p>
+
+        {isLoading && (
+          <div className="px-5 pb-5 space-y-2">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton key={i} className="h-8 w-full" />
+            ))}
+          </div>
+        )}
+
+        {isError && (
+          <p className="px-5 pb-5 text-sm text-muted-foreground">Failed to load season data.</p>
+        )}
+
+        {data && (
+          <>
+            {/* Totals chips */}
+            <div className="grid grid-cols-3 gap-2 px-5 pb-4">
+              <ModalStatChip label="Starts" value={String(data.totals.starts)} />
+              <ModalStatChip label="Wins" value={String(data.totals.wins)} highlight={data.totals.wins > 0} />
+              <ModalStatChip label="Podiums" value={String(data.totals.podiums)} highlight={data.totals.podiums > 0} />
+              <ModalStatChip label="DNFs" value={String(data.totals.dnfs)} />
+              <ModalStatChip label="Fastest" value={String(data.totals.fastestLaps)} icon={<Zap size={11} className="text-[var(--f1-red)]" />} />
+              <ModalStatChip label="Points" value={String(data.totals.points)} bold />
+            </div>
+
+            {/* Race-by-race table */}
+            {data.races.length > 0 && (
+              <div className="border-t border-border/60">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-border/60">
+                        <th className="text-left text-[11px] text-muted-foreground font-medium px-5 py-2">Race</th>
+                        <th className="text-center text-[11px] text-muted-foreground font-medium px-3 py-2">Grid</th>
+                        <th className="text-center text-[11px] text-muted-foreground font-medium px-3 py-2">Fin</th>
+                        <th className="text-right text-[11px] text-muted-foreground font-medium px-5 py-2">Pts</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {data.races.map((r) => (
+                        <tr key={r.round} className="border-b border-border/30 last:border-0">
+                          <td className="px-5 py-2 text-sm">
+                            <span className="text-muted-foreground/60 font-mono text-xs mr-2">{r.round}</span>
+                            <span className="text-foreground/90 truncate">{r.raceName.replace(" Grand Prix", " GP")}</span>
+                            {r.fastestLap && (
+                              <Zap size={10} className="inline ml-1 text-[var(--f1-red)]" aria-label="Fastest lap" />
+                            )}
+                          </td>
+                          <td className="px-3 py-2 text-center font-mono text-xs text-muted-foreground">
+                            {r.grid === 0 ? "PL" : r.grid}
+                          </td>
+                          <td className="px-3 py-2 text-center font-mono text-xs">
+                            {r.position === null ? (
+                              <span className="text-destructive font-medium">DNF</span>
+                            ) : r.position <= 3 ? (
+                              <span className="font-bold" style={{ color: r.position === 1 ? "#C9A84C" : r.position === 2 ? "#A8A9AD" : "#CD7F32" }}>
+                                P{r.position}
+                              </span>
+                            ) : (
+                              <span className="text-foreground/70">P{r.position}</span>
+                            )}
+                          </td>
+                          <td className="px-5 py-2 text-right font-mono text-xs font-bold">
+                            {r.points > 0 ? r.points : <span className="text-muted-foreground/40">—</span>}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {data.races.length === 0 && (
+              <p className="px-5 pb-5 text-sm text-muted-foreground">No race data available yet.</p>
+            )}
+          </>
+        )}
+        {/* Bottom safe area for mobile */}
+        <div className="h-4" />
+      </div>
+    </div>
+  );
+}
+
+function ModalStatChip({
+  label,
+  value,
+  highlight = false,
+  bold = false,
+  icon,
+}: {
+  label: string;
+  value: string;
+  highlight?: boolean;
+  bold?: boolean;
+  icon?: React.ReactNode;
+}) {
+  return (
+    <div className="bg-surface-2 border border-border/40 rounded-lg p-2 text-center">
+      <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-0.5">{label}</p>
+      <p className={`font-mono text-base ${bold ? "font-black" : "font-bold"} ${highlight ? "text-chart-5" : ""} flex items-center justify-center gap-1`}>
+        {icon}{value}
+      </p>
+    </div>
+  );
+}
+
+// ─── Main component ───────────────────────────────────────────────────────────
+
 export default function StandingsTables({
   season = "current",
   initialData,
@@ -93,6 +319,8 @@ export default function StandingsTables({
   season?: string;
   initialData?: StandingsData;
 }) {
+  const [selectedDriver, setSelectedDriver] = useState<DriverStanding | null>(null);
+
   const { data, isLoading, isError } = useQuery({
     queryKey: ["standings", season],
     queryFn: () => fetchStandings(season),
@@ -109,7 +337,8 @@ export default function StandingsTables({
   const form = formData?.form ?? {};
 
   return (
-    <Tabs defaultValue="drivers" className="w-full">
+    <>
+      <Tabs defaultValue="drivers" className="w-full">
       <TabsList className="mb-4 bg-surface-2">
         <TabsTrigger value="drivers" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
           Drivers
@@ -143,8 +372,14 @@ export default function StandingsTables({
                 const pos = parseInt(d.position, 10);
                 const team = d.Constructors[0]?.name ?? "Unknown";
                 const accentColor = getTeamColor(team);
+                const isSelected = selectedDriver?.Driver.driverId === d.Driver.driverId;
                 return (
-                  <TableRow key={d.Driver.driverId} className="border-border hover:bg-accent/40">
+                  <TableRow
+                    key={d.Driver.driverId}
+                    className={`border-border cursor-pointer transition-colors ${isSelected ? "bg-accent/60" : "hover:bg-accent/40"}`}
+                    onClick={() => setSelectedDriver(isSelected ? null : d)}
+                    aria-label={`View ${d.Driver.givenName} ${d.Driver.familyName} season stats`}
+                  >
                     <TableCell className="py-2.5">
                       <PositionBadge pos={pos} />
                     </TableCell>
@@ -225,5 +460,14 @@ export default function StandingsTables({
         )}
       </TabsContent>
     </Tabs>
+
+    {selectedDriver && (
+      <DriverSeasonModal
+        driver={selectedDriver}
+        season={season}
+        onClose={() => setSelectedDriver(null)}
+      />
+    )}
+    </>
   );
 }
