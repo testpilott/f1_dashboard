@@ -35,4 +35,46 @@ describe("createApiFetcher", () => {
       "Example fetch failed: 404 /missing",
     );
   });
+
+  it("retries transient 429 responses and eventually succeeds", async () => {
+    vi.mocked(fetchWithTimeout)
+      .mockResolvedValueOnce(new Response("rate limited", { status: 429 }))
+      .mockResolvedValueOnce(new Response("rate limited", { status: 429 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ ok: true }), { status: 200 }));
+
+    const apiFetch = createApiFetcher("https://example.test", "Example");
+    const out = await apiFetch<{ ok: boolean }>("/path", 60);
+
+    expect(out).toEqual({ ok: true });
+    expect(fetchWithTimeout).toHaveBeenCalledTimes(3);
+  });
+
+  it("retries timeout (AbortError) and eventually succeeds", async () => {
+    const abort = new DOMException("aborted", "AbortError");
+    vi.mocked(fetchWithTimeout)
+      .mockRejectedValueOnce(abort)
+      .mockResolvedValueOnce(new Response(JSON.stringify({ ok: true }), { status: 200 }));
+
+    const apiFetch = createApiFetcher("https://example.test", "Example");
+    const out = await apiFetch<{ ok: boolean }>("/path", 60);
+
+    expect(out).toEqual({ ok: true });
+    expect(fetchWithTimeout).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not retry permanent 404 responses", async () => {
+    vi.mocked(fetchWithTimeout).mockResolvedValue(new Response("missing", { status: 404 }));
+
+    const apiFetch = createApiFetcher("https://example.test", "Example");
+    await expect(apiFetch("/missing", 60)).rejects.toThrow(/404/);
+    expect(fetchWithTimeout).toHaveBeenCalledTimes(1);
+  });
+
+  it("stops after MAX_ATTEMPTS retries when failures persist", async () => {
+    vi.mocked(fetchWithTimeout).mockResolvedValue(new Response("nope", { status: 500 }));
+
+    const apiFetch = createApiFetcher("https://example.test", "Example");
+    await expect(apiFetch("/flaky", 60)).rejects.toThrow(/500/);
+    expect(fetchWithTimeout).toHaveBeenCalledTimes(3);
+  });
 });

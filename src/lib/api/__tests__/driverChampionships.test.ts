@@ -53,40 +53,7 @@ describe("getDriverCareerChampionships", () => {
     await expect(getDriverCareerChampionships("unknown_driver")).resolves.toBe("0");
   });
 
-  it("retries a transient season lookup failure and still returns correct count", async () => {
-    const calls = new Map<string, number>();
-
-    apiFetchMock.mockImplementation(async (path: string) => {
-      calls.set(path, (calls.get(path) ?? 0) + 1);
-
-      if (path === "/drivers/hamilton/seasons.json?limit=100") {
-        return {
-          MRData: {
-            SeasonTable: {
-              Seasons: [{ season: "2008" }, { season: "2014" }, { season: "2015" }],
-            },
-          },
-        };
-      }
-      if (path === "/2008/drivers/hamilton/driverStandings/1.json?limit=1") {
-        return { MRData: { total: "1" } };
-      }
-      if (path === "/2014/drivers/hamilton/driverStandings/1.json?limit=1") {
-        if ((calls.get(path) ?? 0) === 1) {
-          throw new Error("upstream timeout");
-        }
-        return { MRData: { total: "1" } };
-      }
-      if (path === "/2015/drivers/hamilton/driverStandings/1.json?limit=1") {
-        return { MRData: { total: "1" } };
-      }
-      throw new Error(`Unexpected path: ${path}`);
-    });
-
-    await expect(getDriverCareerChampionships("hamilton")).resolves.toBe("3");
-  });
-
-  it("rejects when a season lookup still fails after retry", async () => {
+  it("propagates a season lookup failure to the caller", async () => {
     apiFetchMock.mockImplementation(async (path: string) => {
       if (path === "/drivers/hamilton/seasons.json?limit=100") {
         return {
@@ -109,5 +76,30 @@ describe("getDriverCareerChampionships", () => {
     await expect(getDriverCareerChampionships("hamilton")).rejects.toThrow(
       /persistent upstream timeout/
     );
+  });
+
+  it("limits per-season concurrency to avoid upstream rate limits", async () => {
+    let inFlight = 0;
+    let peakInFlight = 0;
+
+    apiFetchMock.mockImplementation(async (path: string) => {
+      if (path === "/drivers/alonso/seasons.json?limit=100") {
+        const seasons = Array.from({ length: 20 }, (_, i) => ({
+          season: String(2001 + i),
+        }));
+        return { MRData: { SeasonTable: { Seasons: seasons } } };
+      }
+
+      inFlight++;
+      peakInFlight = Math.max(peakInFlight, inFlight);
+      // Yield a microtask so concurrent calls overlap.
+      await Promise.resolve();
+      inFlight--;
+      return { MRData: { total: "0" } };
+    });
+
+    await expect(getDriverCareerChampionships("alonso")).resolves.toBe("0");
+    expect(peakInFlight).toBeGreaterThan(0);
+    expect(peakInFlight).toBeLessThanOrEqual(4);
   });
 });

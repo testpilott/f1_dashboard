@@ -137,23 +137,33 @@ export async function getDriverCareerChampionships(driverId: string): Promise<st
 
   async function hasChampionshipInSeason(season: number): Promise<boolean> {
     const path = `/${season}/drivers/${encodeURIComponent(driverId)}/driverStandings/1.json?limit=1`;
-    const maxAttempts = 2;
-
-    let lastError: unknown;
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      try {
-        const total = await jolpicaTotal(path);
-        return Number(total) > 0;
-      } catch (err) {
-        lastError = err;
-      }
-    }
-
-    throw lastError ?? new Error(`Championship lookup failed for season ${season}`);
+    const total = await jolpicaTotal(path);
+    return Number(total) > 0;
   }
 
-  const seasonChecks = await Promise.all(seasons.map((season) => hasChampionshipInSeason(season)));
-  const championships = seasonChecks.reduce((count, hasTitle) => (hasTitle ? count + 1 : count), 0);
+  // Throttle the per-season fan-out so we don't trigger Jolpica rate limits
+  // for long-career drivers (e.g. Alonso ~24 seasons). createApiFetcher
+  // already retries transient errors per request.
+  const CONCURRENCY = 4;
+  const seasonChecks: boolean[] = new Array(seasons.length);
+  let cursor = 0;
+
+  async function worker(): Promise<void> {
+    while (true) {
+      const index = cursor++;
+      if (index >= seasons.length) return;
+      seasonChecks[index] = await hasChampionshipInSeason(seasons[index]);
+    }
+  }
+
+  await Promise.all(
+    Array.from({ length: Math.min(CONCURRENCY, seasons.length) }, () => worker()),
+  );
+
+  const championships = seasonChecks.reduce(
+    (count, hasTitle) => (hasTitle ? count + 1 : count),
+    0,
+  );
 
   return String(championships);
 }
