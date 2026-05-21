@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 import { getTeamColor, getTeamLogo } from "@/lib/constants";
 
@@ -50,9 +51,11 @@ export default function TeamLogo({ team, size = 40 }: TeamLogoProps) {
           }}
         />
       ) : (
-        <img
+        <Image
           src={logoPath}
           alt={team}
+          width={Math.max(1, size - pad * 2)}
+          height={Math.max(1, size - pad * 2)}
           style={{
             width: "100%",
             height: "100%",

@@ -63,10 +63,16 @@ describe("/api/circuit-info", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(rateLimited).mockReturnValue(null);
-    vi.mocked(getSchedule).mockResolvedValue([MOCK_RACE] as any);
-    vi.mocked(getSessions).mockResolvedValue([MOCK_SESSION] as any);
+    vi.mocked(getSchedule).mockResolvedValue(
+      [MOCK_RACE] as unknown as Awaited<ReturnType<typeof getSchedule>>,
+    );
+    vi.mocked(getSessions).mockResolvedValue(
+      [MOCK_SESSION] as unknown as Awaited<ReturnType<typeof getSessions>>,
+    );
     vi.mocked(pickRaceSession).mockReturnValue(9999);
-    vi.mocked(getCircuitInfo).mockResolvedValue(MOCK_CIRCUIT_INFO as any);
+    vi.mocked(getCircuitInfo).mockResolvedValue(
+      MOCK_CIRCUIT_INFO as unknown as Awaited<ReturnType<typeof getCircuitInfo>>,
+    );
   });
 
   it("returns 400 when year is missing", async () => {
@@ -130,7 +136,7 @@ describe("/api/circuit-info", () => {
     vi.mocked(getCircuitInfo).mockResolvedValue({
       ...MOCK_CIRCUIT_INFO,
       corners: null,
-    } as any);
+    } as unknown as Awaited<ReturnType<typeof getCircuitInfo>>);
     const res = await GET(makeRequest());
     const body = await res.json();
     expect(body.available).toBe(true);
@@ -142,7 +148,7 @@ describe("/api/circuit-info", () => {
       ...MOCK_CIRCUIT_INFO,
       x: undefined,
       y: undefined,
-    } as any);
+    } as unknown as Awaited<ReturnType<typeof getCircuitInfo>>);
     const res = await GET(makeRequest());
     const body = await res.json();
     expect(body.available).toBe(true);

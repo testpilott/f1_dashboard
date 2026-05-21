@@ -158,5 +158,18 @@ Previously-deferred features, all free-tier, no new heavy deps.
       driver + `<audio controls preload="none">`; "Radio" tab on Race Detail (2023+
       sessions only).
 
-**Test count:** 269 passing (31 test files). `npm run lint` 0 errors / 5 pre-existing
-advisory warnings. `npm run build` clean.
+## Six-feature handoff round status ✅
+
+- [x] WS-1 Schedule past/upcoming divider
+- [x] WS-2 Race incident markers on circuit map
+- [x] WS-3 Standings driver modal with season breakdown
+- [x] WS-4 Constructor comparison context expansion
+- [x] WS-5 Driver headshot photos
+- [x] WS-6 Drivers season + career expanded stats
+
+Current focus has shifted from feature implementation to regression hardening
+(route/component tests) and verification discipline after changes.
+
+**Latest verification snapshot (2026-05-21):** 362 passing tests (42 test files).
+`npm run build` passes. `npm run lint` reports 10 errors and 6 warnings, with no new
+lint errors introduced by the latest WS hardening additions.

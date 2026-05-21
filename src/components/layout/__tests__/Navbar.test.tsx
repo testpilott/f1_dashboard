@@ -13,7 +13,6 @@ vi.mock("next/link", () => ({
 }));
 vi.mock("next/image", () => ({
   default: ({ src, alt, ...props }: React.ComponentProps<"img">) => (
-    // eslint-disable-next-line @next/next/no-img-element
     <img src={src} alt={alt} {...props} />
   ),
 }));

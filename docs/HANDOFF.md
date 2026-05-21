@@ -5,9 +5,28 @@
 > the tests to write, and a "Definition of Done" you can verify yourself. Do not start a
 > workstream until the previous one's DoD is green.
 
+> **Status update (2026-05-21):** WS-1 through WS-6 are implemented on `main`.
+> Keep this document as the implementation specification/history for those changes.
+> If you are starting new work today, use section 0.0 first.
+
 ---
 
 ## 0. Orientation
+
+### 0.0 Current status (May 2026)
+
+All six handoff workstreams are already shipped in source and integrated into the app.
+The current engineering focus is no longer feature bootstrapping for WS-1..WS-6.
+
+Remaining work to execute before new feature expansion:
+
+1. Add/maintain handler-level tests for WS routes with the highest regression risk
+  (`/api/driver-photos`, `/api/driver-career`, `/api/race-incidents`).
+2. Add/maintain component interaction tests for reused primitives and critical flows
+  (Dialog open/close interactions, map marker interactions).
+3. Keep this handoff and roadmap documentation aligned with actual implementation state.
+4. Re-run full verification (`npm run lint`, `npm test`, `npm run test:ci`, `npm run build`)
+  after any behavior change to WS-1..WS-6 code paths.
 
 ### 0.1 What you are building
 

@@ -38,7 +38,7 @@ describe("/api/team-radio availability handling", () => {
         round: "1",
         Circuit: { Location: { country: "Australia" } },
       },
-    ] as any);
+    ] as unknown as Awaited<ReturnType<typeof getSchedule>>);
     vi.mocked(getSessions).mockResolvedValue([
       {
         session_key: 11234,
@@ -47,16 +47,23 @@ describe("/api/team-radio availability handling", () => {
         country_name: "Australia",
         is_cancelled: false,
       },
-    ] as any);
+    ] as unknown as Awaited<ReturnType<typeof getSessions>>);
     vi.mocked(pickRaceSession).mockReturnValue(11234);
-    vi.mocked(getDriversForSession).mockResolvedValue([
+    const drivers: Awaited<ReturnType<typeof getDriversForSession>> = [
       {
         driver_number: 1,
+        broadcast_name: "M VERSTAPPEN",
+        first_name: "Max",
+        last_name: "Verstappen",
+        full_name: "Max Verstappen",
         name_acronym: "VER",
         team_name: "Red Bull",
         team_colour: "3671C6",
+        session_key: 11234,
+        meeting_key: 1279,
       },
-    ] as any);
+    ];
+    vi.mocked(getDriversForSession).mockResolvedValue(drivers);
   });
 
   it("returns available=false with a clear reason when OpenF1 radio is unavailable", async () => {
@@ -73,7 +80,7 @@ describe("/api/team-radio availability handling", () => {
   });
 
   it("returns available=true with reason when the race has zero clips", async () => {
-    vi.mocked(getTeamRadio).mockResolvedValue([] as any);
+    vi.mocked(getTeamRadio).mockResolvedValue([]);
 
     const res = await GET(makeRequest());
     const body = await res.json();
@@ -86,7 +93,7 @@ describe("/api/team-radio availability handling", () => {
   });
 
   it("returns grouped clips when OpenF1 radio data exists", async () => {
-    vi.mocked(getTeamRadio).mockResolvedValue([
+    const clips: Awaited<ReturnType<typeof getTeamRadio>> = [
       {
         session_key: 11234,
         meeting_key: 1279,
@@ -94,7 +101,8 @@ describe("/api/team-radio availability handling", () => {
         date: "2026-03-08T04:54:22.636000+00:00",
         recording_url: "https://example.com/clip-1.mp3",
       },
-    ] as any);
+    ];
+    vi.mocked(getTeamRadio).mockResolvedValue(clips);
 
     const res = await GET(makeRequest());
     const body = await res.json();

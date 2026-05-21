@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect } from "vitest";
 import { checkRateLimit, getClientIp, flushStaleEntries, getStoreSize } from "@/lib/ratelimit";
 
 // Each test uses a unique key so they don't share the in-memory store.
