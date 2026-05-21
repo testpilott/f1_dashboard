@@ -131,56 +131,22 @@ export async function getDriverCareerFastestLaps(driverId: string): Promise<stri
   return jolpicaTotal(`/drivers/${encodeURIComponent(driverId)}/fastest/1/results.json?limit=1`);
 }
 
-/**
- * Static map of F1 World Drivers' Championship counts, keyed by Jolpica/Ergast driverId.
- *
- * The natural Jolpica endpoint `/drivers/{id}/driverStandings/1.json` requires a `season_year`
- * parameter and returns HTTP 400 without it, so it cannot be used to count championships across
- * all seasons. Iterating per-season would require N requests per driver. Because the set of WDC
- * champions is small and finite, a static map is the most reliable and efficient approach.
- *
- * Source: official FIA records (post-1950).
- */
-const DRIVER_CHAMPIONSHIPS: Record<string, number> = {
-  farina: 1,
-  fangio: 5,
-  ascari: 2,
-  hawthorn: 1,
-  brabham: 3,
-  phil_hill: 1,
-  graham_hill: 2,
-  clark: 2,
-  hulme: 1,
-  surtees: 1,
-  rindt: 1,
-  stewart: 3,
-  fittipaldi: 2,
-  hunt: 1,
-  lauda: 3,
-  andretti: 1,
-  scheckter: 1,
-  jones: 1,
-  piquet: 3,
-  keke_rosberg: 1,
-  prost: 4,
-  senna: 3,
-  mansell: 1,
-  michael_schumacher: 7,
-  damon_hill: 1,
-  villeneuve: 1,
-  hakkinen: 2,
-  alonso: 2,
-  raikkonen: 1,
-  button: 1,
-  vettel: 4,
-  rosberg: 1,
-  hamilton: 7,
-  max_verstappen: 4,
-};
-
 export async function getDriverCareerChampionships(driverId: string): Promise<string> {
-  const count = DRIVER_CHAMPIONSHIPS[driverId] ?? 0;
-  return String(count);
+  const seasons = await getDriverSeasons(driverId);
+  if (seasons.length === 0) return "0";
+
+  const seasonChecks = await Promise.allSettled(
+    seasons.map((season) =>
+      jolpicaTotal(`/${season}/drivers/${encodeURIComponent(driverId)}/driverStandings/1.json?limit=1`)
+    )
+  );
+
+  const championships = seasonChecks.reduce((count, seasonCheck) => {
+    if (seasonCheck.status !== "fulfilled") return count;
+    return Number(seasonCheck.value) > 0 ? count + 1 : count;
+  }, 0);
+
+  return String(championships);
 }
 
 /** Returns the list of seasons a driver competed in, oldest first. */
