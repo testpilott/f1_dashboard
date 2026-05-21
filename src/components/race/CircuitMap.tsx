@@ -516,7 +516,7 @@ export default function CircuitMap({ year, round }: { year: string; round: strin
                 {selectedIncident?.category === "CarEvent" ? "Incident" :
                  selectedIncident?.flag ? `${selectedIncident.flag} Flag` : "Race Control"}
               </DialogTitle>
-              <DialogClose className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors">
+              <DialogClose aria-label="Close" className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors">
                 <X size={16} />
               </DialogClose>
             </div>

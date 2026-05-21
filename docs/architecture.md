@@ -128,32 +128,25 @@ a live session. The roadmap's original "all 9 routes" constraint is therefore
 intentionally **8 active routes + Weekend parked**. Re-enabling Weekend is out of scope
 unless the product decision changes.
 
-### Known lint debt (pre-existing, tracked)
+### Lint status ✅
 
-`npm run lint` reports 5 remaining `react-hooks/set-state-in-effect` errors, all
-pre-existing in handoff code and all the **same intentional SSR hydration mount-guard
-pattern** (`useEffect(() => setX(clientOnlyValue), [])`):
+`npm run lint` reports **0 errors, 0 warnings**. All previously-tracked
+`react-hooks/set-state-in-effect` issues have been resolved:
 
-- `components/ui/ThemeToggle.tsx:12` (mounted flag for `next-themes`)
-- `components/schedule/ScheduleClient.tsx:62, ~167` (`userTz`, expand state)
-- `components/next-race/NextRaceCard.tsx:42` (countdown)
-- `components/weekend/RaceCalendar.tsx:46` (countdown)
+- `ThemeToggle.tsx` → replaced with `useIsClient()` (backed by `useSyncExternalStore`)
+- `ScheduleClient.tsx` → replaced with `useSyncExternalStore` for `userTz`
+- `NextRaceCard.tsx` → replaced with `useNow()` (backed by `useSyncExternalStore`)
+- `RaceCalendar.tsx` → uses render-time state sync (no effect); lint-clean by design
 
-These set client-only state *after* hydration specifically to avoid a server/client
-hydration mismatch — converting them to lazy `useState` initialisers would reintroduce
-that mismatch. Recommended remediation (separate, browser-verified task): adopt
-`useSyncExternalStore` (or a `useIsMounted`/`useClientValue` hook) so the value is read
-through a hydration-safe API rather than an effect. Not done here because it cannot be
-browser-verified in the build sandbox and the rule is advisory (performance, not
-correctness). The genuine correctness bug that *was* here — a conditionally-called
-`useMemo` in `LapChart.tsx` (rules-of-hooks) — has been fixed, along with two
+The helper hooks live in `src/lib/hooks/useIsClient.ts` and `src/lib/hooks/useNow.ts`.
+The genuine correctness bug that *was* here — a conditionally-called `useMemo` in
+`LapChart.tsx` (rules-of-hooks) — was fixed in Phase 5, along with two
 `react-hooks/purity` (`Date.now()`-in-render) errors.
 
-### Build sandbox limitation
+### Build sandbox limitation ✅ (resolved)
 
-`npm run build` fails in the isolated build sandbox because statically-prerendered
-pages (e.g. `/schedule`) fetch the external Jolpica API at build time and the sandbox
-blocks egress (`403`). This reproduces on the untouched merge base, so it is an
-**environmental/architectural** constraint, not a code regression. Recommended fix
-(separate task): mark data-dependent pages dynamic (`export const dynamic =
-"force-dynamic"`) or add a build-time fallback so SSG does not depend on a live API.
+Data-dependent server pages (`/`, `/schedule`, `/standings`) now carry
+`export const dynamic = "force-dynamic"` so they SSR on demand rather than
+prerendering at build time. `npm run build` passes cleanly. The race detail route
+(`/race/[year]/[round]`) is a dynamic segment and was never prerendered. All other
+pages are pure client components that fetch via same-origin `/api/*` routes.

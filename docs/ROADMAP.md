@@ -170,6 +170,5 @@ Previously-deferred features, all free-tier, no new heavy deps.
 Current focus has shifted from feature implementation to regression hardening
 (route/component tests) and verification discipline after changes.
 
-**Latest verification snapshot (2026-05-21):** 362 passing tests (42 test files).
-`npm run build` passes. `npm run lint` reports 10 errors and 6 warnings, with no new
-lint errors introduced by the latest WS hardening additions.
+**Latest verification snapshot (2026-05-21, updated):** 372 passing tests (43 test files).
+`npm run build` passes. `npm run lint` reports **0 errors, 0 warnings**.
