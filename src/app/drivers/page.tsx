@@ -132,19 +132,19 @@ export default function DriversPage() {
               <Fragment key={d.Driver.driverId}>
                 <button
                   onClick={() => setSelected(isActive ? null : d)}
-                  className={`rounded-lg border p-4 flex items-center gap-4 transition-all text-left w-full cursor-pointer ${
+                  className={`rounded-lg border px-3.5 py-2.5 sm:px-4 sm:py-3 flex items-center gap-2.5 sm:gap-3 transition-all text-left w-full cursor-pointer ${
                     isActive
                       ? "bg-surface-3 border-ring ring-1 ring-ring"
                       : "bg-surface-2 border-border hover:bg-accent/40"
                   }`}
                   style={{ borderLeftColor: color, borderLeftWidth: 3 }}
                 >
-                <div className="text-3xl font-black text-muted-foreground/40 w-8 text-center tabular-nums shrink-0">
+                <div className="text-2xl sm:text-3xl font-black text-muted-foreground/40 w-7 sm:w-8 text-center tabular-nums shrink-0">
                   {pos}
                 </div>
+                <DriverHeadshot driver={d} photos={photos ?? []} size={44} />
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <DriverHeadshot driver={d} photos={photos ?? []} size={24} />
+                  <div className="flex items-center gap-2 mb-0.5">
                     <span className="font-mono text-xs font-bold" style={{ color }}>
                       {d.Driver.code}
                     </span>
@@ -154,13 +154,13 @@ export default function DriversPage() {
                       </Badge>
                     )}
                   </div>
-                  <p className="text-sm font-medium truncate">
+                  <p className="text-sm font-medium leading-tight truncate">
                     {d.Driver.givenName} {d.Driver.familyName}
                   </p>
-                  <p className="text-xs text-muted-foreground truncate">{team}</p>
+                  <p className="text-xs leading-tight text-muted-foreground truncate">{team}</p>
                 </div>
                 <div className="text-right shrink-0">
-                  <p className="font-bold font-mono text-lg">{d.points}</p>
+                  <p className="font-bold font-mono text-sm sm:text-base leading-tight">{d.points}</p>
                   <p className="text-[10px] text-muted-foreground/50">pts</p>
                 </div>
                 </button>
