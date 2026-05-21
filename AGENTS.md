@@ -31,3 +31,12 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - Next.js routing itself (framework responsibility)
 - External network calls — mock at the fetch boundary or test the transform in isolation
 - UI rendering — no jsdom tests unless specifically needed; keep environment `node`
+
+## Deployment Safety (mandatory before pushing)
+
+1. **Run production build locally before push.** If changes touch `src/app/**`, API routes, Next segment config exports, or chart components, run `npm run build` (not only `npm test`) and fix all build/type errors first.
+2. **Segment config exports must be literals.** In route/page segment config exports (`revalidate`, `maxDuration`, `preferredRegion`, etc.), use static literal values only (for example `21600`, not `6 * 3600`).
+3. **Do not assume third-party type exports.** For libraries like `@nivo/*`, verify available exported types in `node_modules/<pkg>/dist/types/index.d.ts` before importing named type exports.
+4. **Prefer local series/types over fragile library aliases.** When generic chart typing gets strict, define a local chart data type and pass it consistently to component generics and layer props.
+5. **After tool-based edits, re-read changed files before build.** If patching tools produce unexpected syntax/layout, validate by reading the full file and rerun `npm run build`.
+6. **Push gate:** do not push when local `npm run build` fails, even if `npm test` is green.
