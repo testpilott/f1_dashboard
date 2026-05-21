@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { badRequest, serverError } from "@/lib/api/routeHelpers";
 import {
   getRaceResultsAtCircuit,
   getQualifyingResultsAtCircuit,
@@ -27,45 +28,46 @@ export async function GET(req: Request) {
   const season = searchParams.get("season") ?? "current";
 
   if (!VALID_COMPARE_VIEW.has(view)) {
-    return NextResponse.json({ error: "Invalid view parameter" }, { status: 400 });
+    return badRequest("Invalid view parameter");
   }
-  if (!driverA || !driverB) {
-    return NextResponse.json(
-      { error: "driverA and driverB are required" },
-      { status: 400 }
-    );
-  }
-  if (!VALID_ID.test(driverA) || !VALID_ID.test(driverB)) {
-    return NextResponse.json({ error: "Invalid driver identifier" }, { status: 400 });
+
+  if (view !== "teams") {
+    if (!driverA || !driverB) {
+      return badRequest("driverA and driverB are required");
+    }
+    if (!VALID_ID.test(driverA) || !VALID_ID.test(driverB)) {
+      return badRequest("Invalid driver identifier");
+    }
   }
 
   // ── Season-long head-to-head ────────────────────────────────────────────────
   if (view === "season") {
+    const seasonDriverA = driverA as string;
+    const seasonDriverB = driverB as string;
     if (!VALID_SEASON.test(season)) {
-      return NextResponse.json({ error: "Invalid season parameter" }, { status: 400 });
+      return badRequest("Invalid season parameter");
     }
     try {
       const races = await getSeasonRaceResults(season);
-      const stats = seasonHeadToHead(races, driverA, driverB);
-      return NextResponse.json({ view: "season", season, driverA, driverB, stats });
+      const stats = seasonHeadToHead(races, seasonDriverA, seasonDriverB);
+      return NextResponse.json({ view: "season", season, driverA: seasonDriverA, driverB: seasonDriverB, stats });
     } catch (err) {
-      console.error("[/api/compare?view=season] Error:", err);
-      return NextResponse.json({ error: "Failed to compute season comparison" }, { status: 500 });
+      return serverError("compare?view=season", err);
     }
   }
 
   // ── Constructor head-to-head ───────────────────────────────────────────────
   if (view === "teams") {
     if (!VALID_SEASON.test(season)) {
-      return NextResponse.json({ error: "Invalid season parameter" }, { status: 400 });
+      return badRequest("Invalid season parameter");
     }
     const constructorA = searchParams.get("constructorA");
     const constructorB = searchParams.get("constructorB");
     if (!constructorA || !constructorB) {
-      return NextResponse.json({ error: "constructorA and constructorB are required for teams view" }, { status: 400 });
+      return badRequest("constructorA and constructorB are required for teams view");
     }
     if (!VALID_ID.test(constructorA) || !VALID_ID.test(constructorB)) {
-      return NextResponse.json({ error: "Invalid constructor identifier" }, { status: 400 });
+      return badRequest("Invalid constructor identifier");
     }
     try {
       const [races, standings] = await Promise.all([
@@ -101,20 +103,16 @@ export async function GET(req: Request) {
 
       return NextResponse.json({ view: "teams", season, constructorA, constructorB, stats, context });
     } catch (err) {
-      console.error("[/api/compare?view=teams] Error:", err);
-      return NextResponse.json({ error: "Failed to compute constructor comparison" }, { status: 500 });
+      return serverError("compare?view=teams", err);
     }
   }
 
   // ── Circuit history (default) ───────────────────────────────────────────────
   if (!circuitId) {
-    return NextResponse.json(
-      { error: "circuitId is required for circuit view" },
-      { status: 400 }
-    );
+    return badRequest("circuitId is required for circuit view");
   }
   if (!VALID_ID.test(circuitId)) {
-    return NextResponse.json({ error: "Invalid circuit identifier" }, { status: 400 });
+    return badRequest("Invalid circuit identifier");
   }
 
   const yearResults = await Promise.all(
@@ -134,6 +132,8 @@ export async function GET(req: Request) {
   const history = yearResults
     .filter(({ race, quali }) => race.length > 0 || quali.length > 0)
     .map(({ year, race, quali }) => {
+      const circuitDriverA = driverA as string;
+      const circuitDriverB = driverB as string;
       const pick = (driverId: string) => {
         const r = race.find((x) => x.Driver.driverId === driverId);
         const q = quali.find((x) => x.Driver.driverId === driverId);
@@ -155,7 +155,7 @@ export async function GET(req: Request) {
             : null,
         };
       };
-      return { year, a: pick(driverA), b: pick(driverB) };
+      return { year, a: pick(circuitDriverA), b: pick(circuitDriverB) };
     });
 
   return NextResponse.json({ circuitId, driverA, driverB, history });

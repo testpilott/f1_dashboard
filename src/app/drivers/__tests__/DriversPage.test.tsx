@@ -1,18 +1,15 @@
 import { render, screen } from "@testing-library/react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import userEvent from "@testing-library/user-event";
 import { vi, describe, it, expect, beforeEach } from "vitest";
 import DriversPage from "@/app/drivers/page";
+import { withQuery } from "@/test/render";
+import { createFetchRouter } from "@/test/fetch";
 
 vi.mock("next/image", () => ({
   default: ({ src, alt, width, height, className }: { src: string; alt: string; width: number; height: number; className?: string }) => (
     <img src={src} alt={alt} width={width} height={height} className={className} />
   ),
 }));
-
-function withQuery(ui: React.ReactNode) {
-  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return <QueryClientProvider client={qc}>{ui}</QueryClientProvider>;
-}
 
 const mockDrivers = [
   {
@@ -45,23 +42,65 @@ const mockPhotos = [
   },
 ];
 
-function mockFetch(options?: { standingsFails?: boolean; photos?: unknown }) {
-  global.fetch = vi.fn(async (url: unknown) => {
-    const u = String(url);
+const mockSeason = {
+  season: "2026",
+  driverId: "verstappen",
+  summary: {
+    driverId: "verstappen",
+    season: "2026",
+    rows: [
+      {
+        round: 1,
+        raceName: "Bahrain Grand Prix",
+        grid: 1,
+        finish: 1,
+        points: 25,
+        status: "Finished",
+        fastestLap: true,
+      },
+    ],
+    aggregates: {
+      races: 1,
+      wins: 1,
+      podiums: 1,
+      points: 25,
+      dnfs: 0,
+      fastestLaps: 1,
+      avgFinish: 1,
+      avgGrid: 1,
+    },
+  },
+};
 
-    if (u.includes("/api/standings")) {
-      if (options?.standingsFails) {
+const mockCareer = {
+  driverId: "verstappen",
+  career: { wins: 60, podiums: 98, starts: 210, fastestLaps: 44, championships: 4 },
+};
+
+function mockFetch(options?: { standingsFails?: boolean; photos?: unknown }) {
+  if (options?.standingsFails) {
+    global.fetch = vi.fn(async (url: unknown) => {
+      const u = String(url);
+      if (u.includes("/api/standings")) {
         throw new Error("Network error");
       }
-      return new Response(JSON.stringify({ drivers: mockDrivers }), { status: 200 });
-    }
+      if (u.includes("/api/driver-photos")) {
+        return new Response(JSON.stringify({ photos: options?.photos ?? mockPhotos }), {
+          status: 200,
+        });
+      }
+      return new Response("{}", { status: 200 });
+    }) as unknown as typeof fetch;
+    return;
+  }
 
-    if (u.includes("/api/driver-photos")) {
-      return new Response(JSON.stringify({ photos: options?.photos ?? mockPhotos }), { status: 200 });
-    }
-
-    return new Response("{}", { status: 200 });
-  }) as unknown as typeof fetch;
+  global.fetch = createFetchRouter({
+    "/api/standings": { drivers: mockDrivers },
+    "/api/driver-photos": { photos: options?.photos ?? mockPhotos },
+    "/api/driver-season": mockSeason,
+    "/api/driver-career": mockCareer,
+    "/api/news": { items: [] },
+  });
 }
 
 beforeEach(() => {
@@ -99,5 +138,16 @@ describe("<DriversPage />", () => {
     mockFetch({ standingsFails: true });
     render(withQuery(<DriversPage />));
     expect(await screen.findByText(/failed to load drivers/i)).toBeInTheDocument();
+  });
+
+  it("selecting a driver opens detail panel with season and career blocks", async () => {
+    const user = userEvent.setup();
+    render(withQuery(<DriversPage />));
+
+    const card = await screen.findByRole("button", { name: /verstappen/i });
+    await user.click(card);
+
+    expect((await screen.findAllByText("This Season")).length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Career").length).toBeGreaterThan(0);
   });
 });

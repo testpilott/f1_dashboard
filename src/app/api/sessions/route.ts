@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSessions, getSessionResult, getStints, getLaps, getPitStops, getTrackWeather, getRaceControl, getDriversForSession } from "@/lib/api/openf1";
+import { badRequest, serverError } from "@/lib/api/routeHelpers";
 import { rateLimited } from "@/lib/api/withRateLimit";
 import { VALID_YEAR, VALID_MEETING_KEY, VALID_SESSION_KEY } from "@/lib/validators";
 
@@ -54,16 +55,16 @@ export async function GET(req: Request) {
   const meetingKey = searchParams.get("meeting_key");
 
   if (!VALID_ENDPOINTS.has(endpoint)) {
-    return NextResponse.json({ error: "Invalid endpoint" }, { status: 400 });
+    return badRequest("Invalid endpoint");
   }
   if (year && !VALID_YEAR.test(year)) {
-    return NextResponse.json({ error: "Invalid year parameter" }, { status: 400 });
+    return badRequest("Invalid year parameter");
   }
   if (meetingKey && !VALID_MEETING_KEY.test(meetingKey)) {
-    return NextResponse.json({ error: "Invalid meeting_key parameter" }, { status: 400 });
+    return badRequest("Invalid meeting_key parameter");
   }
   if (sessionKey && !VALID_SESSION_KEY.test(sessionKey)) {
-    return NextResponse.json({ error: "Invalid session_key parameter" }, { status: 400 });
+    return badRequest("Invalid session_key parameter");
   }
 
   try {
@@ -77,14 +78,13 @@ export async function GET(req: Request) {
     }
 
     if (!sessionKey) {
-      return NextResponse.json({ error: "session_key required" }, { status: 400 });
+      return badRequest("session_key required");
     }
 
     const key = sessionKey === "latest" ? "latest" : parseInt(sessionKey, 10);
     const handler = KEYED_HANDLERS[endpoint];
     return await handler(key);
   } catch (err) {
-    console.error("[/api/sessions] Error:", err);
-    return NextResponse.json({ error: "OpenF1 request failed" }, { status: 500 });
+    return serverError("sessions", err);
   }
 }

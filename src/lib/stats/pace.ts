@@ -3,6 +3,7 @@
  * No network — unit-testable in isolation.
  */
 import type { OpenF1Lap, OpenF1Stint } from "@/lib/types";
+import { mean } from "@/lib/stats/common";
 
 export interface LapPoint {
   lap: number;
@@ -63,9 +64,6 @@ export function degradationSlope(points: LapPoint[]): number {
   if (denom === 0) return 0;
   return (n * sxy - sx * sy) / denom;
 }
-
-const mean = (xs: number[]): number =>
-  xs.length === 0 ? 0 : xs.reduce((s, x) => s + x, 0) / xs.length;
 
 /** Per-stint pace summary for one driver. */
 export function stintSummaries(

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { badRequest, serverError } from "@/lib/api/routeHelpers";
 import { rateLimited } from "@/lib/api/withRateLimit";
 import { VALID_SEASON, VALID_ID } from "@/lib/validators";
 import { getSeasonRaceResults } from "@/lib/api/jolpica";
@@ -15,10 +16,10 @@ export async function GET(req: Request) {
   const driverId = searchParams.get("driverId") ?? "";
 
   if (!VALID_SEASON.test(season)) {
-    return NextResponse.json({ error: "Invalid season" }, { status: 400 });
+    return badRequest("Invalid season");
   }
   if (!VALID_ID.test(driverId)) {
-    return NextResponse.json({ error: "Invalid driverId" }, { status: 400 });
+    return badRequest("Invalid driverId");
   }
 
   try {
@@ -26,10 +27,6 @@ export async function GET(req: Request) {
     const summary = driverSeasonSummary(races, driverId);
     return NextResponse.json({ season, driverId, summary });
   } catch (err) {
-    console.error("[/api/driver-season] Error:", err);
-    return NextResponse.json(
-      { error: "Failed to fetch driver season data" },
-      { status: 500 },
-    );
+    return serverError("driver-season", err);
   }
 }

@@ -1,13 +1,9 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { vi, describe, it, expect, beforeEach } from "vitest";
 import CircuitMap from "@/components/race/CircuitMap";
-
-function withQuery(ui: React.ReactNode) {
-  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return <QueryClientProvider client={qc}>{ui}</QueryClientProvider>;
-}
+import { withQuery } from "@/test/render";
+import { createFetchRouter } from "@/test/fetch";
 
 // Minimal valid 4-point square track — satisfies TrackSVG's xs.length >= 2 guard
 const CIRCUIT_INFO = {
@@ -58,16 +54,10 @@ const INCIDENTS_EMPTY = { available: false };
  * Both queries fire in useQuery; order is non-deterministic so we match by URL.
  */
 function mockFetch(circuitPayload: unknown, incidentsPayload: unknown) {
-  global.fetch = vi.fn(async (url: unknown) => {
-    const u = String(url);
-    if (u.includes("circuit-info")) {
-      return new Response(JSON.stringify(circuitPayload), { status: 200 });
-    }
-    if (u.includes("race-incidents")) {
-      return new Response(JSON.stringify(incidentsPayload), { status: 200 });
-    }
-    return new Response("{}", { status: 404 });
-  }) as unknown as typeof fetch;
+  global.fetch = createFetchRouter({
+    "circuit-info": circuitPayload,
+    "race-incidents": incidentsPayload,
+  });
 }
 
 beforeEach(() => mockFetch(CIRCUIT_INFO, INCIDENTS_WITH_DATA));

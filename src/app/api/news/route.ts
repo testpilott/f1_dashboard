@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { fetchNewsFeeds } from "@/lib/api/rss";
+import { serverError } from "@/lib/api/routeHelpers";
 import { rateLimited } from "@/lib/api/withRateLimit";
 
 export const revalidate = 900; // 15 minutes
@@ -25,7 +26,6 @@ export async function GET(req: Request) {
     }
     return NextResponse.json({ items: items.slice(0, 50) });
   } catch (err) {
-    console.error("[/api/news] Error:", err);
-    return NextResponse.json({ error: "News fetch failed" }, { status: 500 });
+    return serverError("news", err);
   }
 }

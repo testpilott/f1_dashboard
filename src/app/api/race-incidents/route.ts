@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { badRequest, serverError } from "@/lib/api/routeHelpers";
 import { rateLimited } from "@/lib/api/withRateLimit";
 import { VALID_YEAR, VALID_ROUND } from "@/lib/validators";
 import { getSchedule } from "@/lib/api/jolpica";
@@ -21,13 +22,13 @@ export async function GET(req: Request) {
   const round = searchParams.get("round");
 
   if (!year || !round) {
-    return NextResponse.json({ error: "year and round are required" }, { status: 400 });
+    return badRequest("year and round are required");
   }
   if (!VALID_YEAR.test(year)) {
-    return NextResponse.json({ error: "Invalid year parameter" }, { status: 400 });
+    return badRequest("Invalid year parameter");
   }
   if (!VALID_ROUND.test(round)) {
-    return NextResponse.json({ error: "Invalid round parameter" }, { status: 400 });
+    return badRequest("Invalid round parameter");
   }
 
   try {
@@ -74,7 +75,7 @@ export async function GET(req: Request) {
     });
 
     return NextResponse.json({ available: true, incidents: output });
-  } catch {
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  } catch (err) {
+    return serverError("race-incidents", err);
   }
 }

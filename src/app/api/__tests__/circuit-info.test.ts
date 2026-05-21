@@ -26,6 +26,7 @@ import { getSchedule } from "@/lib/api/jolpica";
 import { getSessions } from "@/lib/api/openf1";
 import { pickRaceSession } from "@/lib/stats/session-match";
 import { getCircuitInfo } from "@/lib/api/multiviewer";
+import { makeApiRequest } from "@/test/api";
 
 const MOCK_RACE = {
   round: "5",
@@ -55,10 +56,6 @@ const MOCK_CIRCUIT_INFO = {
   raceDate: "2026-09-21",
 };
 
-function makeRequest(year = "2026", round = "5") {
-  return new Request(`http://localhost/api/circuit-info?year=${year}&round=${round}`);
-}
-
 describe("/api/circuit-info", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -76,7 +73,7 @@ describe("/api/circuit-info", () => {
   });
 
   it("returns 400 when year is missing", async () => {
-    const req = new Request("http://localhost/api/circuit-info?round=5");
+    const req = makeApiRequest("/api/circuit-info", { round: "5" });
     const res = await GET(req);
     expect(res.status).toBe(400);
     const body = await res.json();
@@ -84,7 +81,7 @@ describe("/api/circuit-info", () => {
   });
 
   it("returns 400 when year is invalid", async () => {
-    const req = new Request("http://localhost/api/circuit-info?year=abcd&round=5");
+    const req = makeApiRequest("/api/circuit-info", { year: "abcd", round: "5" });
     const res = await GET(req);
     expect(res.status).toBe(400);
     const body = await res.json();
@@ -93,7 +90,7 @@ describe("/api/circuit-info", () => {
 
   it("returns available=false when race is not found in schedule", async () => {
     vi.mocked(getSchedule).mockResolvedValue([]);
-    const res = await GET(makeRequest());
+    const res = await GET(makeApiRequest("/api/circuit-info", { year: "2026", round: "5" }));
     const body = await res.json();
     expect(body.available).toBe(false);
     expect(body.reason).toMatch(/race not found/i);
@@ -101,7 +98,7 @@ describe("/api/circuit-info", () => {
 
   it("returns available=false when no OpenF1 session matches", async () => {
     vi.mocked(pickRaceSession).mockReturnValue(null);
-    const res = await GET(makeRequest());
+    const res = await GET(makeApiRequest("/api/circuit-info", { year: "2026", round: "5" }));
     const body = await res.json();
     expect(body.available).toBe(false);
     expect(body.reason).toMatch(/not available/i);
@@ -109,14 +106,14 @@ describe("/api/circuit-info", () => {
 
   it("returns available=false when Multiviewer throws", async () => {
     vi.mocked(getCircuitInfo).mockRejectedValue(new Error("Multiviewer fetch failed: 404"));
-    const res = await GET(makeRequest());
+    const res = await GET(makeApiRequest("/api/circuit-info", { year: "2026", round: "5" }));
     const body = await res.json();
     expect(body.available).toBe(false);
     expect(body.reason).toMatch(/unavailable/i);
   });
 
   it("returns circuit info with corners and track points on success", async () => {
-    const res = await GET(makeRequest());
+    const res = await GET(makeApiRequest("/api/circuit-info", { year: "2026", round: "5" }));
     const body = await res.json();
 
     expect(res.status).toBe(200);
@@ -137,7 +134,7 @@ describe("/api/circuit-info", () => {
       ...MOCK_CIRCUIT_INFO,
       corners: null,
     } as unknown as Awaited<ReturnType<typeof getCircuitInfo>>);
-    const res = await GET(makeRequest());
+    const res = await GET(makeApiRequest("/api/circuit-info", { year: "2026", round: "5" }));
     const body = await res.json();
     expect(body.available).toBe(true);
     expect(body.corners).toEqual([]);
@@ -149,7 +146,7 @@ describe("/api/circuit-info", () => {
       x: undefined,
       y: undefined,
     } as unknown as Awaited<ReturnType<typeof getCircuitInfo>>);
-    const res = await GET(makeRequest());
+    const res = await GET(makeApiRequest("/api/circuit-info", { year: "2026", round: "5" }));
     const body = await res.json();
     expect(body.available).toBe(true);
     expect(body.trackX).toEqual([]);

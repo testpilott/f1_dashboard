@@ -9,14 +9,9 @@ vi.mock("@/lib/api/withRateLimit", () => ({
 
 import { GET } from "@/app/api/driver-season/route";
 import { getSeasonRaceResults } from "@/lib/api/jolpica";
+import { makeApiRequest } from "@/test/api";
 
 const mockGetRaces = getSeasonRaceResults as ReturnType<typeof vi.fn>;
-
-function makeReq(params: Record<string, string>) {
-  return new Request(
-    "http://localhost/api/driver-season?" + new URLSearchParams(params).toString(),
-  );
-}
 
 const BASE_DRIVER = {
   driverId: "max_verstappen",
@@ -61,23 +56,23 @@ describe("GET /api/driver-season", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("returns 400 for invalid season", async () => {
-    const res = await GET(makeReq({ season: "bad", driverId: "max_verstappen" }));
+    const res = await GET(makeApiRequest("/api/driver-season", { season: "bad", driverId: "max_verstappen" }));
     expect(res.status).toBe(400);
   });
 
   it("returns 400 for invalid driverId (uppercase / special chars)", async () => {
-    const res = await GET(makeReq({ season: "2026", driverId: "INVALID DRIVER!!" }));
+    const res = await GET(makeApiRequest("/api/driver-season", { season: "2026", driverId: "INVALID DRIVER!!" }));
     expect(res.status).toBe(400);
   });
 
   it("returns 400 for injection attempt in driverId", async () => {
-    const res = await GET(makeReq({ season: "2026", driverId: "'; DROP TABLE" }));
+    const res = await GET(makeApiRequest("/api/driver-season", { season: "2026", driverId: "'; DROP TABLE" }));
     expect(res.status).toBe(400);
   });
 
   it("returns summary with correct aggregates on success", async () => {
     mockGetRaces.mockResolvedValueOnce(MOCK_RACES);
-    const res = await GET(makeReq({ season: "2026", driverId: "max_verstappen" }));
+    const res = await GET(makeApiRequest("/api/driver-season", { season: "2026", driverId: "max_verstappen" }));
     expect(res.status).toBe(200);
     const data = await res.json();
     expect(data.summary).toBeDefined();
@@ -92,13 +87,13 @@ describe("GET /api/driver-season", () => {
 
   it("returns 500 when upstream throws", async () => {
     mockGetRaces.mockRejectedValueOnce(new Error("timeout"));
-    const res = await GET(makeReq({ season: "2026", driverId: "max_verstappen" }));
+    const res = await GET(makeApiRequest("/api/driver-season", { season: "2026", driverId: "max_verstappen" }));
     expect(res.status).toBe(500);
   });
 
   it("handles empty Races array gracefully", async () => {
     mockGetRaces.mockResolvedValueOnce([]);
-    const res = await GET(makeReq({ season: "2026", driverId: "max_verstappen" }));
+    const res = await GET(makeApiRequest("/api/driver-season", { season: "2026", driverId: "max_verstappen" }));
     expect(res.status).toBe(200);
     const data = await res.json();
     expect(data.summary.aggregates.races).toBe(0);

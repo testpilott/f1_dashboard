@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getWeatherForecast } from "@/lib/api/openmeteo";
 import { CIRCUIT_COORDS } from "@/lib/constants";
+import { badRequest, serverError } from "@/lib/api/routeHelpers";
 import { rateLimited } from "@/lib/api/withRateLimit";
 
 export const revalidate = 3600; // 1 hour
@@ -21,7 +22,7 @@ export async function GET(req: Request) {
   if (country) {
     const coords = CIRCUIT_COORDS[country];
     if (!coords) {
-      return NextResponse.json({ error: `Unknown circuit country: ${country}` }, { status: 400 });
+      return badRequest(`Unknown circuit country: ${country}`);
     }
     latitude = coords.lat;
     longitude = coords.lng;
@@ -30,24 +31,18 @@ export async function GET(req: Request) {
     const parsedLat = parseFloat(lat);
     const parsedLng = parseFloat(lng);
     if (isNaN(parsedLat) || isNaN(parsedLng)) {
-      return NextResponse.json(
-        { error: "Invalid coordinates: lat and lng must be valid numbers" },
-        { status: 400 }
-      );
+      return badRequest("Invalid coordinates: lat and lng must be valid numbers");
     }
     latitude = parsedLat;
     longitude = parsedLng;
   } else {
-    return NextResponse.json({ error: "country or lat/lng required" }, { status: 400 });
+    return badRequest("country or lat/lng required");
   }
 
   try {
     const forecast = await getWeatherForecast(latitude, longitude, timezone);
     return NextResponse.json(forecast);
   } catch (err) {
-    return NextResponse.json(
-      { error: "Weather fetch failed", detail: String(err) },
-      { status: 500 }
-    );
+    return serverError("weather", err);
   }
 }

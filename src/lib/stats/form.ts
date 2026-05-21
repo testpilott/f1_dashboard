@@ -3,6 +3,8 @@
  * Jolpica/Ergast race results. No external calls; safe to unit-test in isolation.
  */
 import type { Race } from "@/lib/types";
+import { isFinished, mean } from "@/lib/stats/common";
+import { parsePoints } from "@/lib/stats/parsing";
 
 export type FormTrend = "up" | "down" | "flat";
 
@@ -26,15 +28,6 @@ const EMPTY: DriverForm = {
   finishes: 0,
   trend: "flat",
 };
-
-/** A driver is "classified as finished" when not retired/DNS/DSQ. */
-function isFinished(status: string | undefined): boolean {
-  if (!status) return false;
-  return status === "Finished" || /^\+\d+\s+Lap/.test(status);
-}
-
-const mean = (xs: number[]): number =>
-  xs.length === 0 ? 0 : xs.reduce((s, x) => s + x, 0) / xs.length;
 
 /**
  * Compute a driver's recent form over the last `window` rounds.
@@ -64,8 +57,7 @@ export function calculateDriverForm(
     const result = race.Results?.find((r) => r.Driver?.driverId === driverId);
     if (!result) continue;
 
-    const pts = parseFloat(result.points);
-    points.push(Number.isFinite(pts) ? pts : 0);
+    points.push(parsePoints(result.points));
 
     const pos = parseInt(result.position, 10);
     if (pos >= 1 && pos <= 3) podiums += 1;

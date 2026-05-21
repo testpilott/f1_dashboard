@@ -6,18 +6,14 @@ import type {
   QualifyingResult,
   SprintResult,
 } from "@/lib/types";
-import { fetchWithTimeout } from "@/lib/api/fetchWithTimeout";
 import { adaptiveRevalidate, type DataClass } from "@/lib/cacheStrategy";
+import { createApiFetcher } from "@/lib/api/createApiFetcher";
 
 const JOLPICA_BASE = "https://api.jolpi.ca/ergast/f1";
+const jolpicaApi = createApiFetcher(JOLPICA_BASE, "Jolpica");
 
 async function jolpicaFetch<T>(path: string, dataClass: DataClass = "standings"): Promise<T> {
-  const res = await fetchWithTimeout(`${JOLPICA_BASE}${path}`, {
-    next: { revalidate: adaptiveRevalidate(dataClass) },
-    headers: { Accept: "application/json" },
-  });
-  if (!res.ok) throw new Error(`Jolpica fetch failed: ${res.status} ${path}`);
-  return res.json() as Promise<T>;
+  return jolpicaApi<T>(path, adaptiveRevalidate(dataClass));
 }
 
 // ─── Standings ────────────────────────────────────────────────────────────────

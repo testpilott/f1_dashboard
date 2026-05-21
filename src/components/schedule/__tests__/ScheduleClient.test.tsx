@@ -3,20 +3,9 @@ import userEvent from "@testing-library/user-event";
 import { describe, it, expect } from "vitest";
 import ScheduleClient from "@/components/schedule/ScheduleClient";
 import type { Race } from "@/lib/types";
+import { makeRace } from "@/test/fixtures";
 
-function mkRace(p: Partial<Race> & { round: string; raceName: string; date: string }): Race {
-  return {
-    season: "2026",
-    Circuit: {
-      circuitId: "monza",
-      circuitName: "Autodromo Nazionale Monza",
-      Location: { locality: "Monza", country: "Italy", lat: "0", long: "0" },
-    },
-    ...p,
-  } as unknown as Race;
-}
-
-const future = mkRace({
+const future = makeRace({
   round: "20",
   raceName: "Future Grand Prix",
   date: "2099-09-06",
@@ -25,7 +14,7 @@ const future = mkRace({
   Sprint: { date: "2099-09-05", time: "10:00:00Z" },
 });
 
-const past = mkRace({ round: "1", raceName: "Past Grand Prix", date: "2000-03-15" });
+const past = makeRace({ round: "1", raceName: "Past Grand Prix", date: "2000-03-15" });
 
 describe("<ScheduleClient />", () => {
   it("lists every race and links the season iCal export", () => {
@@ -58,7 +47,7 @@ describe("<ScheduleClient />", () => {
   });
 
   it("falls back to 'current' season when races have no season field", () => {
-    const r = mkRace({ round: "1", raceName: "X GP", date: "2026-01-01" });
+    const r = makeRace({ round: "1", raceName: "X GP", date: "2026-01-01" });
     delete (r as Partial<Race>).season;
     render(<ScheduleClient races={[r]} />);
     expect(screen.getByRole("link", { name: /add season to calendar/i })).toHaveAttribute(

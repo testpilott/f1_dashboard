@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { badRequest, serverError } from "@/lib/api/routeHelpers";
 import { rateLimited } from "@/lib/api/withRateLimit";
 import { VALID_ID } from "@/lib/validators";
 import {
@@ -13,14 +14,14 @@ import { buildDriverCareerStats } from "@/lib/stats/driverCareer";
 export const revalidate = 86400;
 
 export async function GET(req: Request) {
-  const limited = rateLimited(req, "driver-career");
-  if (limited) return limited;
+  const blocked = rateLimited(req, "driver-career");
+  if (blocked) return blocked;
 
   const { searchParams } = new URL(req.url);
   const driverId = searchParams.get("driverId") ?? "";
 
   if (!VALID_ID.test(driverId)) {
-    return NextResponse.json({ error: "Invalid driverId" }, { status: 400 });
+    return badRequest("Invalid driverId");
   }
 
   try {
@@ -42,7 +43,7 @@ export async function GET(req: Request) {
     });
 
     return NextResponse.json({ driverId, career });
-  } catch {
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  } catch (err) {
+    return serverError("driver-career", err);
   }
 }

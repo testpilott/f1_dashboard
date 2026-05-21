@@ -51,7 +51,7 @@ export async function getHistoricalWeather(
     `&start_date=${startDate}&end_date=${endDate}` +
     `&hourly=temperature_2m,precipitation`;
 
-  const res = await fetch(url, { next: { revalidate: 86400 } }); // cache 24 hours
+  const res = await fetchWithTimeout(url, { next: { revalidate: 86400 } }); // cache 24 hours
   if (!res.ok) throw new Error(`Open-Meteo historical fetch failed: ${res.status}`);
   return res.json();
 }

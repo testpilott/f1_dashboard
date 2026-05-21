@@ -1,25 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { driverSeasonSummary } from "../driverSeason";
-import type { Race } from "@/lib/types";
-
-function makeRace(overrides: Partial<Race> & { Results?: Race["Results"] }): Race {
-  return {
-    season: "2024",
-    round: "1",
-    url: "",
-    raceName: "Test Grand Prix",
-    Circuit: {
-      circuitId: "test",
-      url: "",
-      circuitName: "Test Circuit",
-      Location: { lat: "0", long: "0", locality: "Test", country: "Test" },
-    },
-    date: "2024-03-01",
-    time: "14:00:00Z",
-    Results: [],
-    ...overrides,
-  };
-}
+import { makeRace } from "@/test/fixtures";
 
 const BASE_DRIVER = {
   driverId: "driver1",

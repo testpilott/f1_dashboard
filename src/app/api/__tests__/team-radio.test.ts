@@ -23,10 +23,7 @@ import { rateLimited } from "@/lib/api/withRateLimit";
 import { getSchedule } from "@/lib/api/jolpica";
 import { getDriversForSession, getSessions, getTeamRadio } from "@/lib/api/openf1";
 import { pickRaceSession } from "@/lib/stats/session-match";
-
-function makeRequest(year = "2026", round = "1") {
-  return new Request(`http://localhost/api/team-radio?year=${year}&round=${round}`);
-}
+import { makeApiRequest } from "@/test/api";
 
 describe("/api/team-radio availability handling", () => {
   beforeEach(() => {
@@ -69,7 +66,7 @@ describe("/api/team-radio availability handling", () => {
   it("returns available=false with a clear reason when OpenF1 radio is unavailable", async () => {
     vi.mocked(getTeamRadio).mockRejectedValue(new Error("Request failed: 404 Not Found"));
 
-    const res = await GET(makeRequest());
+    const res = await GET(makeApiRequest("/api/team-radio", { year: "2026", round: "1" }));
     const body = await res.json();
 
     expect(res.status).toBe(200);
@@ -82,7 +79,7 @@ describe("/api/team-radio availability handling", () => {
   it("returns available=true with reason when the race has zero clips", async () => {
     vi.mocked(getTeamRadio).mockResolvedValue([]);
 
-    const res = await GET(makeRequest());
+    const res = await GET(makeApiRequest("/api/team-radio", { year: "2026", round: "1" }));
     const body = await res.json();
 
     expect(res.status).toBe(200);
@@ -104,7 +101,7 @@ describe("/api/team-radio availability handling", () => {
     ];
     vi.mocked(getTeamRadio).mockResolvedValue(clips);
 
-    const res = await GET(makeRequest());
+    const res = await GET(makeApiRequest("/api/team-radio", { year: "2026", round: "1" }));
     const body = await res.json();
 
     expect(res.status).toBe(200);

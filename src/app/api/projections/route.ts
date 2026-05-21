@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { unstable_cache } from "next/cache";
 import { getDriverStandings, getSchedule, getSeasonResults } from "@/lib/api/jolpica";
 import { runProjections } from "@/lib/projections/montecarlo";
+import { badRequest, serverError } from "@/lib/api/routeHelpers";
 import { rateLimited } from "@/lib/api/withRateLimit";
 import { VALID_SEASON } from "@/lib/validators";
 import type { ChampionshipProjection } from "@/lib/types";
@@ -50,12 +51,12 @@ export async function GET(req: Request) {
   const season = searchParams.get("season") ?? "current";
 
   if (!VALID_SEASON.test(season)) {
-    return NextResponse.json({ error: "Invalid season parameter" }, { status: 400 });
+    return badRequest("Invalid season parameter");
   }
   if (season !== "current") {
     const yr = parseInt(season, 10);
     if (yr < 2000 || yr > 2030) {
-      return NextResponse.json({ error: "Season out of range" }, { status: 400 });
+      return badRequest("Season out of range");
     }
   }
 
@@ -63,7 +64,6 @@ export async function GET(req: Request) {
     const projections = await getCachedProjections(season);
     return NextResponse.json(projections);
   } catch (err) {
-    console.error("[/api/projections] Error:", err);
-    return NextResponse.json({ error: "Projection failed" }, { status: 500 });
+    return serverError("projections", err);
   }
 }

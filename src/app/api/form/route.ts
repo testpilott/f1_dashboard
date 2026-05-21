@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSchedule, getRaceResults } from "@/lib/api/jolpica";
+import { badRequest, serverError } from "@/lib/api/routeHelpers";
 import { rateLimited } from "@/lib/api/withRateLimit";
 import { VALID_SEASON } from "@/lib/validators";
 import { calculateDriverForm, type DriverForm } from "@/lib/stats/form";
@@ -22,7 +23,7 @@ export async function GET(req: Request) {
   const season = searchParams.get("season") ?? "current";
 
   if (!VALID_SEASON.test(season)) {
-    return NextResponse.json({ error: "Invalid season parameter" }, { status: 400 });
+    return badRequest("Invalid season parameter");
   }
 
   try {
@@ -57,7 +58,6 @@ export async function GET(req: Request) {
 
     return NextResponse.json({ season, window: WINDOW, form });
   } catch (err) {
-    console.error("[/api/form] Error:", err);
-    return NextResponse.json({ error: "Failed to compute form" }, { status: 500 });
+    return serverError("form", err);
   }
 }

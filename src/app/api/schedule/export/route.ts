@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSchedule } from "@/lib/api/jolpica";
+import { badRequest, serverError } from "@/lib/api/routeHelpers";
 import { rateLimited } from "@/lib/api/withRateLimit";
 import { VALID_SEASON } from "@/lib/validators";
 import { buildICS } from "@/lib/ical";
@@ -14,7 +15,7 @@ export async function GET(req: Request) {
   const season = searchParams.get("season") ?? "current";
 
   if (!VALID_SEASON.test(season)) {
-    return NextResponse.json({ error: "Invalid season parameter" }, { status: 400 });
+    return badRequest("Invalid season parameter");
   }
 
   try {
@@ -29,7 +30,6 @@ export async function GET(req: Request) {
       },
     });
   } catch (err) {
-    console.error("[/api/schedule/export] Error:", err);
-    return NextResponse.json({ error: "Failed to build calendar" }, { status: 500 });
+    return serverError("schedule/export", err);
   }
 }

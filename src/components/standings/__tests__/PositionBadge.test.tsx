@@ -1,0 +1,17 @@
+import { render, screen } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
+import PositionBadge from "@/components/standings/PositionBadge";
+
+describe("<PositionBadge />", () => {
+  it("renders medal styling for podium positions", () => {
+    const { container } = render(<PositionBadge pos={1} />);
+    expect(screen.getByText("1")).toBeInTheDocument();
+    expect(container.querySelector(".bg-medal-gold")).toBeTruthy();
+  });
+
+  it("renders plain text styling for non-podium positions", () => {
+    const { container } = render(<PositionBadge pos={7} />);
+    expect(screen.getByText("7")).toBeInTheDocument();
+    expect(container.querySelector(".bg-medal-gold")).toBeFalsy();
+  });
+});

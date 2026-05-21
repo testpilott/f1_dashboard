@@ -1,4 +1,6 @@
 import type { Race, RaceResult } from "@/lib/types";
+import { isDnf } from "@/lib/stats/common";
+import { parseGrid, parsePoints, parsePosition } from "@/lib/stats/parsing";
 
 export interface DriverSeasonRaceRow {
   round: number;
@@ -28,11 +30,6 @@ export interface DriverSeasonSummary {
   aggregates: DriverSeasonAggregates;
 }
 
-function isDnf(result: RaceResult): boolean {
-  const s = result.status ?? "";
-  return s !== "Finished" && !s.startsWith("+");
-}
-
 export function driverSeasonSummary(races: Race[], driverId: string): DriverSeasonSummary {
   const rows: DriverSeasonRaceRow[] = [];
 
@@ -42,17 +39,17 @@ export function driverSeasonSummary(races: Race[], driverId: string): DriverSeas
     );
     if (!result) continue;
 
-    const finish = parseInt(result.position ?? "99", 10);
-    const grid = parseInt(result.grid ?? "0", 10);
-    const points = parseFloat(result.points ?? "0");
+    const finish = parsePosition(result.position);
+    const grid = parseGrid(result.grid);
+    const points = parsePoints(result.points);
     const fastestLap = result.FastestLap?.rank === "1";
 
     rows.push({
       round: parseInt(race.round, 10),
       raceName: race.raceName,
-      grid: isNaN(grid) ? 0 : grid,
-      finish: isNaN(finish) ? 99 : finish,
-      points: isNaN(points) ? 0 : points,
+      grid,
+      finish,
+      points,
       status: result.status ?? "",
       fastestLap,
     });
@@ -66,7 +63,7 @@ export function driverSeasonSummary(races: Race[], driverId: string): DriverSeas
     wins: rows.filter((r) => r.finish === 1).length,
     podiums: rows.filter((r) => r.finish <= 3).length,
     points: rows.reduce((s, r) => s + r.points, 0),
-    dnfs: rows.filter((r) => isDnf({ status: r.status } as RaceResult)).length,
+    dnfs: rows.filter((r) => isDnf(r.status)).length,
     fastestLaps: rows.filter((r) => r.fastestLap).length,
     avgFinish:
       finishCounts > 0

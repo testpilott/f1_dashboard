@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSchedule } from "@/lib/api/jolpica";
+import { badRequest, serverError } from "@/lib/api/routeHelpers";
 import {
   getSessions,
   getLaps,
@@ -22,13 +23,13 @@ export async function GET(req: Request) {
   const round = searchParams.get("round");
 
   if (!year || !round) {
-    return NextResponse.json({ error: "year and round are required" }, { status: 400 });
+    return badRequest("year and round are required");
   }
   if (!VALID_YEAR.test(year)) {
-    return NextResponse.json({ error: "Invalid year parameter" }, { status: 400 });
+    return badRequest("Invalid year parameter");
   }
   if (!VALID_ROUND.test(round)) {
-    return NextResponse.json({ error: "Invalid round parameter" }, { status: 400 });
+    return badRequest("Invalid round parameter");
   }
 
   try {
@@ -79,7 +80,6 @@ export async function GET(req: Request) {
       drivers: result,
     });
   } catch (err) {
-    console.error("[/api/telemetry] Error:", err);
-    return NextResponse.json({ error: "Failed to load telemetry" }, { status: 500 });
+    return serverError("telemetry", err);
   }
 }

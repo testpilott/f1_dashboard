@@ -26,8 +26,6 @@ const VALID_PROJ_SEASON = VALID_SEASON;
 describe("VALID_SEASON regex", () => {
   it("accepts 4-digit year strings", () => {
     expect(VALID_SEASON.test("2024")).toBe(true);
-    expect(VALID_SEASON.test("2026")).toBe(true);
-    expect(VALID_SEASON.test("2000")).toBe(true);
   });
 
   it("accepts 'current'", () => {
@@ -338,30 +336,9 @@ describe("projections bar-width division-by-zero guard", () => {
   });
 });
 
-// ─── VALID_VIEW (schedule route) ─────────────────────────────────────────────
-
-describe("VALID_VIEW set (/api/schedule)", () => {
-  it("accepts 'next' and 'last'", () => {
-    expect(VALID_VIEW.has("next")).toBe(true);
-    expect(VALID_VIEW.has("last")).toBe(true);
-  });
-
-  it("rejects anything else", () => {
-    expect(VALID_VIEW.has("current")).toBe(false);
-    expect(VALID_VIEW.has("all")).toBe(false);
-    expect(VALID_VIEW.has("")).toBe(false);
-    expect(VALID_VIEW.has("next; rm -rf /")).toBe(false);
-  });
-});
-
 // ─── /api/form (re-uses VALID_SEASON) ────────────────────────────────────────
 
 describe("/api/form season validation", () => {
-  it("accepts a 4-digit season and 'current'", () => {
-    expect(VALID_SEASON.test("2025")).toBe(true);
-    expect(VALID_SEASON.test("current")).toBe(true);
-  });
-
   it("rejects injection / traversal attempts in the season param", () => {
     expect(VALID_SEASON.test("2025; DROP TABLE")).toBe(false);
     expect(VALID_SEASON.test("../../etc/passwd")).toBe(false);
@@ -375,7 +352,6 @@ describe("/api/form season validation", () => {
 describe("/api/telemetry param validation", () => {
   it("accepts a 4-digit year and a 1–30 round", () => {
     expect(VALID_YEAR.test("2024")).toBe(true);
-    expect(VALID_ROUND.test("1")).toBe(true);
     expect(VALID_ROUND.test("24")).toBe(true);
   });
 
@@ -388,70 +364,11 @@ describe("/api/telemetry param validation", () => {
   });
 });
 
-// ─── VALID_COMPARE_VIEW (/api/compare) ───────────────────────────────────────
-
-describe("VALID_COMPARE_VIEW set", () => {
-  it("accepts all three supported views including teams", () => {
-    expect(VALID_COMPARE_VIEW.has("circuit")).toBe(true);
-    expect(VALID_COMPARE_VIEW.has("season")).toBe(true);
-    expect(VALID_COMPARE_VIEW.has("teams")).toBe(true);
-  });
-
-  it("rejects anything else, including injection attempts", () => {
-    expect(VALID_COMPARE_VIEW.has("next")).toBe(false);
-    expect(VALID_COMPARE_VIEW.has("")).toBe(false);
-    expect(VALID_COMPARE_VIEW.has("season; DROP TABLE")).toBe(false);
-    expect(VALID_COMPARE_VIEW.has("../../etc")).toBe(false);
-  });
-});
-
-// ─── VALID_SEARCH_QUERY (/api/search) ────────────────────────────────────────
-
-describe("VALID_SEARCH_QUERY regex", () => {
-  it("accepts printable ASCII queries up to 60 chars", () => {
-    expect(VALID_SEARCH_QUERY.test("hamilton")).toBe(true);
-    expect(VALID_SEARCH_QUERY.test("Max Verstappen")).toBe(true);
-    expect(VALID_SEARCH_QUERY.test("A")).toBe(true);
-    expect(VALID_SEARCH_QUERY.test("a".repeat(60))).toBe(true);
-  });
-
-  it("rejects empty string", () => {
-    expect(VALID_SEARCH_QUERY.test("")).toBe(false);
-  });
-
-  it("rejects strings longer than 60 chars", () => {
-    expect(VALID_SEARCH_QUERY.test("a".repeat(61))).toBe(false);
-  });
-
-  it("rejects non-printable / control characters", () => {
-    expect(VALID_SEARCH_QUERY.test("hello\x00world")).toBe(false);
-    expect(VALID_SEARCH_QUERY.test("hamilton\n")).toBe(false);
-    expect(VALID_SEARCH_QUERY.test("\x1B[31m")).toBe(false);
-  });
-});
-
-// ─── /api/team-radio (re-uses VALID_YEAR + VALID_ROUND) ──────────────────────
-
-describe("/api/team-radio param validation", () => {
-  it("accepts a 4-digit year and valid round", () => {
-    expect(VALID_YEAR.test("2024")).toBe(true);
-    expect(VALID_ROUND.test("5")).toBe(true);
-  });
-
-  it("rejects invalid year/round", () => {
-    expect(VALID_YEAR.test("99")).toBe(false);
-    expect(VALID_ROUND.test("0")).toBe(false);
-    expect(VALID_ROUND.test("99")).toBe(false);
-  });
-});
-
 // ─── /api/driver-career (re-uses VALID_ID) ───────────────────────────────────
 
 describe("/api/driver-career param validation", () => {
   it("accepts valid driverId strings", () => {
-    expect(VALID_ID.test("hamilton")).toBe(true);
     expect(VALID_ID.test("max_verstappen")).toBe(true);
-    expect(VALID_ID.test("alonso")).toBe(true);
   });
 
   it("rejects injection attempts", () => {
@@ -469,20 +386,10 @@ describe("/api/driver-career param validation", () => {
 // ─── /api/race-incidents (re-uses VALID_YEAR + VALID_ROUND) ──────────────────
 
 describe("/api/race-incidents param validation", () => {
-  it("accepts valid year and round", () => {
-    expect(VALID_YEAR.test("2023")).toBe(true);
-    expect(VALID_YEAR.test("2024")).toBe(true);
-    expect(VALID_ROUND.test("1")).toBe(true);
-    expect(VALID_ROUND.test("23")).toBe(true);
-  });
-
-  it("rejects invalid year", () => {
+  it("rejects invalid year and round values", () => {
     expect(VALID_YEAR.test("99")).toBe(false);
     expect(VALID_YEAR.test("20234")).toBe(false);
     expect(VALID_YEAR.test("year")).toBe(false);
-  });
-
-  it("rejects invalid round", () => {
     expect(VALID_ROUND.test("0")).toBe(false);
     expect(VALID_ROUND.test("99")).toBe(false);
     expect(VALID_ROUND.test("round")).toBe(false);

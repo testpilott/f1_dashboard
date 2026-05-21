@@ -1,42 +1,33 @@
 import { describe, it, expect } from "vitest";
 import { seasonHeadToHead } from "@/lib/stats/headToHead";
 import type { Race } from "@/lib/types";
-
-function mkRace(
-  round: number,
-  results: {
-    driverId: string;
-    position: number;
-    grid: number;
-    points: number;
-    status?: string;
-  }[],
-): Race {
-  return {
-    round: String(round),
-    Results: results.map((r) => ({
-      position: String(r.position),
-      grid: String(r.grid),
-      points: String(r.points),
-      status: r.status ?? "Finished",
-      Driver: { driverId: r.driverId },
-    })),
-  } as unknown as Race;
-}
+import { makeRace, makeRaceResult } from "@/test/fixtures";
 
 const A = "hamilton";
 const B = "russell";
 
 describe("seasonHeadToHead — per-driver aggregation", () => {
   const races = [
-    mkRace(1, [
-      { driverId: A, position: 1, grid: 1, points: 25 },
-      { driverId: B, position: 3, grid: 4, points: 15 },
-    ]),
-    mkRace(2, [
-      { driverId: A, position: 20, grid: 2, points: 0, status: "Accident" },
-      { driverId: B, position: 2, grid: 1, points: 18 },
-    ]),
+    makeRace({
+      round: "1",
+      Results: [
+        makeRaceResult({ position: "1", grid: "1", points: "25", Driver: { driverId: A } }),
+        makeRaceResult({ position: "3", grid: "4", points: "15", Driver: { driverId: B } }),
+      ],
+    }),
+    makeRace({
+      round: "2",
+      Results: [
+        makeRaceResult({
+          position: "20",
+          grid: "2",
+          points: "0",
+          status: "Accident",
+          Driver: { driverId: A },
+        }),
+        makeRaceResult({ position: "2", grid: "1", points: "18", Driver: { driverId: B } }),
+      ],
+    }),
   ];
 
   it("sums points, wins, podiums, poles and DNFs", () => {
@@ -56,14 +47,20 @@ describe("seasonHeadToHead — per-driver aggregation", () => {
 describe("seasonHeadToHead — head-to-head counts", () => {
   it("counts who finished and qualified ahead in shared races", () => {
     const races = [
-      mkRace(1, [
-        { driverId: A, position: 1, grid: 2, points: 25 },
-        { driverId: B, position: 2, grid: 1, points: 18 },
-      ]),
-      mkRace(2, [
-        { driverId: A, position: 5, grid: 5, points: 10 },
-        { driverId: B, position: 3, grid: 3, points: 15 },
-      ]),
+      makeRace({
+        round: "1",
+        Results: [
+          makeRaceResult({ position: "1", grid: "2", points: "25", Driver: { driverId: A } }),
+          makeRaceResult({ position: "2", grid: "1", points: "18", Driver: { driverId: B } }),
+        ],
+      }),
+      makeRace({
+        round: "2",
+        Results: [
+          makeRaceResult({ position: "5", grid: "5", points: "10", Driver: { driverId: A } }),
+          makeRaceResult({ position: "3", grid: "3", points: "15", Driver: { driverId: B } }),
+        ],
+      }),
     ];
     const h = seasonHeadToHead(races, A, B);
     expect(h.raceCompared).toBe(2);
@@ -76,11 +73,17 @@ describe("seasonHeadToHead — head-to-head counts", () => {
 
   it("ignores races where only one driver participated", () => {
     const races = [
-      mkRace(1, [{ driverId: A, position: 1, grid: 1, points: 25 }]),
-      mkRace(2, [
-        { driverId: A, position: 2, grid: 2, points: 18 },
-        { driverId: B, position: 1, grid: 1, points: 25 },
-      ]),
+      makeRace({
+        round: "1",
+        Results: [makeRaceResult({ position: "1", grid: "1", points: "25", Driver: { driverId: A } })],
+      }),
+      makeRace({
+        round: "2",
+        Results: [
+          makeRaceResult({ position: "2", grid: "2", points: "18", Driver: { driverId: A } }),
+          makeRaceResult({ position: "1", grid: "1", points: "25", Driver: { driverId: B } }),
+        ],
+      }),
     ];
     const h = seasonHeadToHead(races, A, B);
     expect(h.raceCompared).toBe(1);
@@ -89,10 +92,13 @@ describe("seasonHeadToHead — head-to-head counts", () => {
 
   it("treats grid 0 (pit-lane start) as no clean grid slot", () => {
     const races = [
-      mkRace(1, [
-        { driverId: A, position: 4, grid: 0, points: 12 },
-        { driverId: B, position: 5, grid: 6, points: 10 },
-      ]),
+      makeRace({
+        round: "1",
+        Results: [
+          makeRaceResult({ position: "4", grid: "0", points: "12", Driver: { driverId: A } }),
+          makeRaceResult({ position: "5", grid: "6", points: "10", Driver: { driverId: B } }),
+        ],
+      }),
     ];
     const h = seasonHeadToHead(races, A, B);
     expect(h.raceCompared).toBe(1);
@@ -108,9 +114,7 @@ describe("seasonHeadToHead — guards", () => {
   });
 
   it("does not compare a driver with themselves", () => {
-    const races = [
-      mkRace(1, [{ driverId: A, position: 1, grid: 1, points: 25 }]),
-    ];
+    const races = [makeRace({ round: "1", Results: [makeRaceResult({ position: "1", grid: "1", points: "25", Driver: { driverId: A } })] })];
     const h = seasonHeadToHead(races, A, A);
     expect(h.raceCompared).toBe(0);
   });

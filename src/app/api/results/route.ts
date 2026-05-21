@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getRaceResults, getQualifyingResults, getSprintResults } from "@/lib/api/jolpica";
+import { badRequest, serverError } from "@/lib/api/routeHelpers";
 import { rateLimited } from "@/lib/api/withRateLimit";
 import { VALID_SEASON, VALID_ROUND, VALID_TYPE } from "@/lib/validators";
 
@@ -15,16 +16,16 @@ export async function GET(req: Request) {
   const type = searchParams.get("type") ?? "race";
 
   if (!season || !round) {
-    return NextResponse.json({ error: "season and round are required" }, { status: 400 });
+    return badRequest("season and round are required");
   }
   if (!VALID_SEASON.test(season)) {
-    return NextResponse.json({ error: "Invalid season parameter" }, { status: 400 });
+    return badRequest("Invalid season parameter");
   }
   if (!VALID_ROUND.test(round)) {
-    return NextResponse.json({ error: "Invalid round parameter" }, { status: 400 });
+    return badRequest("Invalid round parameter");
   }
   if (!VALID_TYPE.has(type)) {
-    return NextResponse.json({ error: "Invalid type parameter" }, { status: 400 });
+    return badRequest("Invalid type parameter");
   }
 
   try {
@@ -39,7 +40,6 @@ export async function GET(req: Request) {
     const results = await getRaceResults(season, round);
     return NextResponse.json({ results });
   } catch (err) {
-    console.error("[/api/results] Error:", err);
-    return NextResponse.json({ error: "Failed to fetch results" }, { status: 500 });
+    return serverError("results", err);
   }
 }

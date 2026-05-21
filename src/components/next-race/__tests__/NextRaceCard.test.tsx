@@ -1,17 +1,12 @@
 import { render, screen } from "@testing-library/react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { vi, describe, it, expect, beforeEach } from "vitest";
 import NextRaceCard from "@/components/next-race/NextRaceCard";
 import type { Race } from "@/lib/types";
+import { withQuery } from "@/test/render";
 
 vi.mock("next/image", () => ({
   default: ({ alt }: { alt: string }) => <img alt={alt} />,
 }));
-
-function withQuery(ui: React.ReactNode) {
-  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return <QueryClientProvider client={qc}>{ui}</QueryClientProvider>;
-}
 
 const mockRace: Race = {
   season: "2026",

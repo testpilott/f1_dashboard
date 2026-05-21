@@ -14,18 +14,14 @@ import type {
   OpenF1TeamRadio,
   OpenF1Location,
 } from "@/lib/types";
-import { fetchWithTimeout } from "@/lib/api/fetchWithTimeout";
 import { adaptiveRevalidate } from "@/lib/cacheStrategy";
+import { createApiFetcher } from "@/lib/api/createApiFetcher";
 
 const OPENF1_BASE = "https://api.openf1.org/v1";
+const openF1Api = createApiFetcher(OPENF1_BASE, "OpenF1");
 
 async function openF1Fetch<T>(path: string): Promise<T> {
-  const res = await fetchWithTimeout(`${OPENF1_BASE}${path}`, {
-    next: { revalidate: adaptiveRevalidate("telemetry") },
-    headers: { Accept: "application/json" },
-  });
-  if (!res.ok) throw new Error(`OpenF1 fetch failed: ${res.status} ${path}`);
-  return res.json() as Promise<T>;
+  return openF1Api<T>(path, adaptiveRevalidate("telemetry"));
 }
 
 // ─── Sessions ─────────────────────────────────────────────────────────────────

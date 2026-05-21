@@ -1,13 +1,8 @@
 import { render, screen } from "@testing-library/react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { vi, describe, it, expect, beforeEach } from "vitest";
 import WeekendClient from "@/components/weekend/WeekendClient";
 import type { OpenF1Session } from "@/lib/types";
-
-function withQuery(ui: React.ReactNode) {
-  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return <QueryClientProvider client={qc}>{ui}</QueryClientProvider>;
-}
+import { withQuery } from "@/test/render";
 
 const mockSession: OpenF1Session = {
   session_key: 1001,

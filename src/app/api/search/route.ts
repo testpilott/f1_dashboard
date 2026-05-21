@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { badRequest } from "@/lib/api/routeHelpers";
 import { rateLimited } from "@/lib/api/withRateLimit";
 import { VALID_SEARCH_QUERY } from "@/lib/validators";
 import { getDriverStandings, getConstructorStandings, getSchedule } from "@/lib/api/jolpica";
@@ -15,7 +16,7 @@ export async function GET(req: Request) {
   const q = searchParams.get("q") ?? "";
 
   if (!VALID_SEARCH_QUERY.test(q)) {
-    return NextResponse.json({ error: "Invalid query" }, { status: 400 });
+    return badRequest("Invalid query");
   }
 
   const [driversRes, constructorsRes, scheduleRes] = await Promise.allSettled([

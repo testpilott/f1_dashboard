@@ -1,13 +1,9 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { vi, describe, it, expect, beforeEach } from "vitest";
 import StandingsTables from "@/components/standings/StandingsTables";
-
-function withQuery(ui: React.ReactNode) {
-  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return <QueryClientProvider client={qc}>{ui}</QueryClientProvider>;
-}
+import { withQuery } from "@/test/render";
+import { createFetchRouter } from "@/test/fetch";
 
 const mockData = {
   drivers: [
@@ -55,12 +51,10 @@ const formPayload = {
 
 /** Route the fetch mock by URL so the two independent queries stay isolated. */
 function mockFetch(formResponse: unknown = formPayload, standings: unknown = mockData) {
-  global.fetch = vi.fn(async (url: string) => {
-    if (String(url).includes("/api/form")) {
-      return new Response(JSON.stringify(formResponse), { status: 200 });
-    }
-    return new Response(JSON.stringify(standings), { status: 200 });
-  }) as unknown as typeof fetch;
+  global.fetch = createFetchRouter({
+    "/api/form": formResponse,
+    "/api/standings": standings,
+  });
 }
 
 beforeEach(() => {

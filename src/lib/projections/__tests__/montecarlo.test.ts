@@ -1,80 +1,32 @@
 import { describe, it, expect } from "vitest";
 import { runProjections } from "@/lib/projections/montecarlo";
 import type { DriverStanding, Race } from "@/lib/types";
+import { makeRace, makeDriverStanding, makeDriver, makeConstructor } from "@/test/fixtures";
 
 // ─── Fixtures ─────────────────────────────────────────────────────────────────
 
-function makeStanding(
-  id: string,
-  code: string,
-  given: string,
-  family: string,
-  team: string,
-  points: number,
-  position: number
-): DriverStanding {
-  return {
-    position: String(position),
-    positionText: String(position),
-    points: String(points),
-    wins: "0",
-    Driver: {
-      driverId: id,
-      permanentNumber: "1",
-      code,
-      url: "",
-      givenName: given,
-      familyName: family,
-      dateOfBirth: "1990-01-01",
-      nationality: "British",
-    },
-    Constructors: [
-      {
-        constructorId: team.toLowerCase(),
-        url: "",
-        name: team,
-        nationality: "British",
-      },
-    ],
-  };
-}
-
-function makeRace(season: string, round: number, withSprint = false): Race {
-  return {
-    season,
-    round: String(round),
-    url: "",
-    raceName: `Race ${round}`,
-    Circuit: {
-      circuitId: `circuit-${round}`,
-      url: "",
-      circuitName: `Circuit ${round}`,
-      Location: { lat: "0", long: "0", locality: "City", country: "Country" },
-    },
-    date: `2026-0${round}-01`,
-    time: "13:00:00Z",
-    Results: [],
-    ...(withSprint ? { Sprint: [] } : {}),
-  } as unknown as Race;
-}
-
 // Two-driver standings: leader far ahead, chaser well behind
 const STANDINGS_2: DriverStanding[] = [
-  makeStanding("max", "VER", "Max", "Verstappen", "Red Bull", 300, 1),
-  makeStanding("lec", "LEC", "Charles", "Leclerc", "Ferrari", 50, 2),
+  makeDriverStanding({
+    position: "1",
+    positionText: "1",
+    points: "300",
+    Driver: makeDriver({ driverId: "max", code: "VER", givenName: "Max", familyName: "Verstappen" }),
+    Constructors: [makeConstructor({ constructorId: "red_bull", name: "Red Bull" })],
+  }),
+  makeDriverStanding({
+    position: "2",
+    positionText: "2",
+    points: "50",
+    Driver: makeDriver({ driverId: "lec", code: "LEC", givenName: "Charles", familyName: "Leclerc" }),
+    Constructors: [makeConstructor({ constructorId: "ferrari", name: "Ferrari" })],
+  }),
 ];
 
 // Complete schedule: 3 completed + 5 remaining races
-const SCHEDULE_8: Race[] = [
-  makeRace("2026", 1),
-  makeRace("2026", 2),
-  makeRace("2026", 3),
-  makeRace("2026", 4),
-  makeRace("2026", 5),
-  makeRace("2026", 6),
-  makeRace("2026", 7),
-  makeRace("2026", 8),
-];
+const SCHEDULE_8: Race[] = Array.from({ length: 8 }, (_, i) =>
+  makeRace({ round: String(i + 1) })
+);
 
 // ─── Output shape ─────────────────────────────────────────────────────────────
 
@@ -210,7 +162,13 @@ describe("runProjections() — edge cases", () => {
 
   it("handles a large grid (20 drivers)", () => {
     const bigStandings: DriverStanding[] = Array.from({ length: 20 }, (_, i) =>
-      makeStanding(`d${i}`, `D${i < 10 ? "0" : ""}${i}`, `Driver`, `${i}`, "Ferrari", 100 - i * 4, i + 1)
+      makeDriverStanding({
+        position: String(i + 1),
+        positionText: String(i + 1),
+        points: String(100 - i * 4),
+        Driver: makeDriver({ driverId: `d${i}`, code: `D${i < 10 ? "0" : ""}${i}`, givenName: "Driver", familyName: String(i) }),
+        Constructors: [makeConstructor({ constructorId: "ferrari", name: "Ferrari" })],
+      })
     );
     const result = runProjections(bigStandings, SCHEDULE_8, 3);
     expect(result.drivers).toHaveLength(20);
@@ -219,7 +177,7 @@ describe("runProjections() — edge cases", () => {
   it("handles a sprint weekend in the remaining schedule", () => {
     const scheduleWithSprint: Race[] = [
       ...SCHEDULE_8.slice(0, 3),
-      makeRace("2026", 4, true), // sprint weekend
+      makeRace({ round: "4", Sprint: { date: "2026-04-01", time: "10:00:00Z" } }), // sprint weekend
       ...SCHEDULE_8.slice(4),
     ];
     const result = runProjections(STANDINGS_2, scheduleWithSprint, 3);

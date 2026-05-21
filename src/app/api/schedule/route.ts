@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSchedule, getNextRace, getLastRace } from "@/lib/api/jolpica";
+import { badRequest, serverError } from "@/lib/api/routeHelpers";
 import { rateLimited } from "@/lib/api/withRateLimit";
 import { VALID_SEASON, VALID_VIEW } from "@/lib/validators";
 
@@ -14,10 +15,10 @@ export async function GET(req: Request) {
   const view = searchParams.get("view");
 
   if (!VALID_SEASON.test(season)) {
-    return NextResponse.json({ error: "Invalid season" }, { status: 400 });
+    return badRequest("Invalid season");
   }
   if (view !== null && !VALID_VIEW.has(view)) {
-    return NextResponse.json({ error: "Invalid view" }, { status: 400 });
+    return badRequest("Invalid view");
   }
 
   try {
@@ -32,9 +33,6 @@ export async function GET(req: Request) {
     const races = await getSchedule(season);
     return NextResponse.json({ races });
   } catch (err) {
-    return NextResponse.json(
-      { error: "Failed to fetch schedule", detail: String(err) },
-      { status: 500 }
-    );
+    return serverError("schedule", err);
   }
 }

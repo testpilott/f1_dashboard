@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { TEAM_LOGOS } from "@/lib/constants";
+import { badRequest } from "@/lib/api/routeHelpers";
 import { rateLimited } from "@/lib/api/withRateLimit";
 
 /**
@@ -17,7 +18,7 @@ export async function GET(req: Request) {
   const team = searchParams.get("team");
 
   if (!team) {
-    return NextResponse.json({ error: "team param required" }, { status: 400 });
+    return badRequest("team param required");
   }
 
   // TEAM_LOGOS is a compile-time whitelist — no user-controlled URL construction

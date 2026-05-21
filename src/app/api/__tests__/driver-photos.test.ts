@@ -11,10 +11,7 @@ vi.mock("@/lib/api/openf1", () => ({
 import { GET } from "@/app/api/driver-photos/route";
 import { rateLimited } from "@/lib/api/withRateLimit";
 import { getDriversForSession } from "@/lib/api/openf1";
-
-function makeRequest() {
-  return new Request("http://localhost/api/driver-photos");
-}
+import { makeApiRequest } from "@/test/api";
 
 describe("GET /api/driver-photos", () => {
   beforeEach(() => {
@@ -27,7 +24,7 @@ describe("GET /api/driver-photos", () => {
       new Response(JSON.stringify({ error: "Too many requests" }), { status: 429 }),
     );
 
-    const res = await GET(makeRequest());
+    const res = await GET(makeApiRequest("/api/driver-photos"));
     expect(res.status).toBe(429);
   });
 
@@ -61,7 +58,7 @@ describe("GET /api/driver-photos", () => {
     ];
     vi.mocked(getDriversForSession).mockResolvedValue(drivers);
 
-    const res = await GET(makeRequest());
+    const res = await GET(makeApiRequest("/api/driver-photos"));
     const body = await res.json();
 
     expect(res.status).toBe(200);
@@ -87,7 +84,7 @@ describe("GET /api/driver-photos", () => {
   it("degrades gracefully with an empty array when OpenF1 fails", async () => {
     vi.mocked(getDriversForSession).mockRejectedValue(new Error("timeout"));
 
-    const res = await GET(makeRequest());
+    const res = await GET(makeApiRequest("/api/driver-photos"));
     const body = await res.json();
 
     expect(res.status).toBe(200);

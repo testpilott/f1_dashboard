@@ -29,10 +29,7 @@ import { getSchedule } from "@/lib/api/jolpica";
 import { getLocations, getRaceControl, getSessions } from "@/lib/api/openf1";
 import { classifyIncidents, closestByTime } from "@/lib/stats/incidents";
 import { pickRaceSession } from "@/lib/stats/session-match";
-
-function makeRequest(year = "2026", round = "7") {
-  return new Request(`http://localhost/api/race-incidents?year=${year}&round=${round}`);
-}
+import { makeApiRequest } from "@/test/api";
 
 const MOCK_INCIDENT = {
   date: "2026-06-09T10:00:10.000Z",
@@ -78,14 +75,14 @@ describe("GET /api/race-incidents", () => {
       new Response(JSON.stringify({ error: "Too many requests" }), { status: 429 }),
     );
 
-    const res = await GET(makeRequest());
+    const res = await GET(makeApiRequest("/api/race-incidents", { year: "2026", round: "7" }));
     expect(res.status).toBe(429);
   });
 
   it("returns available=false when round is missing from schedule", async () => {
     vi.mocked(getSchedule).mockResolvedValue([] as unknown as Awaited<ReturnType<typeof getSchedule>>);
 
-    const res = await GET(makeRequest());
+    const res = await GET(makeApiRequest("/api/race-incidents", { year: "2026", round: "7" }));
     const body = await res.json();
 
     expect(res.status).toBe(200);
@@ -95,7 +92,7 @@ describe("GET /api/race-incidents", () => {
   it("returns available=false when no race session can be resolved", async () => {
     vi.mocked(pickRaceSession).mockReturnValue(null);
 
-    const res = await GET(makeRequest());
+    const res = await GET(makeApiRequest("/api/race-incidents", { year: "2026", round: "7" }));
     const body = await res.json();
 
     expect(res.status).toBe(200);
@@ -103,7 +100,7 @@ describe("GET /api/race-incidents", () => {
   });
 
   it("returns incidents with mapped location coordinates on success", async () => {
-    const res = await GET(makeRequest());
+    const res = await GET(makeApiRequest("/api/race-incidents", { year: "2026", round: "7" }));
     const body = await res.json();
 
     expect(res.status).toBe(200);
@@ -133,7 +130,7 @@ describe("GET /api/race-incidents", () => {
   it("keeps incident payload when location fetch fails", async () => {
     vi.mocked(getLocations).mockRejectedValue(new Error("location API timeout"));
 
-    const res = await GET(makeRequest());
+    const res = await GET(makeApiRequest("/api/race-incidents", { year: "2026", round: "7" }));
     const body = await res.json();
 
     expect(res.status).toBe(200);

@@ -21,10 +21,7 @@ import {
   getDriverCareerStarts,
   getDriverCareerWins,
 } from "@/lib/api/jolpica";
-
-function makeRequest(driverId = "max_verstappen") {
-  return new Request(`http://localhost/api/driver-career?driverId=${encodeURIComponent(driverId)}`);
-}
+import { makeApiRequest } from "@/test/api";
 
 describe("GET /api/driver-career", () => {
   beforeEach(() => {
@@ -42,17 +39,17 @@ describe("GET /api/driver-career", () => {
       new Response(JSON.stringify({ error: "Too many requests" }), { status: 429 }),
     );
 
-    const res = await GET(makeRequest());
+    const res = await GET(makeApiRequest("/api/driver-career", { driverId: "max_verstappen" }));
     expect(res.status).toBe(429);
   });
 
   it("returns 400 for invalid driverId", async () => {
-    const res = await GET(makeRequest("INVALID DRIVER"));
+    const res = await GET(makeApiRequest("/api/driver-career", { driverId: "INVALID DRIVER" }));
     expect(res.status).toBe(400);
   });
 
   it("returns career totals when all fetchers resolve", async () => {
-    const res = await GET(makeRequest("max_verstappen"));
+    const res = await GET(makeApiRequest("/api/driver-career", { driverId: "max_verstappen" }));
     const body = await res.json();
 
     expect(res.status).toBe(200);
@@ -73,7 +70,7 @@ describe("GET /api/driver-career", () => {
     vi.mocked(getDriverCareerP3).mockRejectedValue(new Error("p3 endpoint down"));
     vi.mocked(getDriverCareerFastestLaps).mockRejectedValue(new Error("fl endpoint down"));
 
-    const res = await GET(makeRequest("hamilton"));
+    const res = await GET(makeApiRequest("/api/driver-career", { driverId: "hamilton" }));
     const body = await res.json();
 
     expect(res.status).toBe(200);

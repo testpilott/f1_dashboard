@@ -3,6 +3,8 @@
  * (finishing position, grid slot, points, status). No external calls.
  */
 import type { Race } from "@/lib/types";
+import { isFinished, mean } from "@/lib/stats/common";
+import { parsePoints } from "@/lib/stats/parsing";
 
 export interface DriverSeasonStats {
   driverId: string;
@@ -30,14 +32,6 @@ export interface SeasonHeadToHead {
   qualiAheadB: number;
 }
 
-function isFinished(status: string | undefined): boolean {
-  if (!status) return false;
-  return status === "Finished" || /^\+\d+\s+Lap/.test(status);
-}
-
-const mean = (xs: number[]): number =>
-  xs.length === 0 ? 0 : xs.reduce((s, x) => s + x, 0) / xs.length;
-
 function emptyStats(driverId: string): DriverSeasonStats {
   return {
     driverId,
@@ -61,8 +55,7 @@ function collect(races: Race[], driverId: string): DriverSeasonStats {
     if (!r) continue;
 
     s.races += 1;
-    const pts = parseFloat(r.points);
-    if (Number.isFinite(pts)) s.points += pts;
+    s.points += parsePoints(r.points);
 
     const pos = parseInt(r.position, 10);
     if (Number.isFinite(parseInt(r.grid, 10)) && parseInt(r.grid, 10) === 1) {

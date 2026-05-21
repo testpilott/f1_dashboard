@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getDriverStandings, getConstructorStandings } from "@/lib/api/jolpica";
+import { badRequest, serverError } from "@/lib/api/routeHelpers";
 import { rateLimited } from "@/lib/api/withRateLimit";
 import { VALID_SEASON } from "@/lib/validators";
 
@@ -13,7 +14,7 @@ export async function GET(req: Request) {
   const season = searchParams.get("season") ?? "current";
 
   if (!VALID_SEASON.test(season)) {
-    return NextResponse.json({ error: "Invalid season parameter" }, { status: 400 });
+    return badRequest("Invalid season parameter");
   }
 
   try {
@@ -23,7 +24,6 @@ export async function GET(req: Request) {
     ]);
     return NextResponse.json({ drivers, constructors });
   } catch (err) {
-    console.error("[/api/standings] Error:", err);
-    return NextResponse.json({ error: "Failed to fetch standings" }, { status: 500 });
+    return serverError("standings", err);
   }
 }
