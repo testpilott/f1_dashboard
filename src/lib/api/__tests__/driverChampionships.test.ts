@@ -53,8 +53,12 @@ describe("getDriverCareerChampionships", () => {
     await expect(getDriverCareerChampionships("unknown_driver")).resolves.toBe("0");
   });
 
-  it("degrades gracefully when one season request fails", async () => {
+  it("retries a transient season lookup failure and still returns correct count", async () => {
+    const calls = new Map<string, number>();
+
     apiFetchMock.mockImplementation(async (path: string) => {
+      calls.set(path, (calls.get(path) ?? 0) + 1);
+
       if (path === "/drivers/hamilton/seasons.json?limit=100") {
         return {
           MRData: {
@@ -68,7 +72,10 @@ describe("getDriverCareerChampionships", () => {
         return { MRData: { total: "1" } };
       }
       if (path === "/2014/drivers/hamilton/driverStandings/1.json?limit=1") {
-        throw new Error("upstream timeout");
+        if ((calls.get(path) ?? 0) === 1) {
+          throw new Error("upstream timeout");
+        }
+        return { MRData: { total: "1" } };
       }
       if (path === "/2015/drivers/hamilton/driverStandings/1.json?limit=1") {
         return { MRData: { total: "1" } };
@@ -76,6 +83,31 @@ describe("getDriverCareerChampionships", () => {
       throw new Error(`Unexpected path: ${path}`);
     });
 
-    await expect(getDriverCareerChampionships("hamilton")).resolves.toBe("2");
+    await expect(getDriverCareerChampionships("hamilton")).resolves.toBe("3");
+  });
+
+  it("rejects when a season lookup still fails after retry", async () => {
+    apiFetchMock.mockImplementation(async (path: string) => {
+      if (path === "/drivers/hamilton/seasons.json?limit=100") {
+        return {
+          MRData: {
+            SeasonTable: {
+              Seasons: [{ season: "2008" }, { season: "2014" }],
+            },
+          },
+        };
+      }
+      if (path === "/2008/drivers/hamilton/driverStandings/1.json?limit=1") {
+        return { MRData: { total: "1" } };
+      }
+      if (path === "/2014/drivers/hamilton/driverStandings/1.json?limit=1") {
+        throw new Error("persistent upstream timeout");
+      }
+      throw new Error(`Unexpected path: ${path}`);
+    });
+
+    await expect(getDriverCareerChampionships("hamilton")).rejects.toThrow(
+      /persistent upstream timeout/
+    );
   });
 });

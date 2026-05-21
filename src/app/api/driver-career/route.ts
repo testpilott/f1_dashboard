@@ -35,13 +35,18 @@ export async function GET(req: Request) {
       getDriverCareerChampionships(driverId),
     ]);
 
+    // Championships should never silently undercount from transient upstream gaps.
+    if (championships.status !== "fulfilled") {
+      return serverError("driver-career-championships", championships.reason);
+    }
+
     const career = buildDriverCareerStats({
       wins: wins.status === "fulfilled" ? wins.value : undefined,
       p2: p2.status === "fulfilled" ? p2.value : undefined,
       p3: p3.status === "fulfilled" ? p3.value : undefined,
       starts: starts.status === "fulfilled" ? starts.value : undefined,
       fastestLaps: fastestLaps.status === "fulfilled" ? fastestLaps.value : undefined,
-      championships: championships.status === "fulfilled" ? championships.value : undefined,
+      championships: championships.value,
     });
 
     return NextResponse.json({ driverId, career });
