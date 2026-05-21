@@ -186,6 +186,64 @@ describe("VALID_ID regex (/api/compare)", () => {
   });
 });
 
+// ─── VALID_VIEW (schedule route) ────────────────────────────────────────────
+
+describe("VALID_VIEW set (/api/schedule)", () => {
+  it("accepts allowed view values", () => {
+    expect(VALID_VIEW.has("next")).toBe(true);
+    expect(VALID_VIEW.has("last")).toBe(true);
+  });
+
+  it("rejects unknown view values", () => {
+    expect(VALID_VIEW.has("all")).toBe(false);
+    expect(VALID_VIEW.has("")).toBe(false);
+    expect(VALID_VIEW.has("NEXT")).toBe(false);
+    expect(VALID_VIEW.has("next; rm -rf /")).toBe(false);
+  });
+});
+
+// ─── VALID_COMPARE_VIEW (compare route) ───────────────────────────────────────
+
+describe("VALID_COMPARE_VIEW set (/api/compare)", () => {
+  it("accepts allowed compare view values", () => {
+    expect(VALID_COMPARE_VIEW.has("circuit")).toBe(true);
+    expect(VALID_COMPARE_VIEW.has("season")).toBe(true);
+    expect(VALID_COMPARE_VIEW.has("teams")).toBe(true);
+  });
+
+  it("rejects unknown compare view values", () => {
+    expect(VALID_COMPARE_VIEW.has("admin")).toBe(false);
+    expect(VALID_COMPARE_VIEW.has("")).toBe(false);
+    expect(VALID_COMPARE_VIEW.has("Circuit")).toBe(false);
+    expect(VALID_COMPARE_VIEW.has("../etc")).toBe(false);
+  });
+});
+
+// ─── VALID_SEARCH_QUERY (search + news routes) ─────────────────────────────────
+
+describe("VALID_SEARCH_QUERY regex (/api/search, /api/news)", () => {
+  it("accepts printable ASCII strings up to 60 chars", () => {
+    expect(VALID_SEARCH_QUERY.test("Hamilton")).toBe(true);
+    expect(VALID_SEARCH_QUERY.test("max verstappen")).toBe(true);
+    expect(VALID_SEARCH_QUERY.test("F1 2026!")).toBe(true);
+    expect(VALID_SEARCH_QUERY.test("a".repeat(60))).toBe(true);
+  });
+
+  it("rejects empty string", () => {
+    expect(VALID_SEARCH_QUERY.test("")).toBe(false);
+  });
+
+  it("rejects strings longer than 60 characters", () => {
+    expect(VALID_SEARCH_QUERY.test("a".repeat(61))).toBe(false);
+  });
+
+  it("rejects null bytes and control characters", () => {
+    expect(VALID_SEARCH_QUERY.test("abc\x00def")).toBe(false);
+    expect(VALID_SEARCH_QUERY.test("abc\x01def")).toBe(false);
+    expect(VALID_SEARCH_QUERY.test("abc\x1Fdef")).toBe(false);
+  });
+});
+
 // ─── Projections season (projections route) ───────────────────────────────────
 
 describe("VALID_PROJ_SEASON regex (/api/projections)", () => {
@@ -384,5 +442,49 @@ describe("/api/team-radio param validation", () => {
     expect(VALID_YEAR.test("99")).toBe(false);
     expect(VALID_ROUND.test("0")).toBe(false);
     expect(VALID_ROUND.test("99")).toBe(false);
+  });
+});
+
+// ─── /api/driver-career (re-uses VALID_ID) ───────────────────────────────────
+
+describe("/api/driver-career param validation", () => {
+  it("accepts valid driverId strings", () => {
+    expect(VALID_ID.test("hamilton")).toBe(true);
+    expect(VALID_ID.test("max_verstappen")).toBe(true);
+    expect(VALID_ID.test("alonso")).toBe(true);
+  });
+
+  it("rejects injection attempts", () => {
+    expect(VALID_ID.test("'; DROP TABLE--")).toBe(false);
+    expect(VALID_ID.test("<script>")).toBe(false);
+    expect(VALID_ID.test("../etc/passwd")).toBe(false);
+  });
+
+  it("rejects empty and too-long IDs", () => {
+    expect(VALID_ID.test("")).toBe(false);
+    expect(VALID_ID.test("a".repeat(51))).toBe(false);
+  });
+});
+
+// ─── /api/race-incidents (re-uses VALID_YEAR + VALID_ROUND) ──────────────────
+
+describe("/api/race-incidents param validation", () => {
+  it("accepts valid year and round", () => {
+    expect(VALID_YEAR.test("2023")).toBe(true);
+    expect(VALID_YEAR.test("2024")).toBe(true);
+    expect(VALID_ROUND.test("1")).toBe(true);
+    expect(VALID_ROUND.test("23")).toBe(true);
+  });
+
+  it("rejects invalid year", () => {
+    expect(VALID_YEAR.test("99")).toBe(false);
+    expect(VALID_YEAR.test("20234")).toBe(false);
+    expect(VALID_YEAR.test("year")).toBe(false);
+  });
+
+  it("rejects invalid round", () => {
+    expect(VALID_ROUND.test("0")).toBe(false);
+    expect(VALID_ROUND.test("99")).toBe(false);
+    expect(VALID_ROUND.test("round")).toBe(false);
   });
 });

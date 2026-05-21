@@ -11,6 +11,13 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { ConstructorH2HResult } from "@/lib/stats/constructorH2H";
 
+interface ConstructorContext {
+  position: number | null;
+  wins: number;
+  bestFinish: number | null;
+  racesEntered: number;
+}
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface DriverResult {
@@ -73,9 +80,9 @@ async function fetchSeasonCompare(dA: string, dB: string): Promise<{ stats: Seas
   return res.json();
 }
 
-async function fetchTeamsCompare(cA: string, cB: string): Promise<{ stats: ConstructorH2HResult }> {
+async function fetchTeamsCompare(cA: string, cB: string, season: string): Promise<{ stats: ConstructorH2HResult; context: { a: ConstructorContext; b: ConstructorContext }; season: string }> {
   const res = await fetch(
-    `/api/compare?view=teams&constructorA=${encodeURIComponent(cA)}&constructorB=${encodeURIComponent(cB)}`
+    `/api/compare?view=teams&constructorA=${encodeURIComponent(cA)}&constructorB=${encodeURIComponent(cB)}&season=${encodeURIComponent(season)}`
   );
   if (!res.ok) throw new Error("Failed to load constructor comparison");
   return res.json();
@@ -131,6 +138,7 @@ export default function ComparePage() {
   // Teams tab state
   const [constructorAId, setConstructorAId] = useState("");
   const [constructorBId, setConstructorBId] = useState("");
+  const [teamsSeason, setTeamsSeason] = useState(String(new Date().getFullYear()));
 
   const { data: standings, isLoading: standLoading } = useQuery({
     queryKey: ["compare-standings"],
@@ -178,8 +186,8 @@ export default function ComparePage() {
   const teamColorB = getTeamColor(constructorB?.Constructor.name ?? "");
 
   const { data: teamsData, isLoading: teamsLoading } = useQuery({
-    queryKey: ["teams-compare", constructorAId, constructorBId],
-    queryFn: () => fetchTeamsCompare(constructorAId, constructorBId),
+    queryKey: ["teams-compare", constructorAId, constructorBId, teamsSeason],
+    queryFn: () => fetchTeamsCompare(constructorAId, constructorBId, teamsSeason),
     enabled: bothTeamsSelected,
     staleTime: 5 * 60 * 1000,
   });
@@ -433,6 +441,19 @@ export default function ComparePage() {
                 </SelectContent>
               </Select>
             </div>
+            <div className="shrink-0">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Season</p>
+              <Select value={teamsSeason} onValueChange={(v) => v && setTeamsSeason(v)}>
+                <SelectTrigger className="bg-surface-2 border-border w-28">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-surface-2 border-border">
+                  {Array.from({ length: 6 }, (_, i) => String(new Date().getFullYear() - i)).map((yr) => (
+                    <SelectItem key={yr} value={yr}>{yr}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           {!bothTeamsSelected && (
@@ -470,13 +491,47 @@ export default function ComparePage() {
               {teamsData && teamsData.stats && (
                 <>
                   <div className="rounded-lg bg-surface-2 border border-border p-5 space-y-4">
-                    <p className="text-xs text-muted-foreground uppercase tracking-wider">2026 Season</p>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wider">{teamsSeason} Season</p>
                     <StatBar label="Points" a={teamsData.stats.a.totalPoints} b={teamsData.stats.b.totalPoints} colorA={teamColorA} colorB={teamColorB} />
                     <StatBar label="Wins" a={teamsData.stats.a.wins} b={teamsData.stats.b.wins} colorA={teamColorA} colorB={teamColorB} />
                     <StatBar label="Podiums" a={teamsData.stats.a.podiums} b={teamsData.stats.b.podiums} colorA={teamColorA} colorB={teamColorB} />
                     <StatBar label="1-2 Finishes" a={teamsData.stats.a.oneTwos} b={teamsData.stats.b.oneTwos} colorA={teamColorA} colorB={teamColorB} />
                     <StatBar label="DNFs" a={teamsData.stats.a.dnfs} b={teamsData.stats.b.dnfs} colorA={teamColorA} colorB={teamColorB} />
                   </div>
+
+                  {teamsData.context && (
+                    <div className="rounded-lg bg-surface-2 border border-border p-5">
+                      <p className="text-xs text-muted-foreground uppercase tracking-wider mb-3">Championship context — {teamsSeason}</p>
+                      <div className="grid grid-cols-2 gap-3">
+                        {[
+                          { ctx: teamsData.context.a, name: constructorA?.Constructor.name ?? constructorAId, color: teamColorA },
+                          { ctx: teamsData.context.b, name: constructorB?.Constructor.name ?? constructorBId, color: teamColorB },
+                        ].map(({ ctx, name, color }) => (
+                          <div key={name} className="rounded bg-surface-3/60 p-3 space-y-2">
+                            <p className="text-xs font-semibold truncate" style={{ color }}>{name}</p>
+                            <div className="grid grid-cols-2 gap-1 text-center">
+                              <div>
+                                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Champ P</p>
+                                <p className="font-mono font-bold text-sm">{ctx.position != null ? `P${ctx.position}` : "—"}</p>
+                              </div>
+                              <div>
+                                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Wins</p>
+                                <p className="font-mono font-bold text-sm">{ctx.wins}</p>
+                              </div>
+                              <div>
+                                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Best Finish</p>
+                                <p className="font-mono font-bold text-sm">{ctx.bestFinish != null ? `P${ctx.bestFinish}` : "—"}</p>
+                              </div>
+                              <div>
+                                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Races</p>
+                                <p className="font-mono font-bold text-sm">{ctx.racesEntered}</p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   {teamsData.stats.racesCompared > 0 && (
                     <div className="rounded-lg bg-surface-2 border border-border p-5 space-y-4">

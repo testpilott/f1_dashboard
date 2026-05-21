@@ -1,16 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-vi.mock("@/lib/api/fetchWithTimeout", () => ({
-  fetchWithTimeout: vi.fn(),
+vi.mock("@/lib/api/jolpica", () => ({
+  getSeasonRaceResults: vi.fn(),
 }));
 vi.mock("@/lib/api/withRateLimit", () => ({
   rateLimited: vi.fn(() => null),
 }));
 
 import { GET } from "@/app/api/driver-season/route";
-import { fetchWithTimeout } from "@/lib/api/fetchWithTimeout";
+import { getSeasonRaceResults } from "@/lib/api/jolpica";
 
-const mockFetch = fetchWithTimeout as ReturnType<typeof vi.fn>;
+const mockGetRaces = getSeasonRaceResults as ReturnType<typeof vi.fn>;
 
 function makeReq(params: Record<string, string>) {
   return new Request(
@@ -18,27 +18,42 @@ function makeReq(params: Record<string, string>) {
   );
 }
 
-function okResponse(data: unknown) {
-  return Promise.resolve({ ok: true, json: async () => data });
-}
+const BASE_DRIVER = {
+  driverId: "max_verstappen",
+  permanentNumber: "1",
+  code: "VER",
+  url: "",
+  givenName: "Max",
+  familyName: "Verstappen",
+  dateOfBirth: "1997-09-30",
+  nationality: "Dutch",
+};
+const BASE_CONSTRUCTOR = { constructorId: "red_bull", url: "", name: "Red Bull Racing", nationality: "Austrian" };
 
 const MOCK_RACES = [
   {
-    round: "1",
-    raceName: "Bahrain Grand Prix",
+    season: "2026", round: "1", url: "", raceName: "Bahrain Grand Prix",
+    Circuit: { circuitId: "bahrain", url: "", circuitName: "Bahrain International Circuit", Location: { lat: "0", long: "0", locality: "Sakhir", country: "Bahrain" } },
+    date: "2026-03-01", time: "15:00:00Z",
     Results: [
-      { position: "1", positionText: "1", grid: "1", points: "25", status: "Finished", FastestLap: { rank: "1" } },
+      { number: "1", position: "1", positionText: "1", points: "25", Driver: BASE_DRIVER, Constructor: BASE_CONSTRUCTOR, grid: "1", laps: "57", status: "Finished", FastestLap: { rank: "1", lap: "50", Time: { time: "1:30.000" }, AverageSpeed: { units: "kph", speed: "220" } } },
     ],
   },
   {
-    round: "2",
-    raceName: "Saudi Arabian Grand Prix",
-    Results: [{ position: "2", positionText: "2", grid: "3", points: "18", status: "Finished" }],
+    season: "2026", round: "2", url: "", raceName: "Saudi Arabian Grand Prix",
+    Circuit: { circuitId: "jeddah", url: "", circuitName: "Jeddah Corniche Circuit", Location: { lat: "0", long: "0", locality: "Jeddah", country: "Saudi Arabia" } },
+    date: "2026-03-08", time: "17:00:00Z",
+    Results: [
+      { number: "1", position: "2", positionText: "2", points: "18", Driver: BASE_DRIVER, Constructor: BASE_CONSTRUCTOR, grid: "3", laps: "50", status: "Finished" },
+    ],
   },
   {
-    round: "3",
-    raceName: "Australian Grand Prix",
-    Results: [{ position: "0", positionText: "R", grid: "2", points: "0", status: "Accident" }],
+    season: "2026", round: "3", url: "", raceName: "Australian Grand Prix",
+    Circuit: { circuitId: "albert_park", url: "", circuitName: "Albert Park Circuit", Location: { lat: "0", long: "0", locality: "Melbourne", country: "Australia" } },
+    date: "2026-03-15", time: "06:00:00Z",
+    Results: [
+      { number: "1", position: "20", positionText: "R", points: "0", Driver: BASE_DRIVER, Constructor: BASE_CONSTRUCTOR, grid: "2", laps: "30", status: "Engine" },
+    ],
   },
 ];
 
@@ -60,42 +75,34 @@ describe("GET /api/driver-season", () => {
     expect(res.status).toBe(400);
   });
 
-  it("returns race data with correct totals on success", async () => {
-    mockFetch.mockReturnValueOnce(okResponse({ MRData: { RaceTable: { Races: MOCK_RACES } } }));
+  it("returns summary with correct aggregates on success", async () => {
+    mockGetRaces.mockResolvedValueOnce(MOCK_RACES);
     const res = await GET(makeReq({ season: "2026", driverId: "max_verstappen" }));
     expect(res.status).toBe(200);
     const data = await res.json();
-    expect(data.races).toHaveLength(3);
-    expect(data.totals.wins).toBe(1);
-    expect(data.totals.podiums).toBe(2);
-    expect(data.totals.dnfs).toBe(1);
-    expect(data.totals.fastestLaps).toBe(1);
-    expect(data.totals.starts).toBe(3);
-    expect(data.races[0].fastestLap).toBe(true);
-    expect(data.races[2].position).toBeNull();
+    expect(data.summary).toBeDefined();
+    expect(data.summary.aggregates.races).toBe(3);
+    expect(data.summary.aggregates.wins).toBe(1);
+    expect(data.summary.aggregates.podiums).toBe(2);
+    expect(data.summary.aggregates.dnfs).toBe(1);
+    expect(data.summary.aggregates.fastestLaps).toBe(1);
+    expect(data.summary.aggregates.points).toBe(43);
+    expect(data.summary.rows).toHaveLength(3);
   });
 
   it("returns 500 when upstream throws", async () => {
-    mockFetch.mockRejectedValueOnce(new Error("timeout"));
+    mockGetRaces.mockRejectedValueOnce(new Error("timeout"));
     const res = await GET(makeReq({ season: "2026", driverId: "max_verstappen" }));
     expect(res.status).toBe(500);
   });
 
-  it("handles missing Races array gracefully", async () => {
-    mockFetch.mockReturnValueOnce(okResponse({ MRData: { RaceTable: {} } }));
+  it("handles empty Races array gracefully", async () => {
+    mockGetRaces.mockResolvedValueOnce([]);
     const res = await GET(makeReq({ season: "2026", driverId: "max_verstappen" }));
     expect(res.status).toBe(200);
     const data = await res.json();
-    expect(data.races).toHaveLength(0);
-    expect(data.totals.starts).toBe(0);
-    expect(data.totals.points).toBe(0);
-  });
-
-  it("handles null MRData gracefully", async () => {
-    mockFetch.mockReturnValueOnce(okResponse({}));
-    const res = await GET(makeReq({ season: "2026", driverId: "max_verstappen" }));
-    expect(res.status).toBe(200);
-    const data = await res.json();
-    expect(data.races).toHaveLength(0);
+    expect(data.summary.aggregates.races).toBe(0);
+    expect(data.summary.aggregates.points).toBe(0);
+    expect(data.summary.rows).toHaveLength(0);
   });
 });

@@ -106,6 +106,33 @@ export async function getQualifyingResultsAtCircuit(season: string, circuitId: s
   return data.MRData.RaceTable.Races[0]?.QualifyingResults ?? [];
 }
 
+// ─── Career counts ────────────────────────────────────────────────────────────
+
+async function jolpicaTotal(path: string): Promise<string> {
+  const data = await jolpicaFetch<{ MRData: { total: string } }>(path, "results");
+  return data.MRData.total ?? "0";
+}
+
+export async function getDriverCareerWins(driverId: string): Promise<string> {
+  return jolpicaTotal(`/drivers/${encodeURIComponent(driverId)}/results/1.json?limit=1`);
+}
+
+export async function getDriverCareerP2(driverId: string): Promise<string> {
+  return jolpicaTotal(`/drivers/${encodeURIComponent(driverId)}/results/2.json?limit=1`);
+}
+
+export async function getDriverCareerP3(driverId: string): Promise<string> {
+  return jolpicaTotal(`/drivers/${encodeURIComponent(driverId)}/results/3.json?limit=1`);
+}
+
+export async function getDriverCareerStarts(driverId: string): Promise<string> {
+  return jolpicaTotal(`/drivers/${encodeURIComponent(driverId)}/results.json?limit=1`);
+}
+
+export async function getDriverCareerFastestLaps(driverId: string): Promise<string> {
+  return jolpicaTotal(`/drivers/${encodeURIComponent(driverId)}/fastest/1/results.json?limit=1`);
+}
+
 export async function getNextRace(): Promise<Race | null> {
   const data = await jolpicaFetch<{
     MRData: { RaceTable: { Races: Race[] } };

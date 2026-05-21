@@ -3,6 +3,7 @@ import {
   getRaceResultsAtCircuit,
   getQualifyingResultsAtCircuit,
   getSeasonRaceResults,
+  getConstructorStandings,
 } from "@/lib/api/jolpica";
 import { rateLimited } from "@/lib/api/withRateLimit";
 import { VALID_ID, VALID_SEASON, VALID_COMPARE_VIEW } from "@/lib/validators";
@@ -67,9 +68,38 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Invalid constructor identifier" }, { status: 400 });
     }
     try {
-      const races = await getSeasonRaceResults(season);
+      const [races, standings] = await Promise.all([
+        getSeasonRaceResults(season),
+        getConstructorStandings(season),
+      ]);
       const stats = constructorHeadToHead(races, constructorA, constructorB);
-      return NextResponse.json({ view: "teams", season, constructorA, constructorB, stats });
+
+      // Build per-constructor context
+      function buildContext(conId: string) {
+        const standing = standings.find((s) => s.Constructor.constructorId === conId);
+        const allPositions: number[] = [];
+        for (const race of races) {
+          for (const r of race.Results ?? []) {
+            if (r.Constructor?.constructorId === conId) {
+              const pos = parseInt(r.position, 10);
+              if (!isNaN(pos) && pos > 0) allPositions.push(pos);
+            }
+          }
+        }
+        return {
+          position: standing ? parseInt(standing.position, 10) : null,
+          wins: standing ? parseInt(standing.wins, 10) : 0,
+          bestFinish: allPositions.length > 0 ? Math.min(...allPositions) : null,
+          racesEntered: stats[conId === constructorA ? "a" : "b"].racesEntered,
+        };
+      }
+
+      const context = {
+        a: buildContext(constructorA),
+        b: buildContext(constructorB),
+      };
+
+      return NextResponse.json({ view: "teams", season, constructorA, constructorB, stats, context });
     } catch (err) {
       console.error("[/api/compare?view=teams] Error:", err);
       return NextResponse.json({ error: "Failed to compute constructor comparison" }, { status: 500 });

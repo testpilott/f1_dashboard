@@ -5,13 +5,15 @@ import Image from "next/image";
 import { useQuery } from "@tanstack/react-query";
 import type { DriverStanding, NewsItem } from "@/lib/types";
 import { getTeamColor, getFlag } from "@/lib/constants";
-import { getDriverPhotoUrl } from "@/lib/constants/teams";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import TeamLogo from "@/components/ui/TeamLogo";
 import { getDriverStatic } from "@/lib/drivers-static";
 import { formatDistanceToNow } from "date-fns";
 import { X, MapPin, Radio, Zap, ExternalLink } from "lucide-react";
+import { matchOpenF1Driver } from "@/lib/stats/driverMapping";
+import { DriverSeasonStats } from "@/components/stats/DriverSeasonStats";
+import type { DriverSeasonSummary } from "@/lib/stats/driverSeason";
 
 async function fetchStandings() {
   const res = await fetch("/api/standings?season=current");
@@ -27,20 +29,25 @@ async function fetchDriverNews(lastName: string): Promise<NewsItem[]> {
   return Array.isArray(d.items) ? d.items : [];
 }
 
-type DriverSeasonRace = {
-  round: number;
-  raceName: string;
-  grid: number;
-  position: number | null;
-  points: number;
-  status: string;
-  fastestLap: boolean;
+type DriverPhotoEntry = {
+  driver_number: number;
+  name_acronym: string;
+  last_name: string;
+  headshot_url: string | null;
 };
 
 type DriverSeasonData = {
-  races: DriverSeasonRace[];
-  totals: { starts: number; wins: number; podiums: number; dnfs: number; fastestLaps: number; points: number };
+  season: string;
+  driverId: string;
+  summary: DriverSeasonSummary;
 };
+
+async function fetchDriverPhotos(): Promise<DriverPhotoEntry[]> {
+  const res = await fetch("/api/driver-photos");
+  if (!res.ok) return [];
+  const d = await res.json();
+  return Array.isArray(d.photos) ? d.photos : [];
+}
 
 async function fetchDriverSeason(driverId: string): Promise<DriverSeasonData> {
   const res = await fetch(`/api/driver-season?season=current&driverId=${encodeURIComponent(driverId)}`);
@@ -61,6 +68,12 @@ export default function DriversPage() {
     staleTime: 5 * 60 * 1000,
   });
 
+  const { data: photos } = useQuery({
+    queryKey: ["driver-photos"],
+    queryFn: fetchDriverPhotos,
+    staleTime: 24 * 60 * 60 * 1000,
+  });
+
   const { data: news, isLoading: newsLoading } = useQuery({
     queryKey: ["driver-news", selected?.Driver.familyName],
     queryFn: () => fetchDriverNews(selected!.Driver.familyName),
@@ -73,6 +86,15 @@ export default function DriversPage() {
     queryFn: () => fetchDriverSeason(selected!.Driver.driverId),
     enabled: !!selected,
     staleTime: 60 * 60 * 1000,
+  });
+
+  const { data: careerData, isLoading: careerLoading } = useQuery({
+    queryKey: ["driver-career", selected?.Driver.driverId],
+    queryFn: () =>
+      fetch(`/api/driver-career?driverId=${encodeURIComponent(selected!.Driver.driverId)}`)
+        .then((r) => r.json()) as Promise<{ driverId: string; career: import("@/lib/stats/driverCareer").DriverCareerStats }>,
+    enabled: !!selected,
+    staleTime: 24 * 60 * 60 * 1000,
   });
 
   return (
@@ -122,7 +144,7 @@ export default function DriversPage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <DriverHeadshot driver={d} size={24} />
+                    <DriverHeadshot driver={d} photos={photos ?? []} size={24} />
                     <span className="font-mono text-xs font-bold" style={{ color }}>
                       {d.Driver.code}
                     </span>
@@ -151,6 +173,8 @@ export default function DriversPage() {
                       newsLoading={newsLoading}
                       seasonStats={seasonStats}
                       seasonLoading={seasonLoading}
+                      careerData={careerData?.career}
+                      careerLoading={careerLoading}
                       onClose={() => setSelected(null)}
                     />
                   </div>
@@ -169,6 +193,8 @@ export default function DriversPage() {
               newsLoading={newsLoading}
               seasonStats={seasonStats}
               seasonLoading={seasonLoading}
+              careerData={careerData?.career}
+              careerLoading={careerLoading}
               onClose={() => setSelected(null)}
             />
           </div>
@@ -186,6 +212,8 @@ function DriverDetailPanel({
   newsLoading,
   seasonStats,
   seasonLoading,
+  careerData,
+  careerLoading,
   onClose,
 }: {
   driver: DriverStanding;
@@ -193,6 +221,8 @@ function DriverDetailPanel({
   newsLoading: boolean;
   seasonStats?: DriverSeasonData;
   seasonLoading: boolean;
+  careerData?: import("@/lib/stats/driverCareer").DriverCareerStats;
+  careerLoading: boolean;
   onClose: () => void;
 }) {
   const team = driver.Constructors[0]?.name ?? "Unknown";
@@ -321,47 +351,40 @@ function DriverDetailPanel({
             </h3>
           </div>
           {seasonLoading && (
-            <div className="grid grid-cols-3 gap-2">
-              {Array.from({ length: 6 }).map((_, i) => (
+            <div className="space-y-2">
+              {Array.from({ length: 3 }).map((_, i) => (
                 <Skeleton key={i} className="h-12 rounded-lg" />
               ))}
             </div>
           )}
-          {seasonStats && (
-            <>
-              <div className="grid grid-cols-3 gap-2 mb-3">
-                <StatBox label="Starts" value={String(seasonStats.totals.starts)} />
-                <StatBox label="Wins" value={String(seasonStats.totals.wins)} highlight={seasonStats.totals.wins > 0} />
-                <StatBox label="Podiums" value={String(seasonStats.totals.podiums)} highlight={seasonStats.totals.podiums > 0} />
-                <StatBox label="DNFs" value={String(seasonStats.totals.dnfs)} />
-                <StatBox label="Fastest" value={String(seasonStats.totals.fastestLaps)} />
-                <StatBox label="Points" value={String(seasonStats.totals.points)} />
-              </div>
-              {seasonStats.races.length > 0 && (
-                <div className="space-y-1 max-h-48 overflow-y-auto">
-                  {seasonStats.races.map((r) => (
-                    <div key={r.round} className="flex items-center justify-between text-xs py-1 border-b border-border/30 last:border-0">
-                      <span className="text-muted-foreground/60 font-mono w-5 shrink-0">{r.round}</span>
-                      <span className="flex-1 truncate text-foreground/80 mx-2">
-                        {r.raceName.replace(" Grand Prix", " GP")}
-                        {r.fastestLap && <Zap size={9} className="inline ml-1 text-[var(--f1-red)]" />}
-                      </span>
-                      <span className="font-mono shrink-0">
-                        {r.position === null ? (
-                          <span className="text-destructive">DNF</span>
-                        ) : r.position <= 3 ? (
-                          <span className="font-bold" style={{ color: r.position === 1 ? "#C9A84C" : r.position === 2 ? "#A8A9AD" : "#CD7F32" }}>
-                            P{r.position}
-                          </span>
-                        ) : (
-                          <span className="text-foreground/70">P{r.position}</span>
-                        )}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </>
+          {seasonStats?.summary && (
+            <DriverSeasonStats summary={seasonStats.summary} />
+          )}
+        </div>
+
+        {/* Career stats */}
+        <div className="px-5 py-3.5">
+          <div className="flex items-center gap-1.5 mb-3">
+            <Zap size={13} className="text-chart-5 shrink-0" />
+            <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+              Career
+            </h3>
+          </div>
+          {careerLoading && (
+            <div className="grid grid-cols-3 gap-2">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Skeleton key={i} className="h-12 rounded-lg" />
+              ))}
+            </div>
+          )}
+          {careerData && (
+            <div className="grid grid-cols-3 gap-2">
+              <StatBox label="Starts" value={String(careerData.starts)} />
+              <StatBox label="Wins" value={String(careerData.wins)} highlight={careerData.wins > 0} />
+              <StatBox label="Podiums" value={String(careerData.podiums)} highlight={careerData.podiums > 0} />
+              <StatBox label="Fastest" value={String(careerData.fastestLaps)} />
+              <StatBox label="Champs" value={careerData.championships > 0 ? String(careerData.championships) : "—"} highlight={careerData.championships > 0} />
+            </div>
           )}
         </div>
 
@@ -418,12 +441,25 @@ function DriverDetailPanel({
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function DriverHeadshot({ driver, size = 24 }: { driver: DriverStanding; size?: number }) {
+function DriverHeadshot({
+  driver,
+  photos,
+  size = 24,
+}: {
+  driver: DriverStanding;
+  photos: DriverPhotoEntry[];
+  size?: number;
+}) {
   const [errored, setErrored] = useState(false);
   const team = driver.Constructors[0]?.name ?? "Unknown";
-  const url = getDriverPhotoUrl(driver.Driver.familyName, driver.Driver.givenName);
+  const match = matchOpenF1Driver(photos as Parameters<typeof matchOpenF1Driver>[0], {
+    driverId: driver.Driver.driverId,
+    code: driver.Driver.code,
+    familyName: driver.Driver.familyName,
+  });
+  const url = match?.headshot_url;
 
-  if (errored) return <TeamLogo team={team} size={size} />;
+  if (errored || !url) return <TeamLogo team={team} size={size} />;
 
   return (
     <Image

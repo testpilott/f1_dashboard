@@ -12,6 +12,7 @@ import type {
   OpenF1RaceControl,
   OpenF1StartingGrid,
   OpenF1TeamRadio,
+  OpenF1Location,
 } from "@/lib/types";
 import { fetchWithTimeout } from "@/lib/api/fetchWithTimeout";
 import { adaptiveRevalidate } from "@/lib/cacheStrategy";
@@ -109,4 +110,21 @@ export async function getRaceControl(sessionKey: number): Promise<OpenF1RaceCont
 
 export async function getTeamRadio(sessionKey: number): Promise<OpenF1TeamRadio[]> {
   return openF1Fetch<OpenF1TeamRadio[]>(`/team_radio?session_key=${sessionKey}`);
+}
+
+// ─── Location (narrow window only — extremely high-volume endpoint) ────────────
+
+export async function getLocations(
+  sessionKey: number,
+  driverNumber: number,
+  dateFrom: string,
+  dateTo: string,
+): Promise<OpenF1Location[]> {
+  const params = new URLSearchParams({
+    session_key: String(sessionKey),
+    driver_number: String(driverNumber),
+    "date>=": dateFrom,
+    "date<=": dateTo,
+  });
+  return openF1Fetch<OpenF1Location[]>(`/location?${params.toString()}`);
 }

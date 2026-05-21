@@ -74,4 +74,23 @@ describe("<ScheduleClient />", () => {
       "/api/schedule/export?season=current",
     );
   });
+
+  it("shows Past Races and Upcoming Races sections with a divider when both exist", () => {
+    render(<ScheduleClient races={[past, future]} />);
+    expect(screen.getByRole("region", { name: /past races/i })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: /upcoming races/i })).toBeInTheDocument();
+    expect(screen.getByRole("separator")).toBeInTheDocument();
+  });
+
+  it("shows only Upcoming Races label when there are no past races", () => {
+    render(<ScheduleClient races={[future]} />);
+    expect(screen.getByText("Upcoming Races")).toBeInTheDocument();
+    expect(screen.queryByRole("separator")).not.toBeInTheDocument();
+  });
+
+  it("shows only Past Races section when all races are past", () => {
+    render(<ScheduleClient races={[past]} />);
+    expect(screen.getByRole("region", { name: /past races/i })).toBeInTheDocument();
+    expect(screen.queryByRole("separator")).not.toBeInTheDocument();
+  });
 });

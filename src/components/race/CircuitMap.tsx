@@ -4,6 +4,18 @@ import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import {
+  Dialog,
+  DialogTrigger,
+  DialogPortal,
+  DialogBackdrop,
+  DialogPopup,
+  DialogTitle,
+  DialogDescription,
+  DialogClose,
+} from "@/components/ui/dialog";
+import { X } from "lucide-react";
+import { nearestPolylinePoint } from "@/lib/stats/incidents";
 
 // ─── Sector config ────────────────────────────────────────────────────────────
 
@@ -70,6 +82,46 @@ async function fetchCircuitInfo(year: string, round: string): Promise<CircuitInf
   );
   if (!res.ok) throw new Error("Failed to load circuit info");
   return res.json() as Promise<CircuitInfoPayload>;
+}
+
+// ─── Incident types ───────────────────────────────────────────────────────────
+
+export interface IncidentMeta {
+  lap_number: number | null;
+  driver_number: number | null;
+  flag: string | null;
+  category: string;
+  message: string;
+}
+
+interface IncidentMarker {
+  /** Raw Multiviewer/track coordinate — pre-transform */
+  x: number;
+  /** Raw Multiviewer/track coordinate — pre-transform */
+  y: number;
+  meta: IncidentMeta;
+}
+
+interface IncidentsPayload {
+  available: boolean;
+  reason?: string;
+  incidents?: Array<{
+    x: number | null;
+    y: number | null;
+    lap_number: number | null;
+    driver_number: number | null;
+    flag: string | null;
+    category: string;
+    message: string;
+  }>;
+}
+
+async function fetchRaceIncidents(year: string, round: string): Promise<IncidentsPayload> {
+  const res = await fetch(
+    `/api/race-incidents?year=${encodeURIComponent(year)}&round=${encodeURIComponent(round)}`,
+  );
+  if (!res.ok) return { available: false, reason: "Failed to load incidents" };
+  return res.json() as Promise<IncidentsPayload>;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -144,10 +196,14 @@ function TrackSVG({
   data,
   selectedCorners,
   sectorMap,
+  markers = [],
+  onMarkerClick,
 }: {
   data: CircuitInfoPayload;
   selectedCorners: Set<number>;
   sectorMap: Map<number, SectorId>;
+  markers?: IncidentMarker[];
+  onMarkerClick?: (meta: IncidentMeta) => void;
 }) {
   const xs = data.trackX ?? [];
   const rawYs = data.trackY ?? [];
@@ -282,6 +338,61 @@ function TrackSVG({
             </g>
           );
         })}
+      {/* Incident markers — rendered last so they appear on top of track + corners
+          Step 2.4 calibration: OpenF1 x,y are believed to share the Multiviewer
+          coordinate space. Same rotatePoint transform as corners guarantees alignment.
+          Each marker is snapped to the nearest polyline vertex. */}
+      {markers.map((marker, idx) => {
+        // Snap to track centerline before transforming
+        const snapped = nearestPolylinePoint(xs, rawYs, marker.x, marker.y);
+        // Apply same transform as corners: flip y, then rotate
+        const pt = rotatePoint(snapped.x, -snapped.y, cx, cy, rotationDeg);
+        const flagColor =
+          marker.meta.flag === "RED"
+            ? "#ef4444"
+            : marker.meta.flag === "YELLOW" || marker.meta.flag === "DOUBLE YELLOW"
+            ? "#f59e0b"
+            : "var(--f1-red, #e10600)";
+        return (
+          <g
+            key={idx}
+            transform={`translate(${pt.x}, ${pt.y})`}
+            style={{ cursor: "pointer" }}
+            role="button"
+            aria-label={`Incident: ${marker.meta.message}`}
+            onClick={() => onMarkerClick?.(marker.meta)}
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onMarkerClick?.(marker.meta);
+              }
+            }}
+          >
+            {/* Glow ring */}
+            <circle r={dotR * 2.6} fill={flagColor} opacity={0.22} />
+            {/* Main marker */}
+            <circle
+              r={dotR * 1.4}
+              fill={flagColor}
+              stroke="white"
+              strokeWidth={dotR * 0.25}
+              opacity={0.92}
+            />
+            {/* Exclamation mark */}
+            <text
+              textAnchor="middle"
+              dominantBaseline="central"
+              fontSize={fontSize * 0.9}
+              fontFamily="var(--font-mono, monospace)"
+              fontWeight="700"
+              fill="white"
+            >
+              !
+            </text>
+          </g>
+        );
+      })}
     </svg>
   );
 }
@@ -290,12 +401,37 @@ function TrackSVG({
 
 export default function CircuitMap({ year, round }: { year: string; round: string }) {
   const [selectedCorners, setSelectedCorners] = useState<Set<number>>(new Set());
+  const [selectedIncident, setSelectedIncident] = useState<IncidentMeta | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   const { data, isLoading, isError } = useQuery<CircuitInfoPayload>({
     queryKey: ["circuit-info", year, round],
     queryFn: () => fetchCircuitInfo(year, round),
     staleTime: 24 * 60 * 60 * 1000,
   });
+
+  const { data: incidentsData } = useQuery<IncidentsPayload>({
+    queryKey: ["race-incidents", year, round],
+    queryFn: () => fetchRaceIncidents(year, round),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const markers = useMemo<IncidentMarker[]>(() => {
+    if (!incidentsData?.available || !incidentsData.incidents) return [];
+    return incidentsData.incidents
+      .filter((inc) => inc.x != null && inc.y != null)
+      .map((inc) => ({
+        x: inc.x!,
+        y: inc.y!,
+        meta: {
+          lap_number: inc.lap_number,
+          driver_number: inc.driver_number,
+          flag: inc.flag,
+          category: inc.category,
+          message: inc.message,
+        },
+      }));
+  }, [incidentsData]);
 
   const sectorMap = useMemo<Map<number, SectorId>>(() => {
     const corners = data?.corners ?? [];
@@ -326,6 +462,11 @@ export default function CircuitMap({ year, round }: { year: string; round: strin
     });
   };
 
+  const handleMarkerClick = (meta: IncidentMeta) => {
+    setSelectedIncident(meta);
+    setDialogOpen(true);
+  };
+
   if (isLoading) return <Skeleton className="h-[480px] w-full mt-4 rounded-lg" />;
 
   if (isError || !data?.available) {
@@ -352,8 +493,66 @@ export default function CircuitMap({ year, round }: { year: string; round: strin
     <div className="mt-4 space-y-4">
       {/* Map */}
       <div className="rounded-lg border border-border bg-surface-2 p-3 sm:p-5">
-        <TrackSVG data={data} selectedCorners={selectedCorners} sectorMap={sectorMap} />
+        <TrackSVG
+          data={data}
+          selectedCorners={selectedCorners}
+          sectorMap={sectorMap}
+          markers={markers}
+          onMarkerClick={handleMarkerClick}
+        />
+        {markers.length > 0 && (
+          <p className="text-[10px] text-muted-foreground mt-2 text-center">
+            {markers.length} incident marker{markers.length !== 1 ? "s" : ""} — click to view detail
+          </p>
+        )}
       </div>
+
+      {/* Incident detail dialog */}
+      <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) setSelectedIncident(null); }}>
+        <DialogPortal>
+          <DialogBackdrop />
+          <DialogPopup>
+            <div className="flex items-center justify-between mb-3">
+              <DialogTitle className="text-base font-bold">
+                {selectedIncident?.category === "CarEvent" ? "Incident" :
+                 selectedIncident?.flag ? `${selectedIncident.flag} Flag` : "Race Control"}
+              </DialogTitle>
+              <DialogClose className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors">
+                <X size={16} />
+              </DialogClose>
+            </div>
+            {selectedIncident && (
+              <div className="space-y-2 text-sm">
+                {selectedIncident.lap_number != null && (
+                  <div className="flex gap-2">
+                    <span className="text-muted-foreground w-20 shrink-0">Lap</span>
+                    <span className="font-mono font-semibold">{selectedIncident.lap_number}</span>
+                  </div>
+                )}
+                {selectedIncident.driver_number != null && (
+                  <div className="flex gap-2">
+                    <span className="text-muted-foreground w-20 shrink-0">Driver #</span>
+                    <span className="font-mono font-semibold">{selectedIncident.driver_number}</span>
+                  </div>
+                )}
+                {selectedIncident.flag && (
+                  <div className="flex gap-2">
+                    <span className="text-muted-foreground w-20 shrink-0">Flag</span>
+                    <span className="font-semibold">{selectedIncident.flag}</span>
+                  </div>
+                )}
+                <div className="flex gap-2">
+                  <span className="text-muted-foreground w-20 shrink-0">Message</span>
+                  <span className="text-foreground/90 leading-relaxed">{selectedIncident.message}</span>
+                </div>
+              </div>
+            )}
+            <DialogDescription className="sr-only">
+              Race control incident detail
+            </DialogDescription>
+          </DialogPopup>
+        </DialogPortal>
+      </Dialog>
 
       {/* Sector groups + corner buttons */}
       {corners.length > 0 && (
