@@ -48,9 +48,9 @@ describe("adaptiveRevalidate", () => {
     expect(adaptiveRevalidate("results", monday)).toBe(3600);
   });
 
-  it("projections TTL unchanged (expensive to recompute)", () => {
-    expect(adaptiveRevalidate("projections", friday)).toBe(3600);
-    expect(adaptiveRevalidate("projections", monday)).toBe(3600);
+  it("projections TTL is 24h (cached daily, not per-request)", () => {
+    expect(adaptiveRevalidate("projections", friday)).toBe(86400);
+    expect(adaptiveRevalidate("projections", monday)).toBe(86400);
   });
 
   it("form TTL tightens on race weekend", () => {

@@ -103,7 +103,7 @@ export default function ProjectionsPage() {
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["projections"],
     queryFn: fetchProjections,
-    staleTime: 60 * 60 * 1000, // 1 hour
+    staleTime: 24 * 60 * 60 * 1000, // 24 hours — matches the server-side daily cache
   });
 
   // Guard against division-by-zero: if every driver has 0% win probability
