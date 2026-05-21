@@ -5,16 +5,15 @@ import {
   getQualifyingResultsAtCircuit,
   getSeasonRaceResults,
   getConstructorStandings,
+  getDriverSeasons,
 } from "@/lib/api/jolpica";
 import { rateLimited } from "@/lib/api/withRateLimit";
 import { VALID_ID, VALID_SEASON, VALID_COMPARE_VIEW } from "@/lib/validators";
 import { seasonHeadToHead } from "@/lib/stats/headToHead";
 import { constructorHeadToHead } from "@/lib/stats/constructorH2H";
+import { computeComparisonYears, chunk, buildCircuitHistoryRow } from "@/lib/stats/compareHistory";
 
 export const revalidate = 300; // 5 min
-
-const CURRENT_YEAR = new Date().getFullYear();
-const HISTORY_YEARS = [CURRENT_YEAR, CURRENT_YEAR - 1, CURRENT_YEAR - 2, CURRENT_YEAR - 3];
 
 export async function GET(req: Request) {
   const blocked = rateLimited(req, "compare");
@@ -115,49 +114,40 @@ export async function GET(req: Request) {
     return badRequest("Invalid circuit identifier");
   }
 
-  const yearResults = await Promise.all(
-    HISTORY_YEARS.map(async (year) => {
-      const [race, quali] = await Promise.allSettled([
-        getRaceResultsAtCircuit(String(year), circuitId),
-        getQualifyingResultsAtCircuit(String(year), circuitId),
-      ]);
-      return {
-        year,
-        race: race.status === "fulfilled" ? race.value : [],
-        quali: quali.status === "fulfilled" ? quali.value : [],
-      };
-    })
-  );
+  try {
+    const circuitDriverA = driverA as string;
+    const circuitDriverB = driverB as string;
 
-  const history = yearResults
-    .filter(({ race, quali }) => race.length > 0 || quali.length > 0)
-    .map(({ year, race, quali }) => {
-      const circuitDriverA = driverA as string;
-      const circuitDriverB = driverB as string;
-      const pick = (driverId: string) => {
-        const r = race.find((x) => x.Driver.driverId === driverId);
-        const q = quali.find((x) => x.Driver.driverId === driverId);
-        return {
-          race: r
-            ? {
-                position: parseInt(r.position, 10) || null,
-                points: parseFloat(r.points),
-                status: r.status,
-                fastestLap: r.FastestLap?.Time?.time ?? null,
-                hasFastestLap: r.FastestLap?.rank === "1",
-              }
-            : null,
-          quali: q
-            ? {
-                position: parseInt(q.position, 10) || null,
-                bestTime: q.Q3 ?? q.Q2 ?? q.Q1 ?? null,
-              }
-            : null,
-        };
-      };
-      return { year, a: pick(circuitDriverA), b: pick(circuitDriverB) };
-    });
+    const [seasonsA, seasonsB] = await Promise.all([
+      getDriverSeasons(circuitDriverA),
+      getDriverSeasons(circuitDriverB),
+    ]);
 
-  return NextResponse.json({ circuitId, driverA, driverB, history });
+    const years = computeComparisonYears(seasonsA, seasonsB);
+    const history: ReturnType<typeof buildCircuitHistoryRow>[] = [];
+
+    for (const batch of chunk(years, 5)) {
+      const rows = await Promise.all(
+        batch.map(async (year) => {
+          const [race, quali] = await Promise.allSettled([
+            getRaceResultsAtCircuit(String(year), circuitId),
+            getQualifyingResultsAtCircuit(String(year), circuitId),
+          ]);
+          return buildCircuitHistoryRow(
+            year,
+            circuitDriverA,
+            circuitDriverB,
+            race.status === "fulfilled" ? race.value : [],
+            quali.status === "fulfilled" ? quali.value : []
+          );
+        })
+      );
+      history.push(...rows.filter(Boolean));
+    }
+
+    return NextResponse.json({ circuitId, driverA: circuitDriverA, driverB: circuitDriverB, history });
+  } catch (err) {
+    return serverError("compare?view=circuit", err);
+  }
 }
 

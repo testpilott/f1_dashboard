@@ -16,6 +16,8 @@ import {
   VALID_VIEW,
   VALID_COMPARE_VIEW,
   VALID_SEARCH_QUERY,
+  VALID_WIKI_TITLE,
+  VALID_QID,
 } from "@/lib/validators";
 
 // projections route re-uses VALID_SEASON
@@ -364,6 +366,20 @@ describe("/api/telemetry param validation", () => {
   });
 });
 
+// ─── /api/race-laps (re-uses VALID_YEAR + VALID_ROUND) ─────────────────────
+
+describe("/api/race-laps param validation", () => {
+  it("accepts valid year and round", () => {
+    expect(VALID_YEAR.test("2010")).toBe(true);
+    expect(VALID_ROUND.test("12")).toBe(true);
+  });
+
+  it("rejects malformed values", () => {
+    expect(VALID_YEAR.test("2010 OR 1=1")).toBe(false);
+    expect(VALID_ROUND.test("31")).toBe(false);
+  });
+});
+
 // ─── /api/driver-career (re-uses VALID_ID) ───────────────────────────────────
 
 describe("/api/driver-career param validation", () => {
@@ -393,5 +409,71 @@ describe("/api/race-incidents param validation", () => {
     expect(VALID_ROUND.test("0")).toBe(false);
     expect(VALID_ROUND.test("99")).toBe(false);
     expect(VALID_ROUND.test("round")).toBe(false);
+  });
+});
+
+// ─── /api/circuit-records (re-uses VALID_ID) ───────────────────────────────
+
+describe("/api/circuit-records param validation", () => {
+  it("accepts known circuit ids", () => {
+    expect(VALID_ID.test("monza")).toBe(true);
+  });
+
+  it("rejects traversal and malformed ids", () => {
+    expect(VALID_ID.test("../../etc")).toBe(false);
+    expect(VALID_ID.test("")).toBe(false);
+  });
+});
+
+// ─── VALID_WIKI_TITLE (/api/wikidata) ─────────────────────────────────────────
+
+describe("VALID_WIKI_TITLE regex (/api/wikidata)", () => {
+  it("accepts standard Wikipedia article titles", () => {
+    expect(VALID_WIKI_TITLE.test("Lewis_Hamilton")).toBe(true);
+    expect(VALID_WIKI_TITLE.test("Max Verstappen")).toBe(true);
+    expect(VALID_WIKI_TITLE.test("F1 2026!")).toBe(true);
+  });
+
+  it("accepts titles up to 255 chars", () => {
+    expect(VALID_WIKI_TITLE.test("a".repeat(255))).toBe(true);
+  });
+
+  it("rejects empty string", () => {
+    expect(VALID_WIKI_TITLE.test("")).toBe(false);
+  });
+
+  it("rejects titles longer than 255 chars", () => {
+    expect(VALID_WIKI_TITLE.test("a".repeat(256))).toBe(false);
+  });
+
+  it("rejects null bytes and control characters", () => {
+    expect(VALID_WIKI_TITLE.test("abc\x00def")).toBe(false);
+    expect(VALID_WIKI_TITLE.test("abc\x1Fdef")).toBe(false);
+  });
+});
+
+// ─── VALID_QID (/api/wikidata) ────────────────────────────────────────────────
+
+describe("VALID_QID regex (/api/wikidata)", () => {
+  it("accepts valid QIDs", () => {
+    expect(VALID_QID.test("Q9673")).toBe(true);
+    expect(VALID_QID.test("Q1")).toBe(true);
+    expect(VALID_QID.test("Q123456789012345")).toBe(true);
+  });
+
+  it("rejects QIDs with wrong prefix", () => {
+    expect(VALID_QID.test("P19")).toBe(false);
+    expect(VALID_QID.test("q9673")).toBe(false);
+  });
+
+  it("rejects empty string and non-numeric after Q", () => {
+    expect(VALID_QID.test("")).toBe(false);
+    expect(VALID_QID.test("Qabc")).toBe(false);
+    expect(VALID_QID.test("Q")).toBe(false);
+  });
+
+  it("rejects injection payloads", () => {
+    expect(VALID_QID.test("Q123; DROP TABLE")).toBe(false);
+    expect(VALID_QID.test("Q1 OR 1=1")).toBe(false);
   });
 });

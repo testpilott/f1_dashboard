@@ -8,6 +8,7 @@ import {
   getDriverCareerP3,
   getDriverCareerStarts,
   getDriverCareerFastestLaps,
+  getDriverCareerChampionships,
 } from "@/lib/api/jolpica";
 import { buildDriverCareerStats } from "@/lib/stats/driverCareer";
 
@@ -25,12 +26,13 @@ export async function GET(req: Request) {
   }
 
   try {
-    const [wins, p2, p3, starts, fastestLaps] = await Promise.allSettled([
+    const [wins, p2, p3, starts, fastestLaps, championships] = await Promise.allSettled([
       getDriverCareerWins(driverId),
       getDriverCareerP2(driverId),
       getDriverCareerP3(driverId),
       getDriverCareerStarts(driverId),
       getDriverCareerFastestLaps(driverId),
+      getDriverCareerChampionships(driverId),
     ]);
 
     const career = buildDriverCareerStats({
@@ -39,7 +41,7 @@ export async function GET(req: Request) {
       p3: p3.status === "fulfilled" ? p3.value : undefined,
       starts: starts.status === "fulfilled" ? starts.value : undefined,
       fastestLaps: fastestLaps.status === "fulfilled" ? fastestLaps.value : undefined,
-      championships: undefined, // Jolpica career championships endpoint not available
+      championships: championships.status === "fulfilled" ? championships.value : undefined,
     });
 
     return NextResponse.json({ driverId, career });

@@ -5,6 +5,12 @@ import DriversPage from "@/app/drivers/page";
 import { withQuery } from "@/test/render";
 import { createFetchRouter } from "@/test/fetch";
 
+vi.mock("next/navigation", () => ({
+  useSearchParams: () => new URLSearchParams(),
+  useRouter: () => ({ push: vi.fn() }),
+  usePathname: () => "/drivers",
+}));
+
 vi.mock("next/image", () => ({
   default: ({ src, alt, width, height, className }: { src: string; alt: string; width: number; height: number; className?: string }) => (
     <img src={src} alt={alt} width={width} height={height} className={className} />
@@ -110,7 +116,7 @@ beforeEach(() => {
 describe("<DriversPage />", () => {
   it("renders the page heading", () => {
     render(withQuery(<DriversPage />));
-    expect(screen.getByText(/2026 Drivers/i)).toBeInTheDocument();
+    expect(screen.getByText(/2026.*Drivers/i)).toBeInTheDocument();
   });
 
   it("shows a driver card after loading", async () => {

@@ -4,6 +4,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { StintSummary } from "@/lib/stats/pace";
+import type { LapSeriesPoint, PitstopMarker } from "@/lib/stats/lapAnalysis";
+import LapTimeFallbackChart from "@/components/race/LapTimeFallbackChart";
 
 interface TelemetryDriver {
   driverNumber: number;
@@ -21,10 +23,23 @@ interface TelemetryResponse {
   drivers?: TelemetryDriver[];
 }
 
+interface RaceLapsResponse {
+  year: string;
+  round: string;
+  series: LapSeriesPoint[];
+  pitstops: PitstopMarker[];
+}
+
 async function fetchTelemetry(year: string, round: string): Promise<TelemetryResponse> {
   const res = await fetch(`/api/telemetry?year=${year}&round=${round}`);
   if (!res.ok) throw new Error("Failed to fetch telemetry");
   return res.json() as Promise<TelemetryResponse>;
+}
+
+async function fetchRaceLaps(year: string, round: string): Promise<RaceLapsResponse> {
+  const res = await fetch(`/api/race-laps?year=${year}&round=${round}`);
+  if (!res.ok) throw new Error("Failed to fetch race laps");
+  return res.json() as Promise<RaceLapsResponse>;
 }
 
 /** Seconds → "m:ss.mmm" lap-time string. */
@@ -54,11 +69,65 @@ export default function TelemetryPanel({
   year: string;
   round: string;
 }) {
+  const showFallback = Number(year) < 2023;
+
+  const {
+    data: fallback,
+    isLoading: fallbackLoading,
+    isError: fallbackError,
+  } = useQuery({
+    queryKey: ["race-laps", year, round],
+    queryFn: () => fetchRaceLaps(year, round),
+    enabled: showFallback,
+    staleTime: 6 * 60 * 60 * 1000,
+  });
+
   const { data, isLoading, isError } = useQuery({
     queryKey: ["telemetry", year, round],
     queryFn: () => fetchTelemetry(year, round),
     staleTime: 5 * 60 * 1000,
+    enabled: !showFallback,
   });
+
+  if (showFallback) {
+    if (fallbackLoading) {
+      return (
+        <div className="space-y-2 mt-4">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="h-10 w-full" />
+          ))}
+        </div>
+      );
+    }
+
+    if (fallbackError) {
+      return (
+        <p className="text-muted-foreground text-sm mt-4">
+          Fallback lap chart could not be loaded. Please try again later.
+        </p>
+      );
+    }
+
+    if (!fallback?.series?.length) {
+      return (
+        <p className="text-muted-foreground text-sm mt-4">
+          No telemetry available for this race. {" "}
+          <span className="text-muted-foreground/70">
+            Live timing data is provided by OpenF1 for 2023 onwards.
+          </span>
+        </p>
+      );
+    }
+
+    return (
+      <div className="mt-4">
+        <LapTimeFallbackChart
+          series={fallback?.series ?? []}
+          pitstops={fallback?.pitstops ?? []}
+        />
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (

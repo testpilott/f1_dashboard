@@ -3,6 +3,7 @@ import type { DriverStanding, ConstructorStanding } from "@/lib/types";
 import StandingsTables from "@/components/standings/StandingsTables";
 import SeasonPicker from "@/components/ui/SeasonPicker";
 import { getDriverStandings, getConstructorStandings } from "@/lib/api/jolpica";
+import { normalizeSeason, seasonLabel } from "@/lib/season";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +17,7 @@ export default async function StandingsPage({
   searchParams: Promise<{ season?: string }>;
 }) {
   const { season: rawSeason } = await searchParams;
-  const season = /^\d{4}$/.test(rawSeason ?? "") ? rawSeason! : "current";
+  const season = normalizeSeason(rawSeason ?? null);
 
   const [driversResult, constructorsResult] = await Promise.allSettled([
     getDriverStandings(season),
@@ -31,7 +32,7 @@ export default async function StandingsPage({
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Championship Standings</h1>
+        <h1 className="text-2xl font-bold">{seasonLabel(season)} Standings</h1>
         <Suspense>
           <SeasonPicker current={season} />
         </Suspense>

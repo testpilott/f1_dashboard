@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { vi, describe, it, expect } from "vitest";
 import RaceDetailClient from "@/components/race/RaceDetailClient";
 import type { Race, RaceResult, QualifyingResult } from "@/lib/types";
+import { withQuery } from "@/test/render";
 
 vi.mock("@/components/race/LapChart", () => ({ default: () => <div data-testid="lap-chart" /> }));
 vi.mock("@/components/race/TireStrategy", () => ({
@@ -47,14 +48,14 @@ const mockRaceResult: RaceResult = {
 describe("<RaceDetailClient />", () => {
   it("renders race name and circuit info", () => {
     render(
-      <RaceDetailClient
+      withQuery(<RaceDetailClient
         initialData={{
           raceInfo: mockRace,
           raceResults: [mockRaceResult],
           qualifyingResults: [] as QualifyingResult[],
           sprintResults: [],
         }}
-      />
+      />)
     );
     expect(screen.getByText("Monaco Grand Prix")).toBeInTheDocument();
     expect(screen.getByText(/Circuit de Monaco/)).toBeInTheDocument();
@@ -62,14 +63,14 @@ describe("<RaceDetailClient />", () => {
 
   it("shows driver result in the race table", () => {
     render(
-      <RaceDetailClient
+      withQuery(<RaceDetailClient
         initialData={{
           raceInfo: mockRace,
           raceResults: [mockRaceResult],
           qualifyingResults: [] as QualifyingResult[],
           sprintResults: [],
         }}
-      />
+      />)
     );
     expect(screen.getByText(/Verstappen/)).toBeInTheDocument();
     expect(screen.getByText("25")).toBeInTheDocument();
@@ -77,9 +78,9 @@ describe("<RaceDetailClient />", () => {
 
   it("shows empty state when no race info", () => {
     render(
-      <RaceDetailClient
+      withQuery(<RaceDetailClient
         initialData={{ raceInfo: null, raceResults: [], qualifyingResults: [], sprintResults: [] }}
-      />
+      />)
     );
     expect(screen.getByText(/race details unavailable/i)).toBeInTheDocument();
   });

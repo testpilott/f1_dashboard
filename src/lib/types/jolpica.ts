@@ -66,6 +66,18 @@ export interface QualifyingResult {
 
 export type SprintResult = RaceResult;
 
+export interface JolpicaLap {
+  number: string;
+  Timings: { driverId: string; position: string; time: string }[];
+}
+
+export interface JolpicaPitstop {
+  driverId: string;
+  lap: string;
+  stop: string;
+  duration: string;
+}
+
 export interface Race {
   season: string;
   round: string;
@@ -88,6 +100,8 @@ export interface Race {
   Results?: RaceResult[];
   QualifyingResults?: QualifyingResult[];
   SprintResults?: SprintResult[];
+  Laps?: JolpicaLap[];
+  PitStops?: JolpicaPitstop[];
 }
 
 export interface Circuit {

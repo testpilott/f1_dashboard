@@ -1,13 +1,20 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import type { Race, QualifyingResult, RaceResult } from "@/lib/types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import TeamLogo from "@/components/ui/TeamLogo";
+import { Skeleton } from "@/components/ui/skeleton";
 import TelemetryPanel from "@/components/race/TelemetryPanel";
 import TeamRadioPanel from "@/components/race/TeamRadioPanel";
 import CircuitMap from "@/components/race/CircuitMap";
+import CircuitRecords from "@/components/race/CircuitRecords";
+import RaceStartTimes from "@/components/race/RaceStartTimes";
+import type { CircuitRecords as CircuitRecordsType } from "@/lib/stats/circuitRecords";
+import { buildRaceStartTimes } from "@/lib/time/raceTime";
 import { getStatusLabel, getStatusTooltip, RADIO_AVAILABLE_FROM, RADIO_AVAILABLE_THROUGH } from "@/lib/constants";
 import {
   Table,
@@ -26,6 +33,13 @@ type RaceDetailData = {
   qualifyingResults: QualifyingResult[];
   sprintResults: RaceResult[];
 };
+
+async function fetchCircuitRecords(circuitId: string): Promise<CircuitRecordsType | null> {
+  const res = await fetch(`/api/circuit-records?circuitId=${encodeURIComponent(circuitId)}`);
+  if (!res.ok) throw new Error("Failed to fetch circuit records");
+  const body = (await res.json()) as { records?: CircuitRecordsType };
+  return body.records ?? null;
+}
 
 function ResultTable({
   type,
@@ -139,6 +153,46 @@ export default function RaceDetailClient({
   const season = Number(raceInfo?.season ?? 0);
   const hasRadio = season >= RADIO_AVAILABLE_FROM && season <= RADIO_AVAILABLE_THROUGH;
 
+  const startTimes = useMemo(() => {
+    if (!raceInfo) return { venue: null, eastern: null };
+    return buildRaceStartTimes(
+      raceInfo.date,
+      raceInfo.time ?? null,
+      raceInfo.Circuit.circuitId
+    );
+  }, [raceInfo]);
+
+  const [browserLocal, setBrowserLocal] = useState<string | null>(null);
+  useEffect(() => {
+    if (!raceInfo?.time) {
+      setBrowserLocal(null);
+      return;
+    }
+    const d = new Date(`${raceInfo.date}T${raceInfo.time}`);
+    if (isNaN(d.getTime())) {
+      setBrowserLocal(null);
+      return;
+    }
+    setBrowserLocal(
+      new Intl.DateTimeFormat(undefined, {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: false,
+        timeZoneName: "short",
+      }).format(d)
+    );
+  }, [raceInfo]);
+
+  const { data: circuitRecords, isLoading: circuitRecordsLoading } = useQuery({
+    queryKey: ["circuit-records", raceInfo?.Circuit.circuitId],
+    queryFn: () => fetchCircuitRecords(raceInfo!.Circuit.circuitId),
+    enabled: Boolean(raceInfo?.Circuit.circuitId),
+    staleTime: 6 * 60 * 60 * 1000,
+  });
+
   return (
     <div>
       <div className="mb-6">
@@ -152,6 +206,18 @@ export default function RaceDetailClient({
               {raceInfo.Circuit.circuitName} · {raceInfo.Circuit.Location.locality},{" "}
               {raceInfo.Circuit.Location.country}
             </p>
+            <div className="mt-3 space-y-2">
+              <RaceStartTimes
+                venue={startTimes.venue}
+                eastern={startTimes.eastern}
+                browserLocal={browserLocal}
+              />
+              {circuitRecordsLoading ? (
+                <Skeleton className="h-24 w-full" />
+              ) : (
+                <CircuitRecords records={circuitRecords} />
+              )}
+            </div>
           </>
         ) : (
           <p className="text-muted-foreground text-sm">Race details unavailable.</p>

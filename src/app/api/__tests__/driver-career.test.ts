@@ -10,6 +10,7 @@ vi.mock("@/lib/api/jolpica", () => ({
   getDriverCareerP3: vi.fn(),
   getDriverCareerStarts: vi.fn(),
   getDriverCareerFastestLaps: vi.fn(),
+  getDriverCareerChampionships: vi.fn(),
 }));
 
 import { GET } from "@/app/api/driver-career/route";
@@ -20,6 +21,7 @@ import {
   getDriverCareerP3,
   getDriverCareerStarts,
   getDriverCareerWins,
+  getDriverCareerChampionships,
 } from "@/lib/api/jolpica";
 import { makeApiRequest } from "@/test/api";
 
@@ -32,6 +34,7 @@ describe("GET /api/driver-career", () => {
     vi.mocked(getDriverCareerP3).mockResolvedValue("18");
     vi.mocked(getDriverCareerStarts).mockResolvedValue("210");
     vi.mocked(getDriverCareerFastestLaps).mockResolvedValue("44");
+    vi.mocked(getDriverCareerChampionships).mockResolvedValue("0");
   });
 
   it("returns rate-limit response when blocked", async () => {

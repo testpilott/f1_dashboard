@@ -5,6 +5,8 @@ import type {
   RaceResult,
   QualifyingResult,
   SprintResult,
+  JolpicaLap,
+  JolpicaPitstop,
 } from "@/lib/types";
 import { adaptiveRevalidate, type DataClass } from "@/lib/cacheStrategy";
 import { createApiFetcher } from "@/lib/api/createApiFetcher";
@@ -127,6 +129,70 @@ export async function getDriverCareerStarts(driverId: string): Promise<string> {
 
 export async function getDriverCareerFastestLaps(driverId: string): Promise<string> {
   return jolpicaTotal(`/drivers/${encodeURIComponent(driverId)}/fastest/1/results.json?limit=1`);
+}
+
+export async function getDriverCareerChampionships(driverId: string): Promise<string> {
+  return jolpicaTotal(`/drivers/${encodeURIComponent(driverId)}/driverStandings/1.json?limit=1`);
+}
+
+/** Returns the list of seasons a driver competed in, oldest first. */
+export async function getDriverSeasons(driverId: string): Promise<number[]> {
+  const data = await jolpicaFetch<{
+    MRData: { SeasonTable: { Seasons: { season: string }[] } };
+  }>(`/drivers/${encodeURIComponent(driverId)}/seasons.json?limit=100`, "results");
+  const seasons = data.MRData.SeasonTable?.Seasons ?? [];
+  return seasons
+    .map((s) => parseInt(s.season, 10))
+    .filter((y) => !isNaN(y))
+    .sort((a, b) => a - b);
+}
+
+/** Returns all historical race entries for a circuit (all seasons). */
+export async function getAllRaceResultsAtCircuit(circuitId: string): Promise<Race[]> {
+  const data = await jolpicaFetch<{
+    MRData: { RaceTable: { Races: Race[] } };
+  }>(`/circuits/${encodeURIComponent(circuitId)}/results.json?limit=1000`, "results");
+  return data.MRData.RaceTable.Races ?? [];
+}
+
+/** Fetch all lap timing pages for a race. */
+export async function getRaceLaps(year: string, round: string): Promise<JolpicaLap[]> {
+  const limit = 100;
+  let offset = 0;
+  let total = Number.POSITIVE_INFINITY;
+  const all: JolpicaLap[] = [];
+
+  while (offset < total) {
+    const data = await jolpicaFetch<{
+      MRData: {
+        total: string;
+        offset: string;
+        limit: string;
+        RaceTable: { Races: { Laps: JolpicaLap[] }[] };
+      };
+    }>(`/${year}/${round}/laps.json?limit=${limit}&offset=${offset}`, "results");
+
+    const laps = data.MRData.RaceTable.Races[0]?.Laps ?? [];
+    all.push(...laps);
+
+    const parsedTotal = parseInt(data.MRData.total ?? "0", 10);
+    const parsedOffset = parseInt(data.MRData.offset ?? String(offset), 10);
+    const parsedLimit = parseInt(data.MRData.limit ?? String(limit), 10);
+    total = isNaN(parsedTotal) ? 0 : parsedTotal;
+    offset = parsedOffset + (isNaN(parsedLimit) ? limit : parsedLimit);
+
+    if (laps.length === 0) break;
+  }
+
+  return all;
+}
+
+/** Fetch all pit-stop rows for a race. */
+export async function getRacePitstops(year: string, round: string): Promise<JolpicaPitstop[]> {
+  const data = await jolpicaFetch<{
+    MRData: { RaceTable: { Races: { PitStops: JolpicaPitstop[] }[] } };
+  }>(`/${year}/${round}/pitstops.json?limit=1000`, "results");
+  return data.MRData.RaceTable.Races[0]?.PitStops ?? [];
 }
 
 export async function getNextRace(): Promise<Race | null> {

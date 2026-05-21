@@ -24,3 +24,9 @@ export const VALID_COMPARE_VIEW: Set<string> = new Set(["circuit", "season", "te
 
 /** Safe search query: 1–60 chars, printable ASCII only. */
 export const VALID_SEARCH_QUERY = /^[\x20-\x7E]{1,60}$/;
+
+/** Wikipedia article title (URL-encoded or decoded). Max 255 chars, printable ASCII. */
+export const VALID_WIKI_TITLE = /^[\x20-\x7E]{1,255}$/;
+
+/** Wikidata entity QID. Format: Q followed by 1–15 digits. */
+export const VALID_QID = /^Q\d{1,15}$/;

@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { ConstructorH2HResult } from "@/lib/stats/constructorH2H";
 import type { ConstructorStanding } from "@/lib/types";
 import { getTeamColor } from "@/lib/constants";
@@ -18,8 +18,8 @@ interface ConstructorContext {
   racesEntered: number;
 }
 
-async function fetchConstructorStandings(): Promise<ConstructorStanding[]> {
-  const res = await fetch("/api/standings?season=current");
+async function fetchConstructorStandings(season: string): Promise<ConstructorStanding[]> {
+  const res = await fetch(`/api/standings?season=${encodeURIComponent(season)}`);
   if (!res.ok) throw new Error("Failed to load standings");
   return res.json().then((d) => (Array.isArray(d.constructors) ? d.constructors : []));
 }
@@ -42,8 +42,8 @@ export default function TeamsCompareTab() {
   const [teamsSeason, setTeamsSeason] = useState(String(new Date().getFullYear()));
 
   const { data: constructorStandings } = useQuery({
-    queryKey: ["compare-constructor-standings"],
-    queryFn: fetchConstructorStandings,
+    queryKey: ["compare-constructor-standings", teamsSeason],
+    queryFn: () => fetchConstructorStandings(teamsSeason),
     staleTime: 5 * 60 * 1000,
   });
 
@@ -52,6 +52,21 @@ export default function TeamsCompareTab() {
   const constructorB = constructorStandings?.find((c) => c.Constructor.constructorId === constructorBId);
   const teamColorA = getTeamColor(constructorA?.Constructor.name ?? "");
   const teamColorB = getTeamColor(constructorB?.Constructor.name ?? "");
+
+  // Reset selections when the chosen season no longer contains the selected team
+  const knownIds = constructorStandings?.map((c) => c.Constructor.constructorId) ?? [];
+  const constructorAValid = !constructorAId || knownIds.includes(constructorAId);
+  const constructorBValid = !constructorBId || knownIds.includes(constructorBId);
+
+  useEffect(() => {
+    if (constructorStandings && constructorAId && !knownIds.includes(constructorAId)) {
+      setConstructorAId("");
+    }
+    if (constructorStandings && constructorBId && !knownIds.includes(constructorBId)) {
+      setConstructorBId("");
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [constructorStandings]);
 
   const { data: teamsData, isLoading: teamsLoading } = useQuery({
     queryKey: ["teams-compare", constructorAId, constructorBId, teamsSeason],
@@ -68,6 +83,7 @@ export default function TeamsCompareTab() {
           <Select value={constructorAId} onValueChange={(v) => v && setConstructorAId(v)}>
             <SelectTrigger className="w-full bg-surface-2 border-border" style={teamColorA ? { borderTopColor: teamColorA, borderTopWidth: 2 } : undefined}>
               <SelectValue placeholder="Select Team A…" />
+              {!constructorAValid && <span className="text-[10px] text-destructive ml-1">Did not compete in {teamsSeason}</span>}
             </SelectTrigger>
             <SelectContent className="bg-surface-2 border-border">
               {constructorStandings?.map((c) => (
@@ -84,6 +100,7 @@ export default function TeamsCompareTab() {
           <Select value={constructorBId} onValueChange={(v) => v && setConstructorBId(v)}>
             <SelectTrigger className="w-full bg-surface-2 border-border" style={teamColorB ? { borderTopColor: teamColorB, borderTopWidth: 2 } : undefined}>
               <SelectValue placeholder="Select Team B…" />
+              {!constructorBValid && <span className="text-[10px] text-destructive ml-1">Did not compete in {teamsSeason}</span>}
             </SelectTrigger>
             <SelectContent className="bg-surface-2 border-border">
               {constructorStandings?.map((c) => (
@@ -96,7 +113,12 @@ export default function TeamsCompareTab() {
         </div>
         <div className="shrink-0">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Season</p>
-          <Select value={teamsSeason} onValueChange={(v) => v && setTeamsSeason(v)}>
+          <Select value={teamsSeason} onValueChange={(v) => {
+            if (!v) return;
+            setTeamsSeason(v);
+            // Reset selections that won't exist in the new season — resolved
+            // after the standings re-fetch via knownIds check below
+          }}>
             <SelectTrigger className="bg-surface-2 border-border w-28">
               <SelectValue />
             </SelectTrigger>

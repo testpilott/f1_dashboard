@@ -5,7 +5,8 @@ import { formatDistanceToNow } from "date-fns";
 import { X, MapPin, Radio, Zap, ExternalLink } from "lucide-react";
 import type { DriverStanding, NewsItem } from "@/lib/types";
 import type { DriverSeasonSummary } from "@/lib/stats/driverSeason";
-import { getTeamColor, getFlag } from "@/lib/constants";
+import type { WikidataDriverProfile } from "@/lib/types/wikidata";
+import { getTeamColor, getFlagByDemonym } from "@/lib/constants";
 import { getDriverStatic } from "@/lib/drivers-static";
 import { DriverSeasonStats } from "@/components/stats/DriverSeasonStats";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -29,6 +30,8 @@ export default function DriverDetailPanel({
   seasonLoading,
   careerData,
   careerLoading,
+  wikidataProfile,
+  wikidataLoading,
   onClose,
 }: {
   driver: DriverStanding;
@@ -38,6 +41,8 @@ export default function DriverDetailPanel({
   seasonLoading: boolean;
   careerData?: DriverCareerStats;
   careerLoading: boolean;
+  wikidataProfile?: WikidataDriverProfile | null;
+  wikidataLoading?: boolean;
   onClose: () => void;
 }) {
   const team = driver.Constructors[0]?.name ?? "Unknown";
@@ -47,7 +52,7 @@ export default function DriverDetailPanel({
   const [now] = useState(() => new Date());
   const age = driver.Driver.dateOfBirth ? ageFromDateOfBirth(driver.Driver.dateOfBirth, now) : null;
 
-  const flag = getFlag(driver.Driver.nationality);
+  const flag = getFlagByDemonym(driver.Driver.nationality);
   const staticData = getDriverStatic(driver.Driver.driverId);
 
   return (
@@ -63,8 +68,15 @@ export default function DriverDetailPanel({
           <X size={16} />
         </button>
 
-        <div className="flex items-center gap-3 mb-4">
-          <TeamLogo team={team} size={36} />
+        <div className="flex items-center gap-3 mb-4">          {wikidataProfile?.photoUrl && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={wikidataProfile.photoUrl}
+              alt={`${driver.Driver.givenName} ${driver.Driver.familyName}`}
+              className="w-16 h-16 rounded-full object-cover shrink-0 border border-border"
+              loading="lazy"
+            />
+          )}          <TeamLogo team={team} size={36} />
           <div>
             <div className="flex items-center gap-2">
               <span className="font-mono text-sm font-bold" style={{ color }}>
@@ -97,7 +109,27 @@ export default function DriverDetailPanel({
               <span className="text-muted-foreground ml-1">· Age {age}</span>
             )}
           </div>
-          {staticData?.hometown && (
+          {wikidataLoading && (
+            <div className="h-3 w-28 bg-muted animate-pulse rounded pl-5" />
+          )}
+          {!wikidataLoading && wikidataProfile?.birthplaceCity && (
+            <p className="text-xs text-muted-foreground pl-5">
+              Born in{" "}
+              {wikidataProfile.birthplaceWikipediaUrl ? (
+                <a
+                  href={wikidataProfile.birthplaceWikipediaUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline underline-offset-2 hover:text-foreground transition-colors"
+                >
+                  {wikidataProfile.birthplaceCity}
+                </a>
+              ) : (
+                wikidataProfile.birthplaceCity
+              )}
+            </p>
+          )}
+          {!wikidataLoading && !wikidataProfile?.birthplaceCity && staticData?.hometown && (
             <p className="text-xs text-muted-foreground pl-5">{staticData.hometown}</p>
           )}
         </div>
