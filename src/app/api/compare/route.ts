@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { unstable_cache } from "next/cache";
 import { badRequest, serverError } from "@/lib/api/routeHelpers";
 import {
   getRaceResultsAtCircuit,
@@ -11,9 +12,50 @@ import { rateLimited } from "@/lib/api/withRateLimit";
 import { VALID_ID, VALID_SEASON, VALID_COMPARE_VIEW } from "@/lib/validators";
 import { seasonHeadToHead } from "@/lib/stats/headToHead";
 import { constructorHeadToHead } from "@/lib/stats/constructorH2H";
-import { computeComparisonYears, chunk, buildCircuitHistoryRow } from "@/lib/stats/compareHistory";
+import {
+  computeComparisonYears,
+  chunk,
+  buildCircuitHistoryRow,
+  type CircuitHistoryRow,
+} from "@/lib/stats/compareHistory";
 
 export const revalidate = 300; // 5 min
+
+const getCircuitHistoryCached = unstable_cache(
+  async (driverA: string, driverB: string, circuitId: string): Promise<CircuitHistoryRow[]> => {
+    const [seasonsA, seasonsB] = await Promise.all([
+      getDriverSeasons(driverA),
+      getDriverSeasons(driverB),
+    ]);
+
+    const years = computeComparisonYears(seasonsA, seasonsB);
+    const history: CircuitHistoryRow[] = [];
+
+    for (const batch of chunk(years, 5)) {
+      const rows = await Promise.all(
+        batch.map(async (year) => {
+          const [race, quali] = await Promise.allSettled([
+            getRaceResultsAtCircuit(String(year), circuitId),
+            getQualifyingResultsAtCircuit(String(year), circuitId),
+          ]);
+          return buildCircuitHistoryRow(
+            year,
+            driverA,
+            driverB,
+            race.status === "fulfilled" ? race.value : [],
+            quali.status === "fulfilled" ? quali.value : [],
+          );
+        }),
+      );
+
+      history.push(...rows.filter((r): r is CircuitHistoryRow => r !== null));
+    }
+
+    return history;
+  },
+  ["compare-circuit"],
+  { revalidate: 6 * 3600 },
+);
 
 export async function GET(req: Request) {
   const blocked = rateLimited(req, "compare");
@@ -118,32 +160,7 @@ export async function GET(req: Request) {
     const circuitDriverA = driverA as string;
     const circuitDriverB = driverB as string;
 
-    const [seasonsA, seasonsB] = await Promise.all([
-      getDriverSeasons(circuitDriverA),
-      getDriverSeasons(circuitDriverB),
-    ]);
-
-    const years = computeComparisonYears(seasonsA, seasonsB);
-    const history: ReturnType<typeof buildCircuitHistoryRow>[] = [];
-
-    for (const batch of chunk(years, 5)) {
-      const rows = await Promise.all(
-        batch.map(async (year) => {
-          const [race, quali] = await Promise.allSettled([
-            getRaceResultsAtCircuit(String(year), circuitId),
-            getQualifyingResultsAtCircuit(String(year), circuitId),
-          ]);
-          return buildCircuitHistoryRow(
-            year,
-            circuitDriverA,
-            circuitDriverB,
-            race.status === "fulfilled" ? race.value : [],
-            quali.status === "fulfilled" ? quali.value : []
-          );
-        })
-      );
-      history.push(...rows.filter(Boolean));
-    }
+    const history = await getCircuitHistoryCached(circuitDriverA, circuitDriverB, circuitId);
 
     return NextResponse.json({ circuitId, driverA: circuitDriverA, driverB: circuitDriverB, history });
   } catch (err) {
