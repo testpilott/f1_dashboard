@@ -189,10 +189,21 @@ export default function DriverDetailPanel({
           )}
           {careerData && (
             <div className="grid grid-cols-3 gap-2">
-              <StatBox label="Starts" value={String(careerData.starts)} />
-              <StatBox label="Wins" value={String(careerData.wins)} highlight={careerData.wins > 0} />
-              <StatBox label="Podiums" value={String(careerData.podiums)} highlight={careerData.podiums > 0} />
-              <StatBox label="Fastest" value={String(careerData.fastestLaps)} />
+              <StatBox label="Starts" value={careerData.starts === null ? "—" : String(careerData.starts)} />
+              <StatBox
+                label="Wins"
+                value={careerData.wins === null ? "—" : String(careerData.wins)}
+                highlight={typeof careerData.wins === "number" && careerData.wins > 0}
+              />
+              <StatBox
+                label="Podiums"
+                value={careerData.podiums === null ? "—" : String(careerData.podiums)}
+                highlight={typeof careerData.podiums === "number" && careerData.podiums > 0}
+              />
+              <StatBox
+                label="Fastest"
+                value={careerData.fastestLaps === null ? "—" : String(careerData.fastestLaps)}
+              />
               <StatBox
                 label="Champs"
                 value={

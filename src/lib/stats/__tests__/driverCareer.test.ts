@@ -18,16 +18,16 @@ describe("buildDriverCareerStats", () => {
     expect(result.championships).toBe(7);
   });
 
-  it("treats missing fields as 0", () => {
+  it("treats missing fields as null", () => {
     const result = buildDriverCareerStats({});
-    expect(result.wins).toBe(0);
-    expect(result.podiums).toBe(0);
-    expect(result.starts).toBe(0);
-    expect(result.fastestLaps).toBe(0);
+    expect(result.wins).toBeNull();
+    expect(result.podiums).toBeNull();
+    expect(result.starts).toBeNull();
+    expect(result.fastestLaps).toBeNull();
     expect(result.championships).toBeNull();
   });
 
-  it("treats non-numeric totals as 0", () => {
+  it("treats non-numeric totals as null", () => {
     const result = buildDriverCareerStats({
       wins: "N/A",
       p2: "undefined",
@@ -35,15 +35,20 @@ describe("buildDriverCareerStats", () => {
       starts: "abc",
       fastestLaps: "null",
     });
-    expect(result.wins).toBe(0);
-    expect(result.podiums).toBe(0);
-    expect(result.starts).toBe(0);
-    expect(result.fastestLaps).toBe(0);
+    expect(result.wins).toBeNull();
+    expect(result.podiums).toBeNull();
+    expect(result.starts).toBeNull();
+    expect(result.fastestLaps).toBeNull();
   });
 
-  it("handles partial fields — podiums uses available values", () => {
+  it("returns null podiums when any contributing total is missing", () => {
     const result = buildDriverCareerStats({ wins: "5", p2: "10" });
-    expect(result.podiums).toBe(15); // p3 defaults to 0
+    expect(result.podiums).toBeNull();
+  });
+
+  it("sums podiums only when wins, p2, and p3 are all present", () => {
+    const result = buildDriverCareerStats({ wins: "5", p2: "10", p3: "3" });
+    expect(result.podiums).toBe(18);
   });
 
   it("treats non-numeric championships as unknown", () => {

@@ -80,10 +80,10 @@ describe("GET /api/driver-career", () => {
     expect(body).toEqual({
       driverId: "hamilton",
       career: {
-        wins: 0,
-        podiums: 20,
+        wins: null,
+        podiums: null,
         starts: 210,
-        fastestLaps: 0,
+        fastestLaps: null,
         championships: 0,
       },
     });

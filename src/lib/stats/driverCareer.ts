@@ -1,8 +1,8 @@
 export interface DriverCareerStats {
-  wins: number;
-  podiums: number;
-  starts: number;
-  fastestLaps: number;
+  wins: number | null;
+  podiums: number | null;
+  starts: number | null;
+  fastestLaps: number | null;
   championships: number | null;
 }
 
@@ -14,23 +14,21 @@ export function buildDriverCareerStats(raw: {
   fastestLaps?: string;
   championships?: string;
 }): DriverCareerStats {
-  const parse = (v: string | undefined): number => {
-    const n = Number(v);
-    return Number.isFinite(n) ? n : 0;
-  };
   const parseNullable = (v: string | undefined): number | null => {
     if (v === undefined) return null;
     const n = Number(v);
     return Number.isFinite(n) ? n : null;
   };
-  const wins = parse(raw.wins);
-  const p2 = parse(raw.p2);
-  const p3 = parse(raw.p3);
+  const wins = parseNullable(raw.wins);
+  const p2 = parseNullable(raw.p2);
+  const p3 = parseNullable(raw.p3);
+  const podiums =
+    wins === null || p2 === null || p3 === null ? null : wins + p2 + p3;
   return {
     wins,
-    podiums: wins + p2 + p3,
-    starts: parse(raw.starts),
-    fastestLaps: parse(raw.fastestLaps),
+    podiums,
+    starts: parseNullable(raw.starts),
+    fastestLaps: parseNullable(raw.fastestLaps),
     championships: parseNullable(raw.championships),
   };
 }

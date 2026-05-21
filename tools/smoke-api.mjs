@@ -12,8 +12,8 @@ function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
 
-function isNonNegativeNumber(value) {
-  return Number.isFinite(value) && value >= 0;
+function isNonNegativeNumberOrNull(value) {
+  return value === null || (Number.isFinite(value) && value >= 0);
 }
 
 async function fetchJson(path) {
@@ -47,19 +47,23 @@ function validateCareerPayload(driverId, payload) {
   assert(payload.career && typeof payload.career === "object", `${driverId}: missing career object`);
 
   const { wins, podiums, starts, fastestLaps, championships } = payload.career;
-  assert(isNonNegativeNumber(wins), `${driverId}: wins must be non-negative number`);
-  assert(isNonNegativeNumber(podiums), `${driverId}: podiums must be non-negative number`);
-  assert(isNonNegativeNumber(starts), `${driverId}: starts must be non-negative number`);
-  assert(isNonNegativeNumber(fastestLaps), `${driverId}: fastestLaps must be non-negative number`);
+  assert(isNonNegativeNumberOrNull(wins), `${driverId}: wins must be non-negative number or null`);
+  assert(isNonNegativeNumberOrNull(podiums), `${driverId}: podiums must be non-negative number or null`);
+  assert(isNonNegativeNumberOrNull(starts), `${driverId}: starts must be non-negative number or null`);
+  assert(isNonNegativeNumberOrNull(fastestLaps), `${driverId}: fastestLaps must be non-negative number or null`);
   assert(
-    championships === null || isNonNegativeNumber(championships),
-    `${driverId}: championships must be null or non-negative number`
+    isNonNegativeNumberOrNull(championships),
+    `${driverId}: championships must be non-negative number or null`,
   );
 
   // Guard against regressions on known champions.
   if (driverId === "hamilton") {
     assert(championships !== null, "hamilton: championships unexpectedly null");
     assert(championships >= 5, `hamilton: championships suspiciously low (${championships})`);
+  }
+  if (driverId === "max_verstappen") {
+    assert(championships !== null, "max_verstappen: championships unexpectedly null");
+    assert(championships >= 4, `max_verstappen: championships suspiciously low (${championships})`);
   }
 }
 
@@ -77,6 +81,13 @@ async function run() {
       run: async () => {
         const payload = await fetchJson("/api/driver-career?driverId=piastri");
         validateCareerPayload("piastri", payload);
+      },
+    },
+    {
+      name: "driver-career max_verstappen",
+      run: async () => {
+        const payload = await fetchJson("/api/driver-career?driverId=max_verstappen");
+        validateCareerPayload("max_verstappen", payload);
       },
     },
     {
