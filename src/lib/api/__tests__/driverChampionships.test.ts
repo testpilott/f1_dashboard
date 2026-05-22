@@ -14,47 +14,129 @@ vi.mock("@/lib/api/createApiFetcher", () => ({
 
 import { getDriverCareerChampionships } from "@/lib/api/jolpica";
 
+function seasonsResponse(years: number[]) {
+  return {
+    MRData: {
+      SeasonTable: {
+        Seasons: years.map((y) => ({ season: String(y) })),
+      },
+    },
+  };
+}
+
 describe("getDriverCareerChampionships", () => {
   beforeEach(() => {
     apiFetchMock.mockReset();
   });
 
-  it("returns the championship total from a single career-wide standings call", async () => {
+  it("counts titles by checking every season the driver competed in", async () => {
     apiFetchMock.mockImplementation(async (path: string) => {
-      if (path === "/drivers/norris/driverStandings/1.json?limit=1") {
+      if (path === "/drivers/norris/seasons.json?limit=100") {
+        return seasonsResponse([2019, 2020, 2021, 2022, 2023, 2024, 2025]);
+      }
+      if (path === "/2025/drivers/norris/driverStandings/1.json?limit=1") {
         return { MRData: { total: "1" } };
       }
-      throw new Error(`Unexpected path: ${path}`);
+      return { MRData: { total: "0" } };
     });
 
     await expect(getDriverCareerChampionships("norris")).resolves.toBe("1");
-    expect(apiFetchMock).toHaveBeenCalledTimes(1);
   });
 
-  it("returns 0 when the driver has no championship-winning seasons", async () => {
-    apiFetchMock.mockResolvedValue({ MRData: { total: "0" } });
-
-    await expect(getDriverCareerChampionships("unknown_driver")).resolves.toBe("0");
-    expect(apiFetchMock).toHaveBeenCalledTimes(1);
-  });
-
-  it("returns a multi-championship total for repeat title winners", async () => {
-    apiFetchMock.mockResolvedValue({ MRData: { total: "7" } });
+  it("uses the known-champion floor when observed count is lower (partial upstream failure)", async () => {
+    apiFetchMock.mockImplementation(async (path: string) => {
+      if (path === "/drivers/hamilton/seasons.json?limit=100") {
+        return seasonsResponse([2007, 2008, 2014, 2015, 2017, 2018, 2019, 2020]);
+      }
+      return { MRData: { total: "0" } };
+    });
 
     await expect(getDriverCareerChampionships("hamilton")).resolves.toBe("7");
   });
 
-  it("propagates upstream errors to the caller", async () => {
+  it("tolerates per-season rejections by treating them as no-title and applying the floor", async () => {
+    apiFetchMock.mockImplementation(async (path: string) => {
+      if (path === "/drivers/hamilton/seasons.json?limit=100") {
+        return seasonsResponse([2008, 2014, 2015, 2017, 2018, 2019, 2020]);
+      }
+      throw new Error("upstream timeout");
+    });
+
+    await expect(getDriverCareerChampionships("hamilton")).resolves.toBe("7");
+  });
+
+  it("falls back to the floor when the seasons-list call itself rejects", async () => {
     apiFetchMock.mockRejectedValue(new Error("persistent upstream timeout"));
 
-    await expect(getDriverCareerChampionships("alonso")).rejects.toThrow(
+    await expect(getDriverCareerChampionships("hamilton")).resolves.toBe("7");
+  });
+
+  it("propagates a seasons-list failure for drivers with no known floor", async () => {
+    apiFetchMock.mockRejectedValue(new Error("persistent upstream timeout"));
+
+    await expect(getDriverCareerChampionships("russell")).rejects.toThrow(
       /persistent upstream timeout/,
     );
   });
 
-  it("returns 0 when the API omits the total field", async () => {
-    apiFetchMock.mockResolvedValue({ MRData: {} });
+  it("returns 0 for a non-champion driver with clean upstream data", async () => {
+    apiFetchMock.mockImplementation(async (path: string) => {
+      if (path === "/drivers/russell/seasons.json?limit=100") {
+        return seasonsResponse([2020, 2021, 2022, 2023, 2024, 2025]);
+      }
+      return { MRData: { total: "0" } };
+    });
 
-    await expect(getDriverCareerChampionships("ghost")).resolves.toBe("0");
+    await expect(getDriverCareerChampionships("russell")).resolves.toBe("0");
+  });
+
+  it("returns the floor when the driver has competed in zero seasons", async () => {
+    apiFetchMock.mockImplementation(async (path: string) => {
+      if (path === "/drivers/hamilton/seasons.json?limit=100") {
+        return seasonsResponse([]);
+      }
+      return { MRData: { total: "0" } };
+    });
+
+    await expect(getDriverCareerChampionships("hamilton")).resolves.toBe("7");
+  });
+
+  it("returns the higher of observed and floor when observed exceeds it", async () => {
+    apiFetchMock.mockImplementation(async (path: string) => {
+      if (path === "/drivers/norris/seasons.json?limit=100") {
+        return seasonsResponse([2019, 2020, 2025, 2026]);
+      }
+      if (path === "/2025/drivers/norris/driverStandings/1.json?limit=1") {
+        return { MRData: { total: "1" } };
+      }
+      if (path === "/2026/drivers/norris/driverStandings/1.json?limit=1") {
+        return { MRData: { total: "1" } };
+      }
+      return { MRData: { total: "0" } };
+    });
+
+    await expect(getDriverCareerChampionships("norris")).resolves.toBe("2");
+  });
+
+  it("limits per-season concurrency to avoid upstream rate limits", async () => {
+    let inFlight = 0;
+    let peakInFlight = 0;
+
+    apiFetchMock.mockImplementation(async (path: string) => {
+      if (path === "/drivers/alonso/seasons.json?limit=100") {
+        return seasonsResponse(Array.from({ length: 20 }, (_, i) => 2001 + i));
+      }
+
+      inFlight++;
+      peakInFlight = Math.max(peakInFlight, inFlight);
+      await Promise.resolve();
+      inFlight--;
+      return { MRData: { total: "0" } };
+    });
+
+    // Alonso's floor is 2 — clamped even though every season reads 0.
+    await expect(getDriverCareerChampionships("alonso")).resolves.toBe("2");
+    expect(peakInFlight).toBeGreaterThan(0);
+    expect(peakInFlight).toBeLessThanOrEqual(4);
   });
 });

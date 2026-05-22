@@ -10,6 +10,7 @@ import type {
 } from "@/lib/types";
 import { adaptiveRevalidate, type DataClass } from "@/lib/cacheStrategy";
 import { createApiFetcher } from "@/lib/api/createApiFetcher";
+import { getKnownChampionshipFloor } from "@/lib/constants/knownChampionships";
 
 const JOLPICA_BASE = "https://api.jolpi.ca/ergast/f1";
 const jolpicaApi = createApiFetcher(JOLPICA_BASE, "Jolpica");
@@ -132,14 +133,67 @@ export async function getDriverCareerFastestLaps(driverId: string): Promise<stri
 }
 
 export async function getDriverCareerChampionships(driverId: string): Promise<string> {
-  // Single-call source-of-truth: Jolpica/Ergast returns one standings row per
-  // season the driver finished P1 (i.e. one row per championship won). The
-  // MRData.total value is the championship count. This replaces an earlier
-  // per-season fan-out that was prone to partial failures (any one season's
-  // transient error would null out the entire count).
-  return jolpicaTotal(
-    `/drivers/${encodeURIComponent(driverId)}/driverStandings/1.json?limit=1`,
+  // Jolpica REQUIRES a season_year for the driverStandings endpoint (unlike
+  // upstream Ergast), so we must fan out one request per season. The fan-out
+  // is made resilient by:
+  //   1. Catching per-season errors instead of letting Promise.all reject the
+  //      whole count — a transient failure on one season won't blank the result.
+  //   2. Falling back to the known-champion floor if the seasons-list lookup
+  //      itself fails (e.g. Hamilton always reports >= 7 even if upstream is down).
+  //   3. Clamping the final count to max(observed, floor) so the value can only
+  //      ever increase past the closed historical list, never decrease below it.
+  const floor = getKnownChampionshipFloor(driverId);
+
+  let seasons: number[];
+  try {
+    seasons = await getDriverSeasons(driverId);
+  } catch (err) {
+    // If we have a static floor for this driver, return it rather than null.
+    // Otherwise propagate so the route can degrade gracefully.
+    if (floor > 0) return String(floor);
+    throw err;
+  }
+
+  if (seasons.length === 0) return String(floor);
+
+  async function hasChampionshipInSeason(season: number): Promise<boolean> {
+    const path = `/${season}/drivers/${encodeURIComponent(driverId)}/driverStandings/1.json?limit=1`;
+    const total = await jolpicaTotal(path);
+    return Number(total) > 0;
+  }
+
+  // Bounded worker pool — keeps fan-out off the rate-limit ceiling on
+  // long-career drivers (Alonso ~24 seasons). Per-season failures are
+  // swallowed so they can't sink the whole count.
+  const CONCURRENCY = 4;
+  const seasonChecks: boolean[] = new Array(seasons.length).fill(false);
+  let cursor = 0;
+
+  async function worker(): Promise<void> {
+    while (true) {
+      const index = cursor++;
+      if (index >= seasons.length) return;
+      try {
+        seasonChecks[index] = await hasChampionshipInSeason(seasons[index]);
+      } catch {
+        // Tolerate per-season failures — the floor will cover known champions
+        // and the worst case for unknown drivers is a 0 that matches reality
+        // for the overwhelming majority of grid history.
+        seasonChecks[index] = false;
+      }
+    }
+  }
+
+  await Promise.all(
+    Array.from({ length: Math.min(CONCURRENCY, seasons.length) }, () => worker()),
   );
+
+  const observed = seasonChecks.reduce(
+    (count, hasTitle) => (hasTitle ? count + 1 : count),
+    0,
+  );
+
+  return String(Math.max(observed, floor));
 }
 
 /** Returns the list of seasons a driver competed in, oldest first. */
