@@ -5,6 +5,7 @@ import NextRaceCard from "@/components/next-race/NextRaceCard";
 import { getDriverStandings, getConstructorStandings, getNextRace } from "@/lib/api/jolpica";
 import { getWeatherForecast } from "@/lib/api/openmeteo";
 import { CIRCUIT_COORDS } from "@/lib/constants";
+import { extractFulfilled } from "@/lib/api/promiseHelpers";
 
 export const dynamic = "force-dynamic";
 
@@ -19,11 +20,9 @@ export default async function HomePage() {
     getNextRace(),
   ]);
 
-  const initialDrivers: DriverStanding[] =
-    driversResult.status === "fulfilled" ? driversResult.value : [];
-  const initialConstructors: ConstructorStanding[] =
-    constructorsResult.status === "fulfilled" ? constructorsResult.value : [];
-  const initialRace: Race | null = raceResult.status === "fulfilled" ? raceResult.value : null;
+  const initialDrivers: DriverStanding[] = extractFulfilled(driversResult, []);
+  const initialConstructors: ConstructorStanding[] = extractFulfilled(constructorsResult, []);
+  const initialRace: Race | null = extractFulfilled<Race | null>(raceResult, null);
 
   return (
     <div className="grid grid-cols-1 xl:grid-cols-[1fr_340px] gap-6">

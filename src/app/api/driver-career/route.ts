@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { badRequest, serverError } from "@/lib/api/routeHelpers";
+import { extractFulfilled } from "@/lib/api/promiseHelpers";
 import { rateLimited } from "@/lib/api/withRateLimit";
 import { VALID_ID } from "@/lib/validators";
 import {
@@ -36,12 +37,12 @@ export async function GET(req: Request) {
     ]);
 
     const career = buildDriverCareerStats({
-      wins: wins.status === "fulfilled" ? wins.value : undefined,
-      p2: p2.status === "fulfilled" ? p2.value : undefined,
-      p3: p3.status === "fulfilled" ? p3.value : undefined,
-      starts: starts.status === "fulfilled" ? starts.value : undefined,
-      fastestLaps: fastestLaps.status === "fulfilled" ? fastestLaps.value : undefined,
-      championships: championships.status === "fulfilled" ? championships.value : undefined,
+      wins: extractFulfilled(wins, undefined),
+      p2: extractFulfilled(p2, undefined),
+      p3: extractFulfilled(p3, undefined),
+      starts: extractFulfilled(starts, undefined),
+      fastestLaps: extractFulfilled(fastestLaps, undefined),
+      championships: extractFulfilled(championships, undefined),
     });
 
     return NextResponse.json({ driverId, career });

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { badRequest, serverError } from "@/lib/api/routeHelpers";
+import { badRequest, gracefulDegradation, serverError } from "@/lib/api/routeHelpers";
+import { extractFulfilled } from "@/lib/api/promiseHelpers";
 import { rateLimited } from "@/lib/api/withRateLimit";
 import { VALID_YEAR, VALID_ROUND } from "@/lib/validators";
 import { getSchedule } from "@/lib/api/jolpica";
@@ -35,14 +36,14 @@ export async function GET(req: Request) {
     const schedule = await getSchedule(year);
     const race = schedule.find((r) => r.round === round) ?? null;
     if (!race) {
-      return NextResponse.json({ available: false, reason: "Unknown race" });
+      return gracefulDegradation("race-incidents", "Unknown race");
     }
 
     const sessions = await getSessions({ year: Number(year), session_type: "Race" }).catch(() => []);
     const sessionKey = pickRaceSession(sessions, race.Circuit.Location.country);
 
     if (sessionKey == null) {
-      return NextResponse.json({ available: false, reason: "OpenF1 covers 2023+ only" });
+      return gracefulDegradation("race-incidents", "OpenF1 covers 2023+ only");
     }
 
     const raceControl = await getRaceControl(sessionKey);
@@ -61,8 +62,7 @@ export async function GET(req: Request) {
     );
 
     const output = incidents.map((incident, i) => {
-      const locResult = locationResults[i];
-      const loc = locResult.status === "fulfilled" ? locResult.value : null;
+      const loc = extractFulfilled(locationResults[i], null);
       return {
         x: loc?.x ?? null,
         y: loc?.y ?? null,

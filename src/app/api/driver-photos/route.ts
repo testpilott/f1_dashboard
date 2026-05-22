@@ -19,7 +19,9 @@ export async function GET(req: Request) {
     }));
     return NextResponse.json({ photos });
   } catch (err) {
-    // Graceful degradation: empty photos array, page falls back to team logos.
+    // Intentional graceful degradation: photos are decorative — when the OpenF1
+    // call fails we still want pages to render, falling back to team logos.
+    // We surface 200 with an empty array (NOT serverError) by design.
     logRouteError("driver-photos", err);
     return NextResponse.json({ photos: [] });
   }

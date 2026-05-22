@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { badRequest } from "@/lib/api/routeHelpers";
+import { extractFulfilled } from "@/lib/api/promiseHelpers";
 import { rateLimited } from "@/lib/api/withRateLimit";
 import { VALID_SEARCH_QUERY } from "@/lib/validators";
 import { getDriverStandings, getConstructorStandings, getSchedule } from "@/lib/api/jolpica";
@@ -25,9 +26,9 @@ export async function GET(req: Request) {
     getSchedule("current"),
   ]);
 
-  const drivers = driversRes.status === "fulfilled" ? driversRes.value : [];
-  const constructors = constructorsRes.status === "fulfilled" ? constructorsRes.value : [];
-  const races = scheduleRes.status === "fulfilled" ? scheduleRes.value : [];
+  const drivers = extractFulfilled(driversRes, []);
+  const constructors = extractFulfilled(constructorsRes, []);
+  const races = extractFulfilled(scheduleRes, []);
 
   const index: SearchIndex = {
     drivers: drivers.map((d) => ({

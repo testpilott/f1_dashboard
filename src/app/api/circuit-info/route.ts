@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
-import { badRequest, logRouteError } from "@/lib/api/routeHelpers";
+import { badRequest, gracefulDegradation } from "@/lib/api/routeHelpers";
 import { rateLimited } from "@/lib/api/withRateLimit";
 import { VALID_YEAR, VALID_ROUND } from "@/lib/validators";
 import { getSchedule } from "@/lib/api/jolpica";
 import { getSessions } from "@/lib/api/openf1";
 import { pickRaceSession } from "@/lib/stats/session-match";
 import { getCircuitInfo } from "@/lib/api/multiviewer";
+import { ensureArray } from "@/lib/utils";
 
 // Circuit layout is static within a season — cache for 24 hours.
 export const revalidate = 86400;
@@ -36,19 +37,26 @@ export async function GET(req: Request) {
 
     const race = schedule.find((r) => r.round === round) ?? null;
     if (!race) {
-      return NextResponse.json({ available: false, reason: "Race not found" });
+      return gracefulDegradation("circuit-info", "Race not found");
     }
 
     const sessionKey = pickRaceSession(sessions, race.Circuit.Location.country);
     const session = sessions.find((s) => s.session_key === sessionKey);
 
     if (!session?.circuit_key) {
-      return NextResponse.json({ available: false, reason: "Circuit data not available from OpenF1 for this race" });
+      return gracefulDegradation(
+        "circuit-info",
+        "Circuit data not available from OpenF1 for this race",
+      );
     }
 
     const info = await getCircuitInfo(session.circuit_key, Number(year));
 
-    const corners = (Array.isArray(info.corners) ? info.corners : []).map((c) => ({
+    const corners = ensureArray<{
+      number: number;
+      length?: number;
+      trackPosition: { x: number; y: number };
+    }>(info.corners).map((c) => ({
       number: c.number,
       x: c.trackPosition.x,
       y: c.trackPosition.y,
@@ -61,13 +69,16 @@ export async function GET(req: Request) {
       country: race.Circuit.Location.country,
       locality: race.Circuit.Location.locality,
       corners,
-      trackX: Array.isArray(info.x) ? info.x : [],
-      trackY: Array.isArray(info.y) ? info.y : [],
-      trackPositionTime: Array.isArray(info.trackPositionTime) ? info.trackPositionTime : [],
+      trackX: ensureArray<number>(info.x),
+      trackY: ensureArray<number>(info.y),
+      trackPositionTime: ensureArray<number>(info.trackPositionTime),
       rotation: typeof info.rotation === "number" ? info.rotation : 0,
     });
   } catch (err) {
-    logRouteError("circuit-info", err);
-    return NextResponse.json({ available: false, reason: "Circuit data temporarily unavailable" });
+    return gracefulDegradation(
+      "circuit-info",
+      "Circuit data temporarily unavailable",
+      err,
+    );
   }
 }

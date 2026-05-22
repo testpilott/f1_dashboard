@@ -4,6 +4,7 @@ import StandingsTables from "@/components/standings/StandingsTables";
 import SeasonPicker from "@/components/ui/SeasonPicker";
 import { getDriverStandings, getConstructorStandings } from "@/lib/api/jolpica";
 import { normalizeSeason, seasonLabel } from "@/lib/season";
+import { extractFulfilled } from "@/lib/api/promiseHelpers";
 
 export const dynamic = "force-dynamic";
 
@@ -24,10 +25,8 @@ export default async function StandingsPage({
     getConstructorStandings(season),
   ]);
 
-  const initialDrivers: DriverStanding[] =
-    driversResult.status === "fulfilled" ? driversResult.value : [];
-  const initialConstructors: ConstructorStanding[] =
-    constructorsResult.status === "fulfilled" ? constructorsResult.value : [];
+  const initialDrivers: DriverStanding[] = extractFulfilled(driversResult, []);
+  const initialConstructors: ConstructorStanding[] = extractFulfilled(constructorsResult, []);
 
   return (
     <div>

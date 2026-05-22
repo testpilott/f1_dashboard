@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { badRequest, serverError } from "@/lib/api/routeHelpers";
+import { badRequest, notFound, serverError } from "@/lib/api/routeHelpers";
 import { rateLimited } from "@/lib/api/withRateLimit";
 import { VALID_WIKI_TITLE } from "@/lib/validators";
 import { getWikidataDriverProfile } from "@/lib/api/wikidata";
@@ -27,7 +27,7 @@ export async function GET(req: Request) {
   try {
     const profile = await getWikidataDriverProfile(wikiUrl);
     if (!profile) {
-      return NextResponse.json({ error: "Profile not found" }, { status: 404 });
+      return notFound("Profile not found");
     }
     return NextResponse.json(profile);
   } catch (err) {
