@@ -8,33 +8,21 @@ vi.mock("@/lib/api/jolpica", () => ({
   getSchedule: vi.fn(),
 }));
 
-vi.mock("@/lib/api/openf1", () => ({
-  getSessions: vi.fn(),
-  getRaceControl: vi.fn(),
-  getLocations: vi.fn(),
-}));
-
-vi.mock("@/lib/stats/session-match", () => ({
-  pickRaceSession: vi.fn(),
-}));
-
-vi.mock("@/lib/stats/incidents", () => ({
-  classifyIncidents: vi.fn(),
-  closestByTime: vi.fn(),
+vi.mock("@/lib/incidents/buildIncidents", () => ({
+  buildIncidentsForRace: vi.fn(),
 }));
 
 import { GET } from "@/app/api/race-incidents/route";
 import { rateLimited } from "@/lib/api/withRateLimit";
 import { getSchedule } from "@/lib/api/jolpica";
-import { getLocations, getRaceControl, getSessions } from "@/lib/api/openf1";
-import { classifyIncidents, closestByTime } from "@/lib/stats/incidents";
-import { pickRaceSession } from "@/lib/stats/session-match";
+import { buildIncidentsForRace } from "@/lib/incidents/buildIncidents";
 import { makeApiRequest } from "@/test/api";
 
 const MOCK_INCIDENT = {
-  date: "2026-06-09T10:00:10.000Z",
-  driver_number: 44,
+  x: 11,
+  y: -9,
   lap_number: 33,
+  driver_number: 44,
   flag: "YELLOW",
   category: "CarEvent",
   message: "Car 44 stopped in Turn 4",
@@ -50,24 +38,10 @@ describe("GET /api/race-incidents", () => {
         Circuit: { Location: { country: "Canada" } },
       },
     ] as unknown as Awaited<ReturnType<typeof getSchedule>>);
-    vi.mocked(getSessions).mockResolvedValue(
-      [{ session_key: 9001 }] as unknown as Awaited<ReturnType<typeof getSessions>>,
-    );
-    vi.mocked(pickRaceSession).mockReturnValue(9001);
-    vi.mocked(getRaceControl).mockResolvedValue(
-      [{ category: "CarEvent" }] as unknown as Awaited<ReturnType<typeof getRaceControl>>,
-    );
-    vi.mocked(classifyIncidents).mockReturnValue(
-      [MOCK_INCIDENT] as unknown as ReturnType<typeof classifyIncidents>,
-    );
-    vi.mocked(getLocations).mockResolvedValue(
-      [{ x: 11, y: -9, date: MOCK_INCIDENT.date }] as unknown as Awaited<
-        ReturnType<typeof getLocations>
-      >,
-    );
-    vi.mocked(closestByTime).mockReturnValue(
-      { x: 11, y: -9 } as unknown as ReturnType<typeof closestByTime>,
-    );
+    vi.mocked(buildIncidentsForRace).mockResolvedValue({
+      available: true,
+      incidents: [MOCK_INCIDENT],
+    });
   });
 
   it("returns rate-limit response when blocked", async () => {
@@ -89,8 +63,11 @@ describe("GET /api/race-incidents", () => {
     expect(body).toEqual({ available: false, reason: "Unknown race" });
   });
 
-  it("returns available=false when no race session can be resolved", async () => {
-    vi.mocked(pickRaceSession).mockReturnValue(null);
+  it("returns available=false when buildIncidentsForRace reports unavailable", async () => {
+    vi.mocked(buildIncidentsForRace).mockResolvedValue({
+      available: false,
+      reason: "OpenF1 covers 2023+ only",
+    });
 
     const res = await GET(makeApiRequest("/api/race-incidents", { year: "2026", round: "7" }));
     const body = await res.json();
@@ -99,54 +76,28 @@ describe("GET /api/race-incidents", () => {
     expect(body).toEqual({ available: false, reason: "OpenF1 covers 2023+ only" });
   });
 
-  it("returns incidents with mapped location coordinates on success", async () => {
+  it("returns incidents from the build helper on success", async () => {
     const res = await GET(makeApiRequest("/api/race-incidents", { year: "2026", round: "7" }));
     const body = await res.json();
 
     expect(res.status).toBe(200);
-    expect(classifyIncidents).toHaveBeenCalledTimes(1);
-    expect(getLocations).toHaveBeenCalledWith(
-      9001,
-      44,
-      "2026-06-09T10:00:06.000Z",
-      "2026-06-09T10:00:14.000Z",
-    );
-    expect(body).toEqual({
-      available: true,
-      incidents: [
-        {
-          x: 11,
-          y: -9,
-          lap_number: 33,
-          driver_number: 44,
-          flag: "YELLOW",
-          category: "CarEvent",
-          message: "Car 44 stopped in Turn 4",
-        },
-      ],
-    });
+    expect(buildIncidentsForRace).toHaveBeenCalledWith("2026", "7", "Canada");
+    expect(body).toEqual({ available: true, incidents: [MOCK_INCIDENT] });
   });
 
-  it("keeps incident payload when location fetch fails", async () => {
-    vi.mocked(getLocations).mockRejectedValue(new Error("location API timeout"));
+  it("returns 400 for missing year or round", async () => {
+    const res = await GET(makeApiRequest("/api/race-incidents", { round: "7" }));
+    expect(res.status).toBe(400);
+  });
 
+  it("returns 400 for malformed year", async () => {
+    const res = await GET(makeApiRequest("/api/race-incidents", { year: "20xx", round: "7" }));
+    expect(res.status).toBe(400);
+  });
+
+  it("returns 500 when getSchedule throws", async () => {
+    vi.mocked(getSchedule).mockRejectedValue(new Error("schedule down"));
     const res = await GET(makeApiRequest("/api/race-incidents", { year: "2026", round: "7" }));
-    const body = await res.json();
-
-    expect(res.status).toBe(200);
-    expect(body).toEqual({
-      available: true,
-      incidents: [
-        {
-          x: null,
-          y: null,
-          lap_number: 33,
-          driver_number: 44,
-          flag: "YELLOW",
-          category: "CarEvent",
-          message: "Car 44 stopped in Turn 4",
-        },
-      ],
-    });
+    expect(res.status).toBe(500);
   });
 });

@@ -14,63 +14,131 @@ vi.mock("@/lib/projections/montecarlo", () => ({
   runProjections: vi.fn(),
 }));
 
-// `unstable_cache` caches by key across tests; we replace it with a passthrough
-// so each test invocation actually exercises the inner pipeline.
+// `unstable_cache` caches by key across tests; replace with a passthrough so
+// each invocation exercises the inner pipeline. `revalidateTag` is a no-op here.
 vi.mock("next/cache", () => ({
-  unstable_cache: (fn: unknown) => fn,
+  unstable_cache: <T extends (...args: never[]) => unknown>(fn: T) => fn,
+  revalidateTag: vi.fn(),
 }));
 
 import { GET } from "@/app/api/projections/route";
+import { POST as SNAPSHOT_POST, GET as SNAPSHOT_GET } from "@/app/api/projections/snapshot/route";
 import {
   getDriverStandings,
   getSchedule,
   getSeasonResults,
 } from "@/lib/api/jolpica";
 import { runProjections } from "@/lib/projections/montecarlo";
+import { _resetSnapshotState } from "@/lib/projections/snapshot";
 import { makeApiRequest } from "@/test/api";
 
-describe("GET /api/projections", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
+function authedRequest(path: string, params: Record<string, string> = {}) {
+  const req = makeApiRequest(path, params);
+  const headers = new Headers(req.headers);
+  headers.set("authorization", "Bearer test-secret");
+  return new Request(req.url, { method: req.method, headers });
+}
 
-  it("returns 400 for an invalid season", async () => {
+beforeEach(() => {
+  vi.clearAllMocks();
+  _resetSnapshotState();
+  process.env.CRON_SECRET = "test-secret";
+});
+
+describe("GET /api/projections", () => {
+  it("returns 400 for invalid season", async () => {
     const res = await GET(makeApiRequest("/api/projections", { season: "abc" }));
     expect(res.status).toBe(400);
-    const body = await res.json();
-    expect(body.error).toMatch(/invalid season/i);
   });
 
-  it("returns 400 for an out-of-range season", async () => {
+  it("returns 400 for out-of-range season", async () => {
     const res = await GET(makeApiRequest("/api/projections", { season: "1980" }));
     expect(res.status).toBe(400);
-    const body = await res.json();
-    expect(body.error).toMatch(/out of range/i);
   });
 
-  it("returns the projection payload when upstream calls resolve", async () => {
+  it("responds with available=false when snapshot is cold (no compute triggered)", async () => {
+    const res = await GET(makeApiRequest("/api/projections", { season: "2026" }));
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body).toEqual({
+      available: false,
+      reason: expect.stringMatching(/snapshot pending/i),
+    });
+    expect(getDriverStandings).not.toHaveBeenCalled();
+    expect(runProjections).not.toHaveBeenCalled();
+  });
+
+  it("serves cached projection after snapshot has been warmed", async () => {
     vi.mocked(getDriverStandings).mockResolvedValue([{ Driver: { driverId: "ver" } }] as never);
     vi.mocked(getSchedule).mockResolvedValue([{ round: "1" }, { round: "2" }] as never);
     vi.mocked(getSeasonResults).mockResolvedValue([
       { round: "1", Results: [{ position: "1" }] },
     ] as never);
-    vi.mocked(runProjections).mockReturnValue({ drivers: [{ id: "ver", winProbability: 0.7 }] } as never);
+    vi.mocked(runProjections).mockReturnValue({
+      drivers: [{ id: "ver", winProbability: 0.7 }],
+    } as never);
+
+    const warmRes = await SNAPSHOT_POST(authedRequest("/api/projections/snapshot", { season: "2026" }));
+    expect(warmRes.status).toBe(200);
 
     const res = await GET(makeApiRequest("/api/projections", { season: "2026" }));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.drivers[0].id).toBe("ver");
-    expect(runProjections).toHaveBeenCalledWith(expect.any(Array), expect.any(Array), 1);
+  });
+});
+
+describe("POST /api/projections/snapshot", () => {
+  it("returns 401 without bearer secret", async () => {
+    const res = await SNAPSHOT_POST(makeApiRequest("/api/projections/snapshot", { season: "2026" }));
+    expect(res.status).toBe(401);
   });
 
-  it("returns 500 when an upstream fetch fails", async () => {
-    vi.mocked(getDriverStandings).mockRejectedValue(new Error("timeout"));
+  it("returns 401 with wrong bearer secret", async () => {
+    const req = makeApiRequest("/api/projections/snapshot", { season: "2026" });
+    const headers = new Headers(req.headers);
+    headers.set("authorization", "Bearer wrong");
+    const res = await SNAPSHOT_POST(new Request(req.url, { headers }));
+    expect(res.status).toBe(401);
+  });
+
+  it("returns 401 when CRON_SECRET is unset", async () => {
+    delete process.env.CRON_SECRET;
+    const res = await SNAPSHOT_POST(authedRequest("/api/projections/snapshot", { season: "2026" }));
+    expect(res.status).toBe(401);
+  });
+
+  it("returns 400 for invalid season", async () => {
+    const res = await SNAPSHOT_POST(authedRequest("/api/projections/snapshot", { season: "abc" }));
+    expect(res.status).toBe(400);
+  });
+
+  it("returns 200 and warms cache on success", async () => {
+    vi.mocked(getDriverStandings).mockResolvedValue([{ Driver: { driverId: "ver" } }] as never);
+    vi.mocked(getSchedule).mockResolvedValue([{ round: "1" }] as never);
+    vi.mocked(getSeasonResults).mockResolvedValue([] as never);
+    vi.mocked(runProjections).mockReturnValue({
+      drivers: [{ id: "ver" }, { id: "lec" }],
+    } as never);
+
+    const res = await SNAPSHOT_POST(authedRequest("/api/projections/snapshot", { season: "2026" }));
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body).toMatchObject({ ok: true, season: "2026", driverCount: 2 });
+    expect(runProjections).toHaveBeenCalledTimes(1);
+  });
+
+  it("returns 500 when pipeline throws", async () => {
+    vi.mocked(getDriverStandings).mockRejectedValue(new Error("upstream"));
     vi.mocked(getSchedule).mockResolvedValue([] as never);
     vi.mocked(getSeasonResults).mockResolvedValue([] as never);
 
-    const res = await GET(makeApiRequest("/api/projections", { season: "2026" }));
+    const res = await SNAPSHOT_POST(authedRequest("/api/projections/snapshot", { season: "2026" }));
     expect(res.status).toBe(500);
-    const body = await res.json();
-    expect(body.error).toMatch(/internal server error/i);
+  });
+
+  it("GET handler also requires auth", async () => {
+    const res = await SNAPSHOT_GET(makeApiRequest("/api/projections/snapshot"));
+    expect(res.status).toBe(401);
   });
 });

@@ -1,18 +1,11 @@
 import { NextResponse } from "next/server";
 import { badRequest, gracefulDegradation, serverError } from "@/lib/api/routeHelpers";
-import { extractFulfilled } from "@/lib/api/promiseHelpers";
 import { rateLimited } from "@/lib/api/withRateLimit";
 import { VALID_YEAR, VALID_ROUND } from "@/lib/validators";
 import { getSchedule } from "@/lib/api/jolpica";
-import { getSessions, getRaceControl, getLocations } from "@/lib/api/openf1";
-import { pickRaceSession } from "@/lib/stats/session-match";
-import { classifyIncidents, closestByTime } from "@/lib/stats/incidents";
+import { buildIncidentsForRace } from "@/lib/incidents/buildIncidents";
 
 export const revalidate = 300;
-
-function addSeconds(iso: string, seconds: number): string {
-  return new Date(new Date(iso).getTime() + seconds * 1000).toISOString();
-}
 
 export async function GET(req: Request) {
   const blocked = rateLimited(req, "race-incidents");
@@ -39,42 +32,13 @@ export async function GET(req: Request) {
       return gracefulDegradation("race-incidents", "Unknown race");
     }
 
-    const sessions = await getSessions({ year: Number(year), session_type: "Race" }).catch(() => []);
-    const sessionKey = pickRaceSession(sessions, race.Circuit.Location.country);
+    const result = await buildIncidentsForRace(year, round, race.Circuit.Location.country);
 
-    if (sessionKey == null) {
-      return gracefulDegradation("race-incidents", "OpenF1 covers 2023+ only");
+    if (!result.available) {
+      return gracefulDegradation("race-incidents", result.reason);
     }
 
-    const raceControl = await getRaceControl(sessionKey);
-    const incidents = classifyIncidents(raceControl);
-
-    // For each incident, fetch a narrow ±4 s location window
-    const locationResults = await Promise.allSettled(
-      incidents.map((incident) =>
-        getLocations(
-          sessionKey,
-          incident.driver_number!,
-          addSeconds(incident.date, -4),
-          addSeconds(incident.date, +4),
-        ).then((samples) => closestByTime(samples, incident.date)),
-      ),
-    );
-
-    const output = incidents.map((incident, i) => {
-      const loc = extractFulfilled(locationResults[i], null);
-      return {
-        x: loc?.x ?? null,
-        y: loc?.y ?? null,
-        lap_number: incident.lap_number,
-        driver_number: incident.driver_number,
-        flag: incident.flag,
-        category: incident.category,
-        message: incident.message,
-      };
-    });
-
-    return NextResponse.json({ available: true, incidents: output });
+    return NextResponse.json({ available: true, incidents: result.incidents });
   } catch (err) {
     return serverError("race-incidents", err);
   }

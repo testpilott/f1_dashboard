@@ -107,29 +107,30 @@ export async function getQualifyingResultsAtCircuit(season: string, circuitId: s
 
 // ─── Career counts ────────────────────────────────────────────────────────────
 
-async function jolpicaTotal(path: string): Promise<string> {
-  const data = await jolpicaFetch<{ MRData: { total: string } }>(path, "results");
+async function jolpicaCareerTotal(path: string): Promise<string> {
+  // Career totals only change after a race; weekly bucket is the right tier.
+  const data = await jolpicaFetch<{ MRData: { total: string } }>(path, "careerStats");
   return data.MRData.total ?? "0";
 }
 
 export async function getDriverCareerWins(driverId: string): Promise<string> {
-  return jolpicaTotal(`/drivers/${encodeURIComponent(driverId)}/results/1.json?limit=1`);
+  return jolpicaCareerTotal(`/drivers/${encodeURIComponent(driverId)}/results/1.json?limit=1`);
 }
 
 export async function getDriverCareerP2(driverId: string): Promise<string> {
-  return jolpicaTotal(`/drivers/${encodeURIComponent(driverId)}/results/2.json?limit=1`);
+  return jolpicaCareerTotal(`/drivers/${encodeURIComponent(driverId)}/results/2.json?limit=1`);
 }
 
 export async function getDriverCareerP3(driverId: string): Promise<string> {
-  return jolpicaTotal(`/drivers/${encodeURIComponent(driverId)}/results/3.json?limit=1`);
+  return jolpicaCareerTotal(`/drivers/${encodeURIComponent(driverId)}/results/3.json?limit=1`);
 }
 
 export async function getDriverCareerStarts(driverId: string): Promise<string> {
-  return jolpicaTotal(`/drivers/${encodeURIComponent(driverId)}/results.json?limit=1`);
+  return jolpicaCareerTotal(`/drivers/${encodeURIComponent(driverId)}/results.json?limit=1`);
 }
 
 export async function getDriverCareerFastestLaps(driverId: string): Promise<string> {
-  return jolpicaTotal(`/drivers/${encodeURIComponent(driverId)}/fastest/1/results.json?limit=1`);
+  return jolpicaCareerTotal(`/drivers/${encodeURIComponent(driverId)}/fastest/1/results.json?limit=1`);
 }
 
 export async function getDriverCareerChampionships(driverId: string): Promise<string> {
@@ -151,7 +152,7 @@ export async function getDriverCareerChampionships(driverId: string): Promise<st
 
     async function hasChampionshipInSeason(season: number): Promise<boolean> {
       const path = `/${season}/drivers/${encodeURIComponent(driverId)}/driverStandings/1.json?limit=1`;
-      const total = await jolpicaTotal(path);
+      const total = await jolpicaCareerTotal(path);
       return Number(total) > 0;
     }
 
@@ -190,7 +191,7 @@ export async function getDriverCareerChampionships(driverId: string): Promise<st
 export async function getDriverSeasons(driverId: string): Promise<number[]> {
   const data = await jolpicaFetch<{
     MRData: { SeasonTable: { Seasons: { season: string }[] } };
-  }>(`/drivers/${encodeURIComponent(driverId)}/seasons.json?limit=100`, "results");
+  }>(`/drivers/${encodeURIComponent(driverId)}/seasons.json?limit=100`, "careerStats");
   const seasons = data.MRData.SeasonTable?.Seasons ?? [];
   return seasons
     .map((s) => parseInt(s.season, 10))

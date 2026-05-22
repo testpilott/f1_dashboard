@@ -25,21 +25,21 @@ type WeekendData = {
 };
 
 async function fetchSessionsForMeeting(meetingKey: number) {
-  const res = await fetch(`/api/sessions?endpoint=sessions&meeting_key=${meetingKey}`);
+  const res = await fetch(`/api/sessions/info?meeting_key=${meetingKey}`);
   if (!res.ok) throw new Error("Failed");
   const data = await res.json();
   return (Array.isArray(data.sessions) ? data.sessions : []) as OpenF1Session[];
 }
 
 async function fetchSessionResult(sessionKey: number) {
-  const res = await fetch(`/api/sessions?endpoint=result&session_key=${sessionKey}`);
+  const res = await fetch(`/api/sessions/result?session_key=${sessionKey}`);
   if (!res.ok) throw new Error("Failed");
   const data = await res.json();
   return (Array.isArray(data.results) ? data.results : []) as OpenF1SessionResult[];
 }
 
 async function fetchSessionDrivers(sessionKey: number) {
-  const res = await fetch(`/api/sessions?endpoint=drivers&session_key=${sessionKey}`);
+  const res = await fetch(`/api/sessions/drivers?session_key=${sessionKey}`);
   if (!res.ok) throw new Error("Failed");
   const data = await res.json();
   return (Array.isArray(data.drivers) ? data.drivers : []) as OpenF1Driver[];

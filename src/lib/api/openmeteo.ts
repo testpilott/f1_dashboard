@@ -1,6 +1,7 @@
 import type { WeatherForecast } from "@/lib/types";
 import { fetchWithTimeout } from "@/lib/api/fetchWithTimeout";
 import { withRetry } from "@/lib/api/retry";
+import { adaptiveRevalidate } from "@/lib/cacheStrategy";
 
 const OPENMETEO_BASE = "https://api.open-meteo.com/v1";
 
@@ -36,7 +37,10 @@ export async function getWeatherForecast(
     `&forecast_days=7`;
 
   return withRetry(async () => {
-    const res = await fetchWithTimeout(url, { next: { revalidate: 3600 } }); // cache 1 hour
+    // weather DataClass: 1h base, 15m on race weekend.
+    const res = await fetchWithTimeout(url, {
+      next: { revalidate: adaptiveRevalidate("weather") },
+    });
     if (!res.ok) throw new Error(`Open-Meteo fetch failed: ${res.status}`);
     return res.json() as Promise<WeatherForecast>;
   });
@@ -55,7 +59,10 @@ export async function getHistoricalWeather(
     `&hourly=temperature_2m,precipitation`;
 
   return withRetry(async () => {
-    const res = await fetchWithTimeout(url, { next: { revalidate: 86400 } }); // cache 24 hours
+    // Historical archive data: classify as seasonal (24h base, 6h race weekend).
+    const res = await fetchWithTimeout(url, {
+      next: { revalidate: adaptiveRevalidate("circuitMeta") },
+    });
     if (!res.ok) throw new Error(`Open-Meteo historical fetch failed: ${res.status}`);
     return res.json();
   });

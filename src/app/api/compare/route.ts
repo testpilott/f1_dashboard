@@ -32,7 +32,10 @@ const getCircuitHistoryCached = unstable_cache(
     const years = computeComparisonYears(seasonsA, seasonsB);
     const history: CircuitHistoryRow[] = [];
 
-    for (const batch of chunk(years, 5)) {
+    // Batch size of 3 keeps fan-out aligned with the per-service concurrency
+    // cap (2) in `createApiFetcher`. Larger batches just queue inside the
+    // limiter without speeding anything up and hurt tail latency.
+    for (const batch of chunk(years, 3)) {
       const rows = await Promise.all(
         batch.map(async (year) => {
           const [race, quali] = await Promise.allSettled([

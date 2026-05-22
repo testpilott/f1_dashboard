@@ -7,13 +7,13 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { Skeleton } from "@/components/ui/skeleton";
 
 async function fetchStints(sessionKey: number) {
-  const res = await fetch(`/api/sessions?endpoint=stints&session_key=${sessionKey}`);
+  const res = await fetch(`/api/sessions/stints?session_key=${sessionKey}`);
   if (!res.ok) throw new Error("Failed");
   return res.json().then((d) => (Array.isArray(d.stints) ? d.stints : []) as OpenF1Stint[]);
 }
 
 async function fetchDrivers(sessionKey: number) {
-  const res = await fetch(`/api/sessions?endpoint=drivers&session_key=${sessionKey}`);
+  const res = await fetch(`/api/sessions/drivers?session_key=${sessionKey}`);
   if (!res.ok) throw new Error("Failed");
   return res.json().then((d) => (Array.isArray(d.drivers) ? d.drivers : []) as OpenF1Driver[]);
 }

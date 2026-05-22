@@ -1,90 +1,45 @@
 import { NextResponse } from "next/server";
-import { getSessions, getSessionResult, getStints, getLaps, getPitStops, getTrackWeather, getRaceControl, getDriversForSession } from "@/lib/api/openf1";
-import { badRequest, serverError } from "@/lib/api/routeHelpers";
+import { badRequest } from "@/lib/api/routeHelpers";
 import { rateLimited } from "@/lib/api/withRateLimit";
-import { VALID_YEAR, VALID_MEETING_KEY, VALID_SESSION_KEY } from "@/lib/validators";
 
 export const revalidate = 60;
 
-// Dispatch map — TypeScript will error if a handler is missing when the key type changes.
-// Keeps VALID_ENDPOINTS and handlers in sync: add one here, it's automatically valid.
-type KeyedHandler = (key: number | "latest") => Promise<NextResponse>;
-
-const KEYED_HANDLERS: Record<string, KeyedHandler> = {
-  result: async (key) => {
-    const results = await getSessionResult(key);
-    return NextResponse.json({ results });
-  },
-  drivers: async (key) => {
-    const drivers = await getDriversForSession(key);
-    return NextResponse.json({ drivers });
-  },
-  stints: async (key) => {
-    const stints = await getStints(key as number);
-    return NextResponse.json({ stints });
-  },
-  laps: async (key) => {
-    const laps = await getLaps(key as number);
-    return NextResponse.json({ laps });
-  },
-  pit: async (key) => {
-    const pit = await getPitStops(key as number);
-    return NextResponse.json({ pit });
-  },
-  weather: async (key) => {
-    const weather = await getTrackWeather(key as number);
-    return NextResponse.json({ weather });
-  },
-  race_control: async (key) => {
-    const raceControl = await getRaceControl(key as number);
-    return NextResponse.json({ raceControl });
-  },
+// Map legacy `endpoint=` query values to the new per-endpoint route paths.
+const ENDPOINT_TO_PATH: Record<string, string> = {
+  sessions: "/api/sessions/info",
+  result: "/api/sessions/result",
+  drivers: "/api/sessions/drivers",
+  stints: "/api/sessions/stints",
+  laps: "/api/sessions/laps",
+  pit: "/api/sessions/pit",
+  weather: "/api/sessions/weather",
+  race_control: "/api/sessions/race-control",
 };
 
-// All valid endpoints — the union of "sessions" + every key in KEYED_HANDLERS.
-const VALID_ENDPOINTS = new Set(["sessions", ...Object.keys(KEYED_HANDLERS)]);
-
+/**
+ * Legacy compat shim for the old `/api/sessions?endpoint=` API surface.
+ * Forwards to the new per-endpoint routes with a 308 redirect so callers
+ * are nudged toward the new URLs but never silently broken.
+ *
+ * New code should call the per-endpoint routes directly (e.g.
+ * `/api/sessions/laps?session_key=...`).
+ */
 export async function GET(req: Request) {
   const blocked = rateLimited(req, "sessions");
   if (blocked) return blocked;
 
-  const { searchParams } = new URL(req.url);
-  const sessionKey = searchParams.get("session_key");
-  const endpoint = searchParams.get("endpoint") ?? "sessions";
-  const year = searchParams.get("year");
-  const meetingKey = searchParams.get("meeting_key");
-
-  if (!VALID_ENDPOINTS.has(endpoint)) {
+  const url = new URL(req.url);
+  const endpoint = url.searchParams.get("endpoint") ?? "sessions";
+  const targetPath = ENDPOINT_TO_PATH[endpoint];
+  if (!targetPath) {
     return badRequest("Invalid endpoint");
   }
-  if (year && !VALID_YEAR.test(year)) {
-    return badRequest("Invalid year parameter");
-  }
-  if (meetingKey && !VALID_MEETING_KEY.test(meetingKey)) {
-    return badRequest("Invalid meeting_key parameter");
-  }
-  if (sessionKey && !VALID_SESSION_KEY.test(sessionKey)) {
-    return badRequest("Invalid session_key parameter");
-  }
 
-  try {
-    if (endpoint === "sessions") {
-      const params: Record<string, string | number> = {};
-      if (year) params.year = year;
-      if (meetingKey) params.meeting_key = meetingKey;
-      if (!year && !meetingKey) params.meeting_key = "latest";
-      const sessions = await getSessions(params);
-      return NextResponse.json({ sessions });
-    }
+  const target = new URL(targetPath, url);
+  // Preserve every query param except `endpoint` itself.
+  url.searchParams.forEach((value, key) => {
+    if (key !== "endpoint") target.searchParams.set(key, value);
+  });
 
-    if (!sessionKey) {
-      return badRequest("session_key required");
-    }
-
-    const key = sessionKey === "latest" ? "latest" : parseInt(sessionKey, 10);
-    const handler = KEYED_HANDLERS[endpoint];
-    return await handler(key);
-  } catch (err) {
-    return serverError("sessions", err);
-  }
+  return NextResponse.redirect(target, 308);
 }

@@ -1,0 +1,9 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "crons": [
+    {
+      "path": "/api/projections/snapshot?season=current",
+      "schedule": "0 6 * * *"
+    }
+  ]
+}
