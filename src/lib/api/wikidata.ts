@@ -2,8 +2,10 @@
  * Wikidata / Wikimedia API helpers.
  *
  * All network calls go through `fetchWithTimeout` with a conservative 8-second
- * timeout. Results are cached in-process for 24 h so the dashboard never
- * hammers the public Wikidata API during server-side rendering.
+ * timeout. Results are cached in-process for 30 days so the dashboard never
+ * hammers the public Wikidata API during server-side rendering. Driver bios
+ * change rarely (career stats accrete; date-of-birth never moves) so a long
+ * TTL is safe; restart the process to force a refresh.
  *
  * Design constraints:
  *  - NO Wikidata calls from client components — always proxied via /api/wikidata.
@@ -228,7 +230,7 @@ export async function fetchWikidataDriverProfile(
 // ── Cache wrapper ──────────────────────────────────────────────────────────
 
 const profileCache = new Map<string, { value: WikidataDriverProfile | null; expiry: number }>();
-const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+const CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days — bios rarely change
 
 /**
  * Cache-wrapped version of fetchWikidataDriverProfile.

@@ -4,6 +4,14 @@
     {
       "path": "/api/projections/snapshot?season=current",
       "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/standings?season=current",
+      "schedule": "15 6 * * *"
+    },
+    {
+      "path": "/api/schedule?season=current",
+      "schedule": "30 6 * * *"
     }
   ]
 }

@@ -96,10 +96,9 @@ Replace `\`/api/sessions?endpoint=laps&session_key=${k}\`` with `\`/api/sessions
 
 ### Verify yourself
 - [ ] `curl localhost:3000/api/sessions?endpoint=laps&session_key=9001` → 308 to `/api/sessions/laps?session_key=9001`.
-- [ ] `curl localhost:3000/api/projections?season=2026` on a cold deploy → `{available:false, reason:"Snapshot pending…"}`.
-- [ ] After running the cron once, the same GET returns the full projection.
-- [ ] `npx vitest run src/app/api/__tests__/sessions.test.ts` — 19 tests pass.
-- [ ] `npx vitest run src/app/api/__tests__/projections.test.ts` — 11 tests pass.
+- [ ] `curl localhost:3000/api/projections?season=2026` returns the full projection (served from the shared Data Cache; first request after a deploy pays the compute, all subsequent reads from any instance hit cache for 24h).
+- [ ] `npx vitest run src/app/api/__tests__/sessions.test.ts` — sessions tests pass.
+- [ ] `npx vitest run src/app/api/__tests__/projections.test.ts` — projections tests pass.
 
 ---
 
@@ -145,7 +144,7 @@ The pre-commit hook runs `npm test`. Build is gated on `npm run build`. Both **m
 | New regex/validator | Accept valid; reject malformed + injection-shaped strings |
 
 ### Verify yourself
-- [ ] `npm test` exits 0 with 654+ passing tests.
+- [ ] `npm test` exits 0 with 655+ passing tests.
 - [ ] `npm run build` exits 0.
 
 ---
@@ -177,10 +176,10 @@ The Vercel Data Cache covers most cases, but for very long TTLs or cross-region 
 `/api/telemetry` still streams large raw OpenF1 responses. For finished sessions, precompute lap-by-lap aggregates and cache them weekly (`liveTelemetry` becomes `careerStats`-class once the session is over).
 
 ### 6.3 Wikidata enrichment cache (driver bios)
-Wikidata responses change rarely; current `seasonal` class (24 h) is too aggressive. Consider a 30-day TTL with manual invalidation.
+_Shipped._ In-process cache TTL in [src/lib/api/wikidata.ts](../src/lib/api/wikidata.ts) is now 30 days. Bios change rarely; restart the process to force a refresh. If we ever need cross-instance invalidation, lift this into `unstable_cache` keyed by the Wikipedia URL.
 
 ### 6.4 Cron expansion
-Add cron warmers for `/api/standings?season=current` and `/api/schedule?season=current` so even the daily-class routes start warm.
+_Partially shipped._ [vercel.json](../vercel.json) now warms `/api/standings?season=current` (06:15 UTC daily) and `/api/schedule?season=current` (06:30 UTC daily) so the daily-class routes are pre-warm by the time European users wake up. Other public daily routes (`/api/drivers`, `/api/news`) can follow the same pattern — just add another `crons` entry.
 
 ### 6.5 Real-time during sessions
 For live sessions, the 10–30 s ISR TTLs are still pull-based. A future enhancement is a small WebSocket relay that pushes OpenF1 deltas; the current code's `liveTelemetry` class is the right tier to hook in.
