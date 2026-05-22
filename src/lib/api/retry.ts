@@ -6,16 +6,29 @@
  * surface has the same bounded retry behavior:
  *
  *  - 3 attempts total
- *  - 250ms / 500ms / 1000ms exponential backoff
+ *  - 500ms / 1000ms / 2000ms exponential backoff with ±50% jitter
  *  - Retries: AbortError/timeout, network failures, HTTP 408/425/429/5xx
  *  - Fails fast on permanent errors (400/401/403/404, etc.)
+ *
+ * Jitter (random 0.5x–1.5x) prevents synchronized retries from a parallel
+ * fan-out (e.g. 6 driver-career fetchers) hammering the upstream at the
+ * same instants. The base backoff is sized to clear typical rate-limit
+ * windows (~1s) on the first retry.
  */
 
 export const MAX_ATTEMPTS = 3;
-export const BASE_BACKOFF_MS = 250;
+export const BASE_BACKOFF_MS = 500;
+export const JITTER_RATIO = 0.5; // delay multiplied by random in [1 - r, 1 + r]
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function backoffDelay(attempt: number): number {
+  const nominal = BASE_BACKOFF_MS * 2 ** (attempt - 1);
+  const min = 1 - JITTER_RATIO;
+  const span = JITTER_RATIO * 2;
+  return Math.round(nominal * (min + Math.random() * span));
 }
 
 /**
@@ -55,7 +68,7 @@ export async function withRetry<T>(fn: () => Promise<T>): Promise<T> {
     } catch (err) {
       lastError = err;
       if (attempt >= MAX_ATTEMPTS || !isRetryable(err)) break;
-      await sleep(BASE_BACKOFF_MS * 2 ** (attempt - 1));
+      await sleep(backoffDelay(attempt));
     }
   }
 
