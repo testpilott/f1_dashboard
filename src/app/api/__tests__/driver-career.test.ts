@@ -72,34 +72,19 @@ describe("GET /api/driver-career", () => {
     });
   });
 
-  it("returns partial totals when some upstream calls fail", async () => {
-    vi.mocked(getDriverCareerWins).mockRejectedValue(new Error("wins endpoint down"));
-    vi.mocked(getDriverCareerP3).mockRejectedValue(new Error("p3 endpoint down"));
-    vi.mocked(getDriverCareerFastestLaps).mockRejectedValue(new Error("fl endpoint down"));
+  it("returns 500 when any required upstream stat fetcher fails (does not cache partial data)", async () => {
+    vi.mocked(getDriverCareerStarts).mockRejectedValue(new Error("starts endpoint down"));
 
     const res = await GET(makeApiRequest("/api/driver-career", { driverId: "hamilton" }));
-    const body = await res.json();
 
-    expect(res.status).toBe(200);
-    expect(body).toEqual({
-      driverId: "hamilton",
-      career: {
-        wins: null,
-        podiums: null,
-        starts: 210,
-        fastestLaps: null,
-        championships: 0,
-      },
-    });
+    expect(res.status).toBe(500);
   });
 
-  it("returns partial career totals when championship lookup fails", async () => {
+  it("returns 500 when championship lookup rejects (championship fetcher is normally resilient)", async () => {
     vi.mocked(getDriverCareerChampionships).mockRejectedValue(new Error("championship lookup failed"));
 
     const res = await GET(makeApiRequest("/api/driver-career", { driverId: "hamilton" }));
-    const body = await res.json();
 
-    expect(res.status).toBe(200);
-    expect(body.career.championships).toBeNull();
+    expect(res.status).toBe(500);
   });
 });

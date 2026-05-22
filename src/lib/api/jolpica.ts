@@ -133,67 +133,57 @@ export async function getDriverCareerFastestLaps(driverId: string): Promise<stri
 }
 
 export async function getDriverCareerChampionships(driverId: string): Promise<string> {
-  // Jolpica REQUIRES a season_year for the driverStandings endpoint (unlike
-  // upstream Ergast), so we must fan out one request per season. The fan-out
-  // is made resilient by:
-  //   1. Catching per-season errors instead of letting Promise.all reject the
-  //      whole count — a transient failure on one season won't blank the result.
-  //   2. Falling back to the known-champion floor if the seasons-list lookup
-  //      itself fails (e.g. Hamilton always reports >= 7 even if upstream is down).
-  //   3. Clamping the final count to max(observed, floor) so the value can only
-  //      ever increase past the closed historical list, never decrease below it.
+  // The set of Formula 1 World Drivers' Champions is a closed, append-only
+  // list (see KNOWN_CHAMPIONSHIPS). Any driver not on that list has 0 titles
+  // by definition — short-circuit without touching Jolpica. This eliminates
+  // the most common cause of a null championships field (an upstream blip on
+  // a network call we didn't actually need to make).
   const floor = getKnownChampionshipFloor(driverId);
+  if (floor === 0) return "0";
 
-  let seasons: number[];
+  // For known champions, corroborate with Jolpica in case our floor is stale
+  // (e.g. a champion wins another title before we bump the constant). Jolpica
+  // requires a season_year on driverStandings, so we must fan out one call
+  // per season — but the floor protects us from any partial or total failure.
   try {
-    seasons = await getDriverSeasons(driverId);
-  } catch (err) {
-    // If we have a static floor for this driver, return it rather than null.
-    // Otherwise propagate so the route can degrade gracefully.
-    if (floor > 0) return String(floor);
-    throw err;
-  }
+    const seasons = await getDriverSeasons(driverId);
+    if (seasons.length === 0) return String(floor);
 
-  if (seasons.length === 0) return String(floor);
+    async function hasChampionshipInSeason(season: number): Promise<boolean> {
+      const path = `/${season}/drivers/${encodeURIComponent(driverId)}/driverStandings/1.json?limit=1`;
+      const total = await jolpicaTotal(path);
+      return Number(total) > 0;
+    }
 
-  async function hasChampionshipInSeason(season: number): Promise<boolean> {
-    const path = `/${season}/drivers/${encodeURIComponent(driverId)}/driverStandings/1.json?limit=1`;
-    const total = await jolpicaTotal(path);
-    return Number(total) > 0;
-  }
+    const CONCURRENCY = 4;
+    const seasonChecks: boolean[] = new Array(seasons.length).fill(false);
+    let cursor = 0;
 
-  // Bounded worker pool — keeps fan-out off the rate-limit ceiling on
-  // long-career drivers (Alonso ~24 seasons). Per-season failures are
-  // swallowed so they can't sink the whole count.
-  const CONCURRENCY = 4;
-  const seasonChecks: boolean[] = new Array(seasons.length).fill(false);
-  let cursor = 0;
-
-  async function worker(): Promise<void> {
-    while (true) {
-      const index = cursor++;
-      if (index >= seasons.length) return;
-      try {
-        seasonChecks[index] = await hasChampionshipInSeason(seasons[index]);
-      } catch {
-        // Tolerate per-season failures — the floor will cover known champions
-        // and the worst case for unknown drivers is a 0 that matches reality
-        // for the overwhelming majority of grid history.
-        seasonChecks[index] = false;
+    async function worker(): Promise<void> {
+      while (true) {
+        const index = cursor++;
+        if (index >= seasons.length) return;
+        try {
+          seasonChecks[index] = await hasChampionshipInSeason(seasons[index]);
+        } catch {
+          seasonChecks[index] = false;
+        }
       }
     }
+
+    await Promise.all(
+      Array.from({ length: Math.min(CONCURRENCY, seasons.length) }, () => worker()),
+    );
+
+    const observed = seasonChecks.reduce(
+      (count, hasTitle) => (hasTitle ? count + 1 : count),
+      0,
+    );
+
+    return String(Math.max(observed, floor));
+  } catch {
+    return String(floor);
   }
-
-  await Promise.all(
-    Array.from({ length: Math.min(CONCURRENCY, seasons.length) }, () => worker()),
-  );
-
-  const observed = seasonChecks.reduce(
-    (count, hasTitle) => (hasTitle ? count + 1 : count),
-    0,
-  );
-
-  return String(Math.max(observed, floor));
 }
 
 /** Returns the list of seasons a driver competed in, oldest first. */

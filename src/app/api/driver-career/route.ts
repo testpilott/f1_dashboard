@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { unstable_cache } from "next/cache";
 import { badRequest, serverError } from "@/lib/api/routeHelpers";
-import { extractFulfilled } from "@/lib/api/promiseHelpers";
 import { rateLimited } from "@/lib/api/withRateLimit";
 import { VALID_ID } from "@/lib/validators";
 import {
@@ -19,7 +18,15 @@ export const revalidate = 604800;
 
 const getCachedDriverCareer = unstable_cache(
   async (driverId: string, _weekBucket: string) => {
-    const [wins, p2, p3, starts, fastestLaps, championships] = await Promise.allSettled([
+    // Use Promise.all (NOT allSettled) so that any individual upstream failure
+    // throws — unstable_cache won't memoize a rejection, so the next request
+    // retries from scratch rather than serving sticky partial data (e.g. a
+    // driver with wins populated but starts null cached for a week).
+    //
+    // championships is now resilient internally (floor-backed; never rejects),
+    // so the only failure modes here are real Jolpica blips on the five stat
+    // endpoints, which is exactly when we WANT to retry rather than cache.
+    const [wins, p2, p3, starts, fastestLaps, championships] = await Promise.all([
       getDriverCareerWins(driverId),
       getDriverCareerP2(driverId),
       getDriverCareerP3(driverId),
@@ -29,17 +36,17 @@ const getCachedDriverCareer = unstable_cache(
     ]);
 
     const career = buildDriverCareerStats({
-      wins: extractFulfilled(wins, undefined),
-      p2: extractFulfilled(p2, undefined),
-      p3: extractFulfilled(p3, undefined),
-      starts: extractFulfilled(starts, undefined),
-      fastestLaps: extractFulfilled(fastestLaps, undefined),
-      championships: extractFulfilled(championships, undefined),
+      wins,
+      p2,
+      p3,
+      starts,
+      fastestLaps,
+      championships,
     });
 
     return { driverId, career };
   },
-  ["driver-career-v4-weekly"],
+  ["driver-career-v5-weekly"],
   { revalidate: WEEKLY_CACHE_REVALIDATE_SECONDS, tags: ["driver-career"] }
 );
 

@@ -29,6 +29,13 @@ describe("getDriverCareerChampionships", () => {
     apiFetchMock.mockReset();
   });
 
+  it("short-circuits to 0 for drivers not on the closed champions list (no network call)", async () => {
+    await expect(getDriverCareerChampionships("sainz")).resolves.toBe("0");
+    await expect(getDriverCareerChampionships("russell")).resolves.toBe("0");
+    await expect(getDriverCareerChampionships("totally_unknown_driver")).resolves.toBe("0");
+    expect(apiFetchMock).not.toHaveBeenCalled();
+  });
+
   it("counts titles by checking every season the driver competed in", async () => {
     apiFetchMock.mockImplementation(async (path: string) => {
       if (path === "/drivers/norris/seasons.json?limit=100") {
@@ -71,23 +78,11 @@ describe("getDriverCareerChampionships", () => {
     await expect(getDriverCareerChampionships("hamilton")).resolves.toBe("7");
   });
 
-  it("propagates a seasons-list failure for drivers with no known floor", async () => {
+  it("never throws for drivers without a known floor (short-circuit returns 0)", async () => {
     apiFetchMock.mockRejectedValue(new Error("persistent upstream timeout"));
 
-    await expect(getDriverCareerChampionships("russell")).rejects.toThrow(
-      /persistent upstream timeout/,
-    );
-  });
-
-  it("returns 0 for a non-champion driver with clean upstream data", async () => {
-    apiFetchMock.mockImplementation(async (path: string) => {
-      if (path === "/drivers/russell/seasons.json?limit=100") {
-        return seasonsResponse([2020, 2021, 2022, 2023, 2024, 2025]);
-      }
-      return { MRData: { total: "0" } };
-    });
-
     await expect(getDriverCareerChampionships("russell")).resolves.toBe("0");
+    expect(apiFetchMock).not.toHaveBeenCalled();
   });
 
   it("returns the floor when the driver has competed in zero seasons", async () => {
