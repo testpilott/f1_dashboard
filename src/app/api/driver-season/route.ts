@@ -1,11 +1,23 @@
 import { NextResponse } from "next/server";
+import { unstable_cache } from "next/cache";
 import { badRequest, serverError } from "@/lib/api/routeHelpers";
 import { rateLimited } from "@/lib/api/withRateLimit";
 import { VALID_SEASON, VALID_ID } from "@/lib/validators";
 import { getSeasonRaceResults } from "@/lib/api/jolpica";
 import { driverSeasonSummary } from "@/lib/stats/driverSeason";
+import { currentEtWeekBucket, WEEKLY_CACHE_REVALIDATE_SECONDS } from "@/lib/time/weeklyCache";
 
-export const revalidate = 3600;
+export const revalidate = 604800;
+
+const getCachedDriverSeason = unstable_cache(
+  async (season: string, driverId: string, _weekBucket: string) => {
+    const races = await getSeasonRaceResults(season);
+    const summary = driverSeasonSummary(races, driverId);
+    return { season, driverId, summary };
+  },
+  ["driver-season-v2-weekly"],
+  { revalidate: WEEKLY_CACHE_REVALIDATE_SECONDS, tags: ["driver-season"] }
+);
 
 export async function GET(req: Request) {
   const blocked = rateLimited(req, "driver-season");
@@ -23,9 +35,9 @@ export async function GET(req: Request) {
   }
 
   try {
-    const races = await getSeasonRaceResults(season);
-    const summary = driverSeasonSummary(races, driverId);
-    return NextResponse.json({ season, driverId, summary });
+    const weekBucket = currentEtWeekBucket();
+    const payload = await getCachedDriverSeason(season, driverId, weekBucket);
+    return NextResponse.json(payload);
   } catch (err) {
     return serverError("driver-season", err);
   }

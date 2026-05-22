@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { unstable_cache } from "next/cache";
 import { badRequest, serverError } from "@/lib/api/routeHelpers";
 import { extractFulfilled } from "@/lib/api/promiseHelpers";
 import { rateLimited } from "@/lib/api/withRateLimit";
@@ -12,21 +13,12 @@ import {
   getDriverCareerChampionships,
 } from "@/lib/api/jolpica";
 import { buildDriverCareerStats } from "@/lib/stats/driverCareer";
+import { currentEtWeekBucket, WEEKLY_CACHE_REVALIDATE_SECONDS } from "@/lib/time/weeklyCache";
 
-export const revalidate = 86400;
+export const revalidate = 604800;
 
-export async function GET(req: Request) {
-  const blocked = rateLimited(req, "driver-career");
-  if (blocked) return blocked;
-
-  const { searchParams } = new URL(req.url);
-  const driverId = searchParams.get("driverId") ?? "";
-
-  if (!VALID_ID.test(driverId)) {
-    return badRequest("Invalid driverId");
-  }
-
-  try {
+const getCachedDriverCareer = unstable_cache(
+  async (driverId: string, _weekBucket: string) => {
     const [wins, p2, p3, starts, fastestLaps, championships] = await Promise.allSettled([
       getDriverCareerWins(driverId),
       getDriverCareerP2(driverId),
@@ -45,7 +37,27 @@ export async function GET(req: Request) {
       championships: extractFulfilled(championships, undefined),
     });
 
-    return NextResponse.json({ driverId, career });
+    return { driverId, career };
+  },
+  ["driver-career-v2-weekly"],
+  { revalidate: WEEKLY_CACHE_REVALIDATE_SECONDS, tags: ["driver-career"] }
+);
+
+export async function GET(req: Request) {
+  const blocked = rateLimited(req, "driver-career");
+  if (blocked) return blocked;
+
+  const { searchParams } = new URL(req.url);
+  const driverId = searchParams.get("driverId") ?? "";
+
+  if (!VALID_ID.test(driverId)) {
+    return badRequest("Invalid driverId");
+  }
+
+  try {
+    const weekBucket = currentEtWeekBucket();
+    const payload = await getCachedDriverCareer(driverId, weekBucket);
+    return NextResponse.json(payload);
   } catch (err) {
     return serverError("driver-career", err);
   }

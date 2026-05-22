@@ -1,11 +1,19 @@
 import { NextResponse } from "next/server";
+import { unstable_cache } from "next/cache";
 import { badRequest, notFound, serverError } from "@/lib/api/routeHelpers";
 import { rateLimited } from "@/lib/api/withRateLimit";
 import { VALID_WIKI_TITLE } from "@/lib/validators";
 import { getWikidataDriverProfile } from "@/lib/api/wikidata";
 import { parseWikipediaTitle } from "@/lib/api/wikidata";
+import { currentEtWeekBucket, WEEKLY_CACHE_REVALIDATE_SECONDS } from "@/lib/time/weeklyCache";
 
-export const revalidate = 86400;
+export const revalidate = 604800;
+
+const getCachedWikidataProfile = unstable_cache(
+  async (wikiUrl: string, _weekBucket: string) => getWikidataDriverProfile(wikiUrl),
+  ["wikidata-v2-weekly"],
+  { revalidate: WEEKLY_CACHE_REVALIDATE_SECONDS, tags: ["wikidata"] }
+);
 
 export async function GET(req: Request) {
   const blocked = rateLimited(req, "wikidata");
@@ -25,7 +33,8 @@ export async function GET(req: Request) {
   }
 
   try {
-    const profile = await getWikidataDriverProfile(wikiUrl);
+    const weekBucket = currentEtWeekBucket();
+    const profile = await getCachedWikidataProfile(wikiUrl, weekBucket);
     if (!profile) {
       return notFound("Profile not found");
     }
