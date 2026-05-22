@@ -39,7 +39,7 @@ const getCachedDriverCareer = unstable_cache(
 
     return { driverId, career };
   },
-  ["driver-career-v2-weekly"],
+  ["driver-career-v3-weekly"],
   { revalidate: WEEKLY_CACHE_REVALIDATE_SECONDS, tags: ["driver-career"] }
 );
 

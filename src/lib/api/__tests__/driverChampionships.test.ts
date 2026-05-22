@@ -19,87 +19,42 @@ describe("getDriverCareerChampionships", () => {
     apiFetchMock.mockReset();
   });
 
-  it("counts titles by checking every season the driver competed in", async () => {
+  it("returns the championship total from a single career-wide standings call", async () => {
     apiFetchMock.mockImplementation(async (path: string) => {
-      if (path === "/drivers/norris/seasons.json?limit=100") {
-        return {
-          MRData: {
-            SeasonTable: {
-              Seasons: [{ season: "2023" }, { season: "2024" }, { season: "2025" }],
-            },
-          },
-        };
-      }
-      if (path === "/2023/drivers/norris/driverStandings/1.json?limit=1") {
-        return { MRData: { total: "0" } };
-      }
-      if (path === "/2024/drivers/norris/driverStandings/1.json?limit=1") {
-        return { MRData: { total: "0" } };
-      }
-      if (path === "/2025/drivers/norris/driverStandings/1.json?limit=1") {
+      if (path === "/drivers/norris/driverStandings/1.json?limit=1") {
         return { MRData: { total: "1" } };
       }
       throw new Error(`Unexpected path: ${path}`);
     });
 
     await expect(getDriverCareerChampionships("norris")).resolves.toBe("1");
+    expect(apiFetchMock).toHaveBeenCalledTimes(1);
   });
 
-  it("returns 0 when no season data is available", async () => {
-    apiFetchMock.mockResolvedValue({
-      MRData: { SeasonTable: { Seasons: [] } },
-    });
+  it("returns 0 when the driver has no championship-winning seasons", async () => {
+    apiFetchMock.mockResolvedValue({ MRData: { total: "0" } });
 
     await expect(getDriverCareerChampionships("unknown_driver")).resolves.toBe("0");
+    expect(apiFetchMock).toHaveBeenCalledTimes(1);
   });
 
-  it("propagates a season lookup failure to the caller", async () => {
-    apiFetchMock.mockImplementation(async (path: string) => {
-      if (path === "/drivers/hamilton/seasons.json?limit=100") {
-        return {
-          MRData: {
-            SeasonTable: {
-              Seasons: [{ season: "2008" }, { season: "2014" }],
-            },
-          },
-        };
-      }
-      if (path === "/2008/drivers/hamilton/driverStandings/1.json?limit=1") {
-        return { MRData: { total: "1" } };
-      }
-      if (path === "/2014/drivers/hamilton/driverStandings/1.json?limit=1") {
-        throw new Error("persistent upstream timeout");
-      }
-      throw new Error(`Unexpected path: ${path}`);
-    });
+  it("returns a multi-championship total for repeat title winners", async () => {
+    apiFetchMock.mockResolvedValue({ MRData: { total: "7" } });
 
-    await expect(getDriverCareerChampionships("hamilton")).rejects.toThrow(
-      /persistent upstream timeout/
+    await expect(getDriverCareerChampionships("hamilton")).resolves.toBe("7");
+  });
+
+  it("propagates upstream errors to the caller", async () => {
+    apiFetchMock.mockRejectedValue(new Error("persistent upstream timeout"));
+
+    await expect(getDriverCareerChampionships("alonso")).rejects.toThrow(
+      /persistent upstream timeout/,
     );
   });
 
-  it("limits per-season concurrency to avoid upstream rate limits", async () => {
-    let inFlight = 0;
-    let peakInFlight = 0;
+  it("returns 0 when the API omits the total field", async () => {
+    apiFetchMock.mockResolvedValue({ MRData: {} });
 
-    apiFetchMock.mockImplementation(async (path: string) => {
-      if (path === "/drivers/alonso/seasons.json?limit=100") {
-        const seasons = Array.from({ length: 20 }, (_, i) => ({
-          season: String(2001 + i),
-        }));
-        return { MRData: { SeasonTable: { Seasons: seasons } } };
-      }
-
-      inFlight++;
-      peakInFlight = Math.max(peakInFlight, inFlight);
-      // Yield a microtask so concurrent calls overlap.
-      await Promise.resolve();
-      inFlight--;
-      return { MRData: { total: "0" } };
-    });
-
-    await expect(getDriverCareerChampionships("alonso")).resolves.toBe("0");
-    expect(peakInFlight).toBeGreaterThan(0);
-    expect(peakInFlight).toBeLessThanOrEqual(4);
+    await expect(getDriverCareerChampionships("ghost")).resolves.toBe("0");
   });
 });
