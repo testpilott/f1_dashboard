@@ -51,16 +51,17 @@ Defined in [src/lib/cacheStrategy.ts](../src/lib/cacheStrategy.ts) as `type Data
 
 The full list lives in [src/app/api/](../src/app/api/). Below are the routes that received structural changes in this refactor.
 
-### 2.1 `/api/projections` — read-only cron-warmed
+### 2.1 `/api/projections` — read-only, served from shared cache
 - **File**: [src/app/api/projections/route.ts](../src/app/api/projections/route.ts)
-- **Behavior**: validates `season`, checks `isSnapshotWarmed(season)`. If cold, returns `{available:false, reason:"Snapshot pending"}`. If warm, returns the cached projection.
-- **Never** triggers the Monte Carlo pipeline on user request.
+- **Behavior**: validates `season`, then calls `getCachedProjections(season)`. `unstable_cache` is the single source of truth; backed by the Vercel Data Cache so every lambda instance sees the same result for `revalidate` seconds.
+- The cron pre-warms after deploys/TTL expiry. If a request arrives on a cold cache it pays the Monte Carlo cost exactly once and every subsequent reader benefits.
+- **Earlier broken design (do not reintroduce)**: gating reads on an in-memory `Set` (`WARMED_SEASONS`) returns `{available:false}` from every lambda instance that wasn't the one the cron warmed, which is most of them. The instance-local flag is kept only as advisory diagnostic info; the route does not consult it.
 
 ### 2.2 `/api/projections/snapshot` — cron warmer
 - **File**: [src/app/api/projections/snapshot/route.ts](../src/app/api/projections/snapshot/route.ts)
 - **Auth**: `Authorization: Bearer ${CRON_SECRET}` env var. Returns 401 otherwise. Vercel Cron sets this header automatically.
 - **Schedule**: every 24h via [vercel.json](../vercel.json) (`0 6 * * *`).
-- **Behavior**: `revalidateTag("projections", "max")` → `computeProjections(season)` → warm `WARMED_SEASONS` set so subsequent GETs serve the snapshot.
+- **Behavior**: `revalidateTag("projections", "max")` → `computeProjections(season)` → store via `getCachedProjections`. Updates the local `WARMED_SEASONS` Set for diagnostics only.
 
 #### How to add seasons
 Edit `vercel.json` and add another cron entry with `?season=2024` etc. The snapshot module supports any year 2000–2030.
@@ -155,7 +156,7 @@ The pre-commit hook runs `npm test`. Build is gated on `npm run build`. Both **m
 
 2. **`unstable_cache` memoizes across tests.** When testing a route or helper that uses it, mock `next/cache` to pass through (see §4). Without this, the first test populates the cache and subsequent tests with different mocks read stale data.
 
-3. **Module-scoped state in serverless is per-instance.** The `WARMED_SEASONS` Set in `snapshot.ts` lives on one lambda instance. If multiple instances are spun up, each needs its own warmup. The cron should be frequent enough (every 24h is fine for projections) that any cold instance answers `{available:false}` for at most a few minutes before the next cron run.
+3. **Module-scoped state in serverless is per-instance and must not gate user reads.** A `Set`/`Map` declared at module scope lives on one lambda; other instances start empty. If you use this to decide whether to serve a result, most users will get the empty-state branch. The fix is to let `unstable_cache` (backed by the shared Vercel Data Cache) be the source of truth and use module-scoped state only for diagnostics. An earlier version of `/api/projections` made exactly this mistake and broke the page in prod.
 
 4. **Files prefixed `_` in `app/` are private to Next.js routing.** Use this for shared helpers next to route files (e.g. `src/app/api/sessions/_shared.ts`).
 
@@ -170,9 +171,7 @@ The pre-commit hook runs `npm test`. Build is gated on `npm run build`. Both **m
 These tasks were considered but deferred. Each is self-contained.
 
 ### 6.1 Persistent snapshot storage (Redis / KV)
-Today's `WARMED_SEASONS` is in-memory per lambda. For multi-instance fleets, swap to Vercel KV / Upstash Redis:
-- Replace the `Set` with `kv.sismember/sadd` calls.
-- Move `getCachedProjections` from `unstable_cache` to a KV-backed read in `snapshot.ts`.
+The Vercel Data Cache covers most cases, but for very long TTLs or cross-region invalidation a KV-backed store is more predictable. Swap `getCachedProjections` from `unstable_cache` to a Vercel KV / Upstash Redis read in `snapshot.ts`.
 
 ### 6.2 OpenF1 telemetry pre-aggregation
 `/api/telemetry` still streams large raw OpenF1 responses. For finished sessions, precompute lap-by-lap aggregates and cache them weekly (`liveTelemetry` becomes `careerStats`-class once the session is over).

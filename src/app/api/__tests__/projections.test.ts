@@ -56,19 +56,33 @@ describe("GET /api/projections", () => {
     expect(res.status).toBe(400);
   });
 
-  it("responds with available=false when snapshot is cold (no compute triggered)", async () => {
+  it("serves projection from the shared cache on every request (no instance-warm gate)", async () => {
+    vi.mocked(getDriverStandings).mockResolvedValue([{ Driver: { driverId: "ver" } }] as never);
+    vi.mocked(getSchedule).mockResolvedValue([{ round: "1" }, { round: "2" }] as never);
+    vi.mocked(getSeasonResults).mockResolvedValue([
+      { round: "1", Results: [{ position: "1" }] },
+    ] as never);
+    vi.mocked(runProjections).mockReturnValue({
+      drivers: [{ id: "ver", winProbability: 0.7 }],
+    } as never);
+
+    // No prior warmSnapshot call — route still serves the projection because
+    // unstable_cache is the single source of truth, not an in-memory flag.
     const res = await GET(makeApiRequest("/api/projections", { season: "2026" }));
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toEqual({
-      available: false,
-      reason: expect.stringMatching(/snapshot pending/i),
-    });
-    expect(getDriverStandings).not.toHaveBeenCalled();
-    expect(runProjections).not.toHaveBeenCalled();
+    expect(body.drivers[0].id).toBe("ver");
   });
 
-  it("serves cached projection after snapshot has been warmed", async () => {
+  it("returns 500 when the pipeline throws", async () => {
+    vi.mocked(getDriverStandings).mockRejectedValue(new Error("upstream"));
+    vi.mocked(getSchedule).mockResolvedValue([] as never);
+    vi.mocked(getSeasonResults).mockResolvedValue([] as never);
+    const res = await GET(makeApiRequest("/api/projections", { season: "2026" }));
+    expect(res.status).toBe(500);
+  });
+
+  it("serves cached projection after snapshot has been warmed by the cron", async () => {
     vi.mocked(getDriverStandings).mockResolvedValue([{ Driver: { driverId: "ver" } }] as never);
     vi.mocked(getSchedule).mockResolvedValue([{ round: "1" }, { round: "2" }] as never);
     vi.mocked(getSeasonResults).mockResolvedValue([

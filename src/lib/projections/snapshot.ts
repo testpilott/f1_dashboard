@@ -6,19 +6,20 @@ import type { ChampionshipProjection } from "@/lib/types";
 /**
  * Snapshot module for the championship projections pipeline.
  *
- * The Monte Carlo run is expensive (10k iterations). To prevent user-facing
- * requests from ever triggering a cold-cache compute, we:
+ * The Monte Carlo run is expensive (10k iterations). To keep it off user
+ * requests:
  *
- *   1. Compute via `computeProjections(season)` — pure, no caching.
- *   2. Persist via `getCachedProjections(season)` — wraps the pipeline in
- *      `unstable_cache` so the result lives in the Next.js Data Cache.
- *   3. The `/api/projections` route only ever calls `getCachedProjections`,
- *      and only after the snapshot has been warmed in this lambda instance
- *      (tracked by `WARMED_SEASONS`). A cold-cache GET responds with
- *      `{ available: false, reason: "Snapshot pending" }` — never compute.
- *   4. The `/api/projections/snapshot` POST (cron-guarded) calls
- *      `warmSnapshot(season)`, which invalidates the tag, recomputes, and
- *      marks the season warmed.
+ *   1. `computeProjections(season)` — pure pipeline, no caching.
+ *   2. `getCachedProjections(season)` — wraps the pipeline in `unstable_cache`
+ *      so the result lives in the shared Vercel Data Cache for 24h. Every
+ *      lambda instance reads from the same store.
+ *   3. `/api/projections` calls `getCachedProjections` directly. The cache is
+ *      the single source of truth; there is no instance-local warm flag
+ *      (that approach was broken because each lambda instance has its own
+ *      memory and only one is ever warmed by the cron).
+ *   4. `/api/projections/snapshot` (cron-guarded) calls `warmSnapshot(season)`
+ *      to invalidate the cached value and recompute, so the first user after
+ *      a deploy / TTL expiry does not pay the compute cost.
  *
  * Bump the cache-key suffix (e.g. "v1" → "v2") whenever the projection
  * algorithm changes and stored results must be invalidated.
@@ -59,8 +60,11 @@ export const getCachedProjections = unstable_cache(
   { revalidate: PROJECTIONS_REVALIDATE_SECONDS, tags: [PROJECTIONS_CACHE_TAG] },
 );
 
-// In-memory record of which seasons have been warmed in this lambda instance.
-// On cold start this is empty, which is the signal GET uses to refuse compute.
+// In-memory record of which seasons have been warmed by this lambda instance.
+// Used only by tests + as advisory diagnostic info from the snapshot route.
+// The user-facing /api/projections route does NOT gate on this — it reads
+// directly from `getCachedProjections`, whose backing store is shared across
+// all instances via the Vercel Data Cache.
 const WARMED_SEASONS = new Set<string>();
 
 export function isSnapshotWarmed(season: string): boolean {

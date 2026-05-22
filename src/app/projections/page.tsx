@@ -7,10 +7,17 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 
 
-async function fetchProjections() {
+type ProjectionsUnavailable = { available: false; reason?: string };
+type ProjectionsResponse = ChampionshipProjection | ProjectionsUnavailable;
+
+function isAvailable(data: ProjectionsResponse | undefined): data is ChampionshipProjection {
+  return !!data && Array.isArray((data as ChampionshipProjection).drivers);
+}
+
+async function fetchProjections(): Promise<ProjectionsResponse> {
   const res = await fetch("/api/projections");
   if (!res.ok) throw new Error("Failed");
-  return res.json() as Promise<ChampionshipProjection>;
+  return res.json() as Promise<ProjectionsResponse>;
 }
 
 function ProjectionRow({ driver, maxWinProb }: { driver: DriverProjection; maxWinProb: number }) {
@@ -106,19 +113,24 @@ export default function ProjectionsPage() {
     staleTime: 24 * 60 * 60 * 1000, // 24 hours — matches the server-side daily cache
   });
 
+  const available = isAvailable(data);
+  const projection = available ? data : undefined;
+  const unavailableReason =
+    !available && data && "reason" in data ? data.reason : undefined;
+
   // Guard against division-by-zero: if every driver has 0% win probability
   // (e.g. season not started), use 1 so bars render at 0% rather than NaN.
-  const maxWinProb = Math.max(data?.drivers[0]?.winProbability ?? 0, 1);
+  const maxWinProb = Math.max(projection?.drivers[0]?.winProbability ?? 0, 1);
 
   return (
     <div>
       <div className="mb-6">
         <h1 className="text-2xl font-bold">Championship Projections</h1>
-        {data && (
+        {projection && (
           <p className="text-muted-foreground text-sm mt-1">
-            {data.totalSimulations.toLocaleString()} Monte Carlo simulations ·{" "}
-            {data.remainingRaces} races remaining · generated{" "}
-            {new Date(data.generatedAt).toLocaleTimeString()}
+            {projection.totalSimulations.toLocaleString()} Monte Carlo simulations ·{" "}
+            {projection.remainingRaces} races remaining · generated{" "}
+            {new Date(projection.generatedAt).toLocaleTimeString()}
           </p>
         )}
       </div>
@@ -140,9 +152,20 @@ export default function ProjectionsPage() {
         </div>
       )}
 
-      {data && (
+      {!isLoading && !isError && !available && data && (
+        <div className="flex items-center gap-3 py-8">
+          <p className="text-muted-foreground text-sm">
+            {unavailableReason ?? "Projections are warming up — check back shortly."}
+          </p>
+          <button onClick={() => refetch()} className="text-xs text-primary hover:underline">
+            Retry
+          </button>
+        </div>
+      )}
+
+      {projection && (
         <div className="space-y-3">
-          {data.drivers.map((driver) => (
+          {projection.drivers.map((driver) => (
             <ProjectionRow key={driver.driverId} driver={driver} maxWinProb={maxWinProb} />
           ))}
         </div>
