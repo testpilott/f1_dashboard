@@ -104,7 +104,7 @@ function DriversPageInner() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">{seasonLabel(season)} Drivers</h1>
+        <h1 className="text-2xl font-bold">{seasonLabel(season).replace(" (current)", "")} Drivers</h1>
         <SeasonPicker current={season} />
       </div>
 
