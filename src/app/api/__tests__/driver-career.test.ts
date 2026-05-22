@@ -72,16 +72,51 @@ describe("GET /api/driver-career", () => {
     });
   });
 
-  it("returns 500 when any required upstream stat fetcher fails (does not cache partial data)", async () => {
+  it("degrades to a best-effort 200 payload when a required upstream stat fetcher fails", async () => {
     vi.mocked(getDriverCareerStarts).mockRejectedValue(new Error("starts endpoint down"));
 
     const res = await GET(makeApiRequest("/api/driver-career", { driverId: "hamilton" }));
 
-    expect(res.status).toBe(500);
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body).toEqual({
+      driverId: "hamilton",
+      career: {
+        wins: 60,
+        podiums: 98,
+        starts: null,
+        fastestLaps: 44,
+        championships: 0,
+      },
+    });
   });
 
-  it("returns 500 when championship lookup rejects (championship fetcher is normally resilient)", async () => {
+  it("degrades to a best-effort 200 payload when championship lookup rejects", async () => {
     vi.mocked(getDriverCareerChampionships).mockRejectedValue(new Error("championship lookup failed"));
+
+    const res = await GET(makeApiRequest("/api/driver-career", { driverId: "hamilton" }));
+
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body).toEqual({
+      driverId: "hamilton",
+      career: {
+        wins: 60,
+        podiums: 98,
+        starts: 210,
+        fastestLaps: 44,
+        championships: null,
+      },
+    });
+  });
+
+  it("returns 500 when every upstream call fails", async () => {
+    vi.mocked(getDriverCareerWins).mockRejectedValue(new Error("wins down"));
+    vi.mocked(getDriverCareerP2).mockRejectedValue(new Error("p2 down"));
+    vi.mocked(getDriverCareerP3).mockRejectedValue(new Error("p3 down"));
+    vi.mocked(getDriverCareerStarts).mockRejectedValue(new Error("starts down"));
+    vi.mocked(getDriverCareerFastestLaps).mockRejectedValue(new Error("fastest down"));
+    vi.mocked(getDriverCareerChampionships).mockRejectedValue(new Error("titles down"));
 
     const res = await GET(makeApiRequest("/api/driver-career", { driverId: "hamilton" }));
 

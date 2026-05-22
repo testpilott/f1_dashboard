@@ -16,35 +16,67 @@ import { currentEtWeekBucket, WEEKLY_CACHE_REVALIDATE_SECONDS } from "@/lib/time
 
 export const revalidate = 604800;
 
+async function computeCareerStrict(driverId: string) {
+  // Use Promise.all (NOT allSettled) so that any individual upstream failure
+  // throws — unstable_cache won't memoize a rejection, so the next request
+  // retries from scratch rather than serving sticky partial data (e.g. a
+  // driver with wins populated but starts null cached for a week).
+  //
+  // championships is now resilient internally (floor-backed; never rejects),
+  // so the only failure modes here are real Jolpica blips on the five stat
+  // endpoints, which is exactly when we WANT to retry rather than cache.
+  const [wins, p2, p3, starts, fastestLaps, championships] = await Promise.all([
+    getDriverCareerWins(driverId),
+    getDriverCareerP2(driverId),
+    getDriverCareerP3(driverId),
+    getDriverCareerStarts(driverId),
+    getDriverCareerFastestLaps(driverId),
+    getDriverCareerChampionships(driverId),
+  ]);
+
+  const career = buildDriverCareerStats({
+    wins,
+    p2,
+    p3,
+    starts,
+    fastestLaps,
+    championships,
+  });
+
+  return { driverId, career };
+}
+
+async function computeCareerBestEffort(driverId: string) {
+  const [wins, p2, p3, starts, fastestLaps, championships] = await Promise.allSettled([
+    getDriverCareerWins(driverId),
+    getDriverCareerP2(driverId),
+    getDriverCareerP3(driverId),
+    getDriverCareerStarts(driverId),
+    getDriverCareerFastestLaps(driverId),
+    getDriverCareerChampionships(driverId),
+  ]);
+
+  const settled = [wins, p2, p3, starts, fastestLaps, championships];
+  const allFailed = settled.every((item) => item.status === "rejected");
+  if (allFailed) {
+    throw new Error("All driver-career upstream calls failed");
+  }
+
+  const career = buildDriverCareerStats({
+    wins: wins.status === "fulfilled" ? wins.value : undefined,
+    p2: p2.status === "fulfilled" ? p2.value : undefined,
+    p3: p3.status === "fulfilled" ? p3.value : undefined,
+    starts: starts.status === "fulfilled" ? starts.value : undefined,
+    fastestLaps: fastestLaps.status === "fulfilled" ? fastestLaps.value : undefined,
+    championships: championships.status === "fulfilled" ? championships.value : undefined,
+  });
+
+  return { driverId, career };
+}
+
 const getCachedDriverCareer = unstable_cache(
   async (driverId: string, _weekBucket: string) => {
-    // Use Promise.all (NOT allSettled) so that any individual upstream failure
-    // throws — unstable_cache won't memoize a rejection, so the next request
-    // retries from scratch rather than serving sticky partial data (e.g. a
-    // driver with wins populated but starts null cached for a week).
-    //
-    // championships is now resilient internally (floor-backed; never rejects),
-    // so the only failure modes here are real Jolpica blips on the five stat
-    // endpoints, which is exactly when we WANT to retry rather than cache.
-    const [wins, p2, p3, starts, fastestLaps, championships] = await Promise.all([
-      getDriverCareerWins(driverId),
-      getDriverCareerP2(driverId),
-      getDriverCareerP3(driverId),
-      getDriverCareerStarts(driverId),
-      getDriverCareerFastestLaps(driverId),
-      getDriverCareerChampionships(driverId),
-    ]);
-
-    const career = buildDriverCareerStats({
-      wins,
-      p2,
-      p3,
-      starts,
-      fastestLaps,
-      championships,
-    });
-
-    return { driverId, career };
+    return computeCareerStrict(driverId);
   },
   ["driver-career-v5-weekly"],
   { revalidate: WEEKLY_CACHE_REVALIDATE_SECONDS, tags: ["driver-career"] }
@@ -66,6 +98,13 @@ export async function GET(req: Request) {
     const payload = await getCachedDriverCareer(driverId, weekBucket);
     return NextResponse.json(payload);
   } catch (err) {
-    return serverError("driver-career", err);
+    // Degrade gracefully for transient upstream issues by returning a
+    // best-effort uncached payload instead of an HTTP 500.
+    try {
+      const payload = await computeCareerBestEffort(driverId);
+      return NextResponse.json(payload);
+    } catch {
+      return serverError("driver-career", err);
+    }
   }
 }
