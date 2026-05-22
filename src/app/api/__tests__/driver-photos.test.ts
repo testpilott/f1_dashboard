@@ -12,7 +12,7 @@ vi.mock("@/lib/api/openf1", () => ({
   getDriversForSession: vi.fn(),
 }));
 
-import { GET } from "@/app/api/driver-photos/route";
+import { GET, _resetDriverPhotosState } from "@/app/api/driver-photos/route";
 import { rateLimited } from "@/lib/api/withRateLimit";
 import { getDriversForSession } from "@/lib/api/openf1";
 import { makeApiRequest } from "@/test/api";
@@ -20,6 +20,7 @@ import { makeApiRequest } from "@/test/api";
 describe("GET /api/driver-photos", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    _resetDriverPhotosState();
     vi.mocked(rateLimited).mockReturnValue(null);
   });
 
@@ -93,5 +94,52 @@ describe("GET /api/driver-photos", () => {
 
     expect(res.status).toBe(200);
     expect(body).toEqual({ photos: [] });
+  });
+
+  it("returns last-known-good photos when upstream fails after a prior success", async () => {
+    const drivers: Awaited<ReturnType<typeof getDriversForSession>> = [
+      {
+        driver_number: 1,
+        broadcast_name: "M VERSTAPPEN",
+        first_name: "Max",
+        name_acronym: "VER",
+        last_name: "Verstappen",
+        full_name: "Max Verstappen",
+        team_name: "Red Bull Racing",
+        team_colour: "3671C6",
+        session_key: 9001,
+        meeting_key: 1200,
+        headshot_url: "https://media.formula1.com/example/ver.png",
+      },
+    ];
+    vi.mocked(getDriversForSession).mockResolvedValueOnce(drivers);
+
+    const first = await GET(makeApiRequest("/api/driver-photos"));
+    expect(first.status).toBe(200);
+    expect(await first.json()).toEqual({
+      photos: [
+        {
+          driver_number: 1,
+          name_acronym: "VER",
+          last_name: "Verstappen",
+          headshot_url: "https://media.formula1.com/example/ver.png",
+        },
+      ],
+    });
+
+    vi.mocked(getDriversForSession).mockRejectedValueOnce(new Error("timeout"));
+
+    const second = await GET(makeApiRequest("/api/driver-photos"));
+    expect(second.status).toBe(200);
+    expect(await second.json()).toEqual({
+      photos: [
+        {
+          driver_number: 1,
+          name_acronym: "VER",
+          last_name: "Verstappen",
+          headshot_url: "https://media.formula1.com/example/ver.png",
+        },
+      ],
+    });
   });
 });

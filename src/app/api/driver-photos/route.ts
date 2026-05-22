@@ -3,12 +3,20 @@ import { unstable_cache } from "next/cache";
 import { logRouteError } from "@/lib/api/routeHelpers";
 import { rateLimited } from "@/lib/api/withRateLimit";
 import { getDriversForSession } from "@/lib/api/openf1";
-import { currentEtWeekBucket, WEEKLY_CACHE_REVALIDATE_SECONDS } from "@/lib/time/weeklyCache";
+import type { OpenF1Driver } from "@/lib/types";
 
-export const revalidate = 604800; // 7 d — refresh at Monday 00:00 ET via week bucket
+type DriverPhoto = Pick<OpenF1Driver, "driver_number" | "name_acronym" | "last_name"> & {
+  headshot_url: string | null;
+};
+
+const DRIVER_PHOTOS_REVALIDATE_SECONDS = 2592000; // 30 days
+export const revalidate = 2592000;
+
+// Last-known-good snapshot for graceful degradation when upstream is flaky.
+let lastKnownGoodPhotos: DriverPhoto[] = [];
 
 const getCachedDriverPhotos = unstable_cache(
-  async (_weekBucket: string) => {
+  async () => {
     const drivers = await getDriversForSession("latest");
     return drivers.map((d) => ({
       driver_number: d.driver_number,
@@ -17,23 +25,39 @@ const getCachedDriverPhotos = unstable_cache(
       headshot_url: d.headshot_url ?? null,
     }));
   },
-  ["driver-photos-v2-weekly"],
-  { revalidate: WEEKLY_CACHE_REVALIDATE_SECONDS, tags: ["driver-photos"] }
+  ["driver-photos-v3-monthly"],
+  { revalidate: DRIVER_PHOTOS_REVALIDATE_SECONDS, tags: ["driver-photos"] }
 );
+
+export function _resetDriverPhotosState(): void {
+  lastKnownGoodPhotos = [];
+}
 
 export async function GET(req: Request) {
   const blocked = rateLimited(req, "driver-photos");
   if (blocked) return blocked;
 
   try {
-    const weekBucket = currentEtWeekBucket();
-    const photos = await getCachedDriverPhotos(weekBucket);
+    const photos = await getCachedDriverPhotos();
+
+    if (photos.length > 0) {
+      lastKnownGoodPhotos = photos;
+      return NextResponse.json({ photos });
+    }
+
+    if (lastKnownGoodPhotos.length > 0) {
+      return NextResponse.json({ photos: lastKnownGoodPhotos });
+    }
+
     return NextResponse.json({ photos });
   } catch (err) {
     // Intentional graceful degradation: photos are decorative — when the OpenF1
     // call fails we still want pages to render, falling back to team logos.
-    // We surface 200 with an empty array (NOT serverError) by design.
+    // Prefer the last-known-good snapshot when available; otherwise empty.
     logRouteError("driver-photos", err);
+    if (lastKnownGoodPhotos.length > 0) {
+      return NextResponse.json({ photos: lastKnownGoodPhotos });
+    }
     return NextResponse.json({ photos: [] });
   }
 }
