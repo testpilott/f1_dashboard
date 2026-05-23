@@ -16,6 +16,7 @@ import FavoriteStar from "@/components/drivers/FavoriteStar";
 import { useFavorites } from "@/hooks/useFavorites";
 
 const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+const DRIVER_PHOTOS_STALE_MS = 5 * 60 * 1000;
 
 async function fetchStandings(season: string) {
   const res = await fetch(`/api/standings?season=${encodeURIComponent(season)}`);
@@ -66,7 +67,8 @@ function DriversPageInner() {
   const { data: photos } = useQuery({
     queryKey: ["driver-photos"],
     queryFn: fetchDriverPhotos,
-    staleTime: ONE_WEEK_MS,
+    staleTime: DRIVER_PHOTOS_STALE_MS,
+    refetchOnMount: "always",
   });
 
   const { data: news, isLoading: newsLoading } = useQuery({

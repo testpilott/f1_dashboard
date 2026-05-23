@@ -25,7 +25,7 @@ const getCachedDriverPhotos = unstable_cache(
       headshot_url: d.headshot_url ?? null,
     }));
   },
-  ["driver-photos-v3-monthly"],
+  ["driver-photos-v4-monthly"],
   { revalidate: DRIVER_PHOTOS_REVALIDATE_SECONDS, tags: ["driver-photos"] }
 );
 
