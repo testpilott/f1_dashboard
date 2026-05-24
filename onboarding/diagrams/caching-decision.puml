@@ -1,0 +1,39 @@
+@startuml caching-decision
+title Caching Decision — Picking a TTL
+
+start
+
+:Fetch needed by route or page;
+:Caller passes a DataClass;
+
+if (Which tier?) then (live-session)
+  :liveTelemetry;
+elseif (live-meta) then
+  :liveStandings / liveResults / liveIncidents;
+elseif (daily) then
+  :weather / socialBio / news;
+elseif (weekly) then
+  :careerStats / driverProfile /\ncircuitRecords / projectionSnapshot;
+else (seasonal)
+  :seasonSchedule / teams / circuitMeta;
+endif
+
+:adaptiveRevalidate(dataClass);
+
+if (isRaceWeekend(now)?\nFri/Sat/Sun) then (yes)
+  :Race-weekend TTL\n(tighter, e.g. 5–60s for live tiers);
+else (no)
+  :Base TTL\n(e.g. 5–60min for live tiers);
+endif
+
+:Apply to fetch.next.revalidate\n+ unstable_cache.revalidate;
+
+stop
+
+note right
+  All TTLs declared in
+  src/lib/cacheStrategy.ts.
+  No raw numbers in routes.
+end note
+
+@enduml

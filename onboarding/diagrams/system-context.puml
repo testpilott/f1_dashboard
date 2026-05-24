@@ -1,0 +1,41 @@
+@startuml system-context
+title F1 Dashboard — System Context
+
+skinparam componentStyle rectangle
+skinparam shadowing false
+left to right direction
+
+actor "User\n(Browser)" as User
+
+package "Vercel Edge / Node" {
+  [Next.js App Router] as App
+  database "Vercel Data Cache\n(unstable_cache + ISR)" as Cache
+  [Vercel Cron] as Cron
+}
+
+cloud "Free public APIs" {
+  [Jolpica (Ergast)] as Jolpica
+  [OpenF1] as OpenF1
+  [MultiViewer] as MV
+  [Open-Meteo] as Meteo
+  [Wikidata] as WD
+  [RSS feeds] as RSS
+}
+
+User --> App : same-origin\nGET /, /api/*
+App --> Cache : hit?
+Cache --> App : cached JSON
+App --> Jolpica : miss
+App --> OpenF1  : miss
+App --> MV      : miss
+App --> Meteo   : miss
+App --> WD      : miss
+App --> RSS     : miss
+Cron --> App    : POST .../snapshot\nBearer CRON_SECRET
+
+note bottom of App
+  CSP: connect-src 'self'
+  Browser never calls upstreams directly.
+end note
+
+@enduml

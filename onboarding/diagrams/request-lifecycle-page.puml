@@ -1,0 +1,42 @@
+@startuml request-lifecycle-page
+title Request Lifecycle — Page (SSR)
+
+actor Browser
+participant "Next.js\nServer" as N
+participant "page.tsx\n(RSC)" as P
+participant "/api/...\n(route)" as R
+participant "Vercel Data\nCache" as C
+participant "Concurrency\nLimiter" as L
+participant "Upstream\n(Jolpica/OpenF1/…)" as U
+
+Browser -> N : GET /standings
+activate N
+N -> P : render server component
+activate P
+P -> R : fetch /api/standings\n(Promise.allSettled × N)
+activate R
+
+R -> C : lookup cache key
+alt cache hit
+    C --> R : cached JSON
+else cache miss
+    R -> L : acquire (cap=2)
+    L -> U : fetch (8s timeout, ≤3 retries)
+    U --> L : JSON
+    L --> R : JSON
+    R -> C : store w/ adaptiveRevalidate(DataClass)
+end
+
+R --> P : JSON
+deactivate R
+P --> N : streamed HTML
+deactivate P
+N --> Browser : HTML + hydrate
+deactivate N
+
+note over Browser, N
+  loading.tsx streams a skeleton
+  while RSCs are still working.
+end note
+
+@enduml

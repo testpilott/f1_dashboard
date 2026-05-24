@@ -1,0 +1,55 @@
+@startuml driver-photos-fallback
+title Driver Photos — Graceful Degradation
+
+actor User
+participant "/drivers page" as Page
+participant "/api/driver-photos" as Route
+participant "unstable_cache\n[driver-photos-v4-monthly]" as Cache
+participant "fetchOpenF1Photos()" as OpenF1
+participant "lastKnownGoodPhotos\n(module-scoped)" as LKG
+participant "DriverHeadshot\ncomponent" as HS
+
+User -> Page : GET /drivers
+Page -> Route : GET /api/driver-photos
+activate Route
+
+Route -> Cache : read
+alt cache hit
+    Cache --> Route : photos[]
+else cache miss
+    Cache -> OpenF1 : GET (8s timeout, retries)
+    alt OpenF1 OK
+        OpenF1 --> Cache : photos[]
+        Cache -> LKG : update module variable
+    else OpenF1 5xx / paywalled\n(live FOM session)
+        OpenF1 --> Cache : error
+        Cache -> LKG : read fallback
+        alt have last-known-good
+            LKG --> Cache : previous photos[]
+        else cold start
+            LKG --> Cache : []
+        end
+    end
+    Cache --> Route : photos[]
+end
+
+Route --> Page : { photos }
+deactivate Route
+
+loop per driver
+    Page -> HS : render with photo URL or null
+    alt photo URL present
+        HS --> User : <img src="…openf1…">
+    else missing
+        HS --> User : team-coloured silhouette\n(public/logos/…)
+    end
+end
+
+note right of Route
+  Even on total OpenF1 outage,
+  the route always returns 200
+  with a graceful payload.
+  No 500 reaches the page.
+end note
+
+@enduml

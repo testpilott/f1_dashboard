@@ -1,0 +1,44 @@
+@startuml projections-cron
+title Projections — Cron-driven Monte Carlo Snapshot
+
+actor "Vercel Cron\n(daily 06:00 UTC)" as Cron
+participant "/api/projections/\nsnapshot" as Snap
+participant "runMonteCarlo()\nsrc/lib/projections" as Sim
+participant "unstable_cache" as Cache
+actor "User browser" as User
+participant "/api/projections\n(GET)" as Get
+participant "/projections page" as Page
+
+Cron -> Snap : POST\nAuthorization: Bearer CRON_SECRET
+activate Snap
+Snap -> Snap : verify bearer token
+Snap -> Sim : simulate(\n  standings, paceDist,\n  N = 10,000, seededRng\n)
+activate Sim
+Sim --> Snap : ProjectionSnapshot\n{ probabilities, generatedAt }
+deactivate Sim
+Snap -> Cache : store\n["projections-vN", weekBucket]\nrevalidate: adaptiveRevalidate("projectionSnapshot")
+Snap --> Cron : 200 OK
+deactivate Snap
+
+== later, on user request ==
+
+User -> Page : GET /projections
+Page -> Get  : fetch /api/projections
+Get  -> Cache : read snapshot
+alt warm
+    Cache --> Get : ProjectionSnapshot
+    Get  --> Page : JSON
+    Page --> User : rendered probabilities
+else cold (first deploy / schema bump)
+    Cache --> Get : (none)
+    Get  --> Page : { available: false,\n  reason: "no-snapshot" }
+    Page --> User : friendly "warming up" UI
+end
+
+note over Cache
+  Bump key version (vN → vN+1)
+  whenever the snapshot shape changes.
+  Next cron run warms the new row.
+end note
+
+@enduml

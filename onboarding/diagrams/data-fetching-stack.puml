@@ -1,0 +1,49 @@
+@startuml data-fetching-stack
+title Data Fetching Stack — createApiFetcher
+
+skinparam shadowing false
+
+package "Per-upstream wrapper\n(jolpica.ts, openf1.ts, …)" {
+  [fetchJolpica(path, dataClass)] as Wrapper
+}
+
+package "createApiFetcher" {
+  [withRetry\n(≤3 attempts, jittered)] as Retry
+  [concurrencyLimiter\n(cap = 2 per service)] as Limiter
+  [fetchWithTimeout\n(AbortController, 8s)] as Timeout
+}
+
+package "Next.js" {
+  [fetch.next.revalidate\n(Data Cache)] as NextCache
+  [unstable_cache\n(route-level computed)] as UnstableCache
+}
+
+cloud "Upstream API" as Upstream
+
+Wrapper --> Retry          : path, adaptiveRevalidate(dataClass)
+Retry   --> Limiter        : acquire / release
+Limiter --> Timeout
+Timeout --> NextCache      : with next.revalidate
+NextCache --> Upstream     : on miss
+Upstream  --> NextCache    : 200 JSON
+NextCache --> Timeout      : cached/fresh
+Timeout   --> Limiter
+Limiter   --> Retry
+Retry     --> Wrapper
+
+UnstableCache .down.> Wrapper : routes wrap\nexpensive computations
+
+note right of Retry
+  Retries on:
+   • network error
+   • HTTP 429 / 5xx
+   • timeout
+end note
+
+note bottom of Limiter
+  Default cap = 2.
+  Lower in createApiFetcher(base, name, 1)
+  for stricter upstreams.
+end note
+
+@enduml
