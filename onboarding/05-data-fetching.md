@@ -59,7 +59,7 @@ flowchart LR
     Next -->|hit| Caller
 ```
 
-PlantUML: [diagrams/data-fetching-stack.puml](diagrams/data-fetching-stack.puml).
+Diagram: [Mermaid (renders on GitHub)](diagrams/mermaid/data-fetching-stack.md) · [PlantUML source](diagrams/puml/data-fetching-stack.puml).
 
 ## Per-upstream wrappers
 
@@ -171,7 +171,7 @@ in progress. The drivers page handles this by:
 3. If even that is empty, it returns `{ photos: [] }` with cache headers.
 4. `DriverHeadshot` falls back to a static team-coloured silhouette.
 
-See [diagrams/driver-photos-fallback.puml](diagrams/driver-photos-fallback.puml).
+See [Mermaid (renders on GitHub)](diagrams/mermaid/driver-photos-fallback.md) · [PlantUML source](diagrams/puml/driver-photos-fallback.puml).
 
 This is the canonical pattern. Whenever an upstream blip would leave a section
 blank, prefer **graceful degradation with a documented partial shape** over a

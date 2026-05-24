@@ -40,7 +40,7 @@ flowchart TD
     I -->|no| K[Base TTL]
 ```
 
-PlantUML: [diagrams/caching-decision.puml](diagrams/caching-decision.puml).
+Diagram: [Mermaid (renders on GitHub)](diagrams/mermaid/caching-decision.md) · [PlantUML source](diagrams/puml/caching-decision.puml).
 
 ## The race-weekend heuristic
 

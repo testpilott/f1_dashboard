@@ -36,7 +36,7 @@ sequenceDiagram
     N-->>U: HTML + hydrate
 ```
 
-PlantUML: [diagrams/request-lifecycle-page.puml](diagrams/request-lifecycle-page.puml).
+Diagram: [Mermaid (renders on GitHub)](diagrams/mermaid/request-lifecycle-page.md) · [PlantUML source](diagrams/puml/request-lifecycle-page.puml).
 
 Key points:
 
@@ -94,7 +94,7 @@ sequenceDiagram
     Route-->>Caller: 200 JSON  // or 500 serverError("route-key")
 ```
 
-PlantUML: [diagrams/request-lifecycle-api.puml](diagrams/request-lifecycle-api.puml).
+Diagram: [Mermaid (renders on GitHub)](diagrams/mermaid/request-lifecycle-api.md) · [PlantUML source](diagrams/puml/request-lifecycle-api.puml).
 
 Authoritative skeleton (copy from [13-recipes.md](13-recipes.md)):
 

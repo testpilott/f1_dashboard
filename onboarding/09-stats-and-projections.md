@@ -86,7 +86,7 @@ sequenceDiagram
     Snap-->>Cron: 200 OK
 ```
 
-PlantUML: [diagrams/projections-cron.puml](diagrams/projections-cron.puml).
+Diagram: [Mermaid (renders on GitHub)](diagrams/mermaid/projections-cron.md) · [PlantUML source](diagrams/puml/projections-cron.puml).
 
 `/api/projections` (GET) just reads the cached snapshot. If the cache is cold
 (first deploy, or schema bump), it returns `{ available: false, reason }` and

@@ -18,7 +18,7 @@ flowchart LR
     Cron["Vercel Cron"] -->|POST /api/.../snapshot| Next
 ```
 
-PlantUML source: [diagrams/system-context.puml](diagrams/system-context.puml).
+Diagram: [Mermaid (renders on GitHub)](diagrams/mermaid/system-context.md) · [PlantUML source](diagrams/puml/system-context.puml).
 
 ## Hard invariants
 

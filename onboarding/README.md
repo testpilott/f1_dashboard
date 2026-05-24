@@ -32,20 +32,20 @@ If you only have 30 minutes, read in this order:
 
 ## Diagrams
 
-PlantUML sources live in [diagrams/](diagrams/). They render natively on GitHub
-with a PlantUML extension, in VS Code with `jebbs.plantuml`, or via
-`https://www.plantuml.com/plantuml/uml/`. Each chapter that references a diagram
-also embeds a small Mermaid version for instant preview.
+Every diagram is maintained in **two formats**: a Mermaid version that renders
+inline on github.com (no extension needed) and a PlantUML source for richer
+local authoring. See [diagrams/README.md](diagrams/README.md) for the
+maintenance rule (keep both files in sync).
 
-| Source | Shows |
-|---|---|
-| [system-context.puml](diagrams/system-context.puml) | Browser ⇄ Next.js ⇄ upstream APIs |
-| [request-lifecycle-page.puml](diagrams/request-lifecycle-page.puml) | SSR page render path |
-| [request-lifecycle-api.puml](diagrams/request-lifecycle-api.puml) | API route happy path + retries |
-| [data-fetching-stack.puml](diagrams/data-fetching-stack.puml) | Fetcher → limiter → retry → cache layers |
-| [caching-decision.puml](diagrams/caching-decision.puml) | How a request picks its TTL |
-| [projections-cron.puml](diagrams/projections-cron.puml) | Monte Carlo snapshot cron pattern |
-| [driver-photos-fallback.puml](diagrams/driver-photos-fallback.puml) | OpenF1 outage degradation flow |
+| Diagram | Mermaid (GitHub view) | PlantUML source |
+|---|---|---|
+| System context | [mermaid/system-context.md](diagrams/mermaid/system-context.md) | [puml/system-context.puml](diagrams/puml/system-context.puml) |
+| Request lifecycle — page (SSR) | [mermaid/request-lifecycle-page.md](diagrams/mermaid/request-lifecycle-page.md) | [puml/request-lifecycle-page.puml](diagrams/puml/request-lifecycle-page.puml) |
+| Request lifecycle — API route | [mermaid/request-lifecycle-api.md](diagrams/mermaid/request-lifecycle-api.md) | [puml/request-lifecycle-api.puml](diagrams/puml/request-lifecycle-api.puml) |
+| Data fetching stack | [mermaid/data-fetching-stack.md](diagrams/mermaid/data-fetching-stack.md) | [puml/data-fetching-stack.puml](diagrams/puml/data-fetching-stack.puml) |
+| Caching decision | [mermaid/caching-decision.md](diagrams/mermaid/caching-decision.md) | [puml/caching-decision.puml](diagrams/puml/caching-decision.puml) |
+| Projections cron | [mermaid/projections-cron.md](diagrams/mermaid/projections-cron.md) | [puml/projections-cron.puml](diagrams/puml/projections-cron.puml) |
+| Driver photos fallback | [mermaid/driver-photos-fallback.md](diagrams/mermaid/driver-photos-fallback.md) | [puml/driver-photos-fallback.puml](diagrams/puml/driver-photos-fallback.puml) |
 
 ## House rules (TL;DR)
 
