@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getDriverStandings, getConstructorStandings } from "@/lib/api/jolpica";
-import { badRequest, serverError } from "@/lib/api/routeHelpers";
+import { badRequest, gracefulDegradation } from "@/lib/api/routeHelpers";
 import { rateLimited } from "@/lib/api/withRateLimit";
 import { VALID_SEASON } from "@/lib/validators";
 
@@ -24,6 +24,9 @@ export async function GET(req: Request) {
     ]);
     return NextResponse.json({ drivers, constructors });
   } catch (err) {
-    return serverError("standings", err);
+    return gracefulDegradation("standings", "upstream unavailable", err, {
+      drivers: [] as unknown[],
+      constructors: [] as unknown[],
+    });
   }
 }

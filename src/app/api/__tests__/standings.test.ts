@@ -52,13 +52,16 @@ describe("GET /api/standings", () => {
     expect(body.constructors[0].Constructor.constructorId).toBe("red_bull");
   });
 
-  it("returns 500 when an upstream fetch fails", async () => {
+  it("degrades gracefully when an upstream fetch fails", async () => {
     vi.mocked(getDriverStandings).mockRejectedValue(new Error("timeout"));
 
     const res = await GET(makeApiRequest("/api/standings", { season: "2026" }));
     const body = await res.json();
 
-    expect(res.status).toBe(500);
-    expect(body.error).toMatch(/internal server error/i);
+    expect(res.status).toBe(200);
+    expect(body.available).toBe(false);
+    expect(body.reason).toMatch(/upstream unavailable/i);
+    expect(Array.isArray(body.drivers)).toBe(true);
+    expect(Array.isArray(body.constructors)).toBe(true);
   });
 });
