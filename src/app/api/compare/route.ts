@@ -116,8 +116,18 @@ export async function GET(req: Request) {
       return badRequest("Invalid constructor identifier");
     }
     try {
-      type StandingsSnapshot = { drivers: unknown[]; constructors: { Constructor: { constructorId: string }; position: string; wins: string }[] };
-      type SeasonResultsSnapshot = { races: { Results?: { position: string; Constructor?: { constructorId: string } }[] }[] };
+      type SourceTag = "jolpica" | "snapshot" | "live" | "degraded-live";
+      type StandingsSnapshot = {
+        drivers: unknown[];
+        constructors: { Constructor: { constructorId: string }; position: string; wins: string }[];
+        snapshotAt?: string;
+        source?: SourceTag;
+      };
+      type SeasonResultsSnapshot = {
+        races: { Results?: { position: string; Constructor?: { constructorId: string } }[] }[];
+        snapshotAt?: string;
+        source?: SourceTag;
+      };
 
       const [standingsPayload, seasonResultsPayload] = await Promise.all([
         readSnapshotOrFetch<StandingsSnapshot>({
@@ -170,7 +180,25 @@ export async function GET(req: Request) {
         b: buildContext(constructorB),
       };
 
-      return cachedJson({ view: "teams", season, constructorA, constructorB, stats, context }, "liveStandings");
+      const source = standingsPayload.source === "live" || seasonResultsPayload.source === "live"
+        ? "live"
+        : standingsPayload.source === "degraded-live" || seasonResultsPayload.source === "degraded-live"
+          ? "degraded-live"
+          : "jolpica";
+
+      return cachedJson(
+        {
+          view: "teams",
+          season,
+          constructorA,
+          constructorB,
+          stats,
+          context,
+          snapshotAt: new Date().toISOString(),
+          source,
+        },
+        "liveStandings"
+      );
     } catch (err) {
       return serverError("compare-teams", err);
     }

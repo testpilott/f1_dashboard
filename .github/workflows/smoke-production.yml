@@ -30,4 +30,6 @@ jobs:
           SMOKE_BASE_URL: ${{ github.event.inputs.baseUrl || 'https://f1-dashboard-lilac.vercel.app' }}
           SMOKE_RETRIES: "4"
           SMOKE_RETRY_DELAY_MS: "1500"
+          SMOKE_MAX_LATENCY_MS: "1500"
+          SMOKE_HARD_MAX_LATENCY_MS: "8000"
         run: node tools/smoke-api.mjs

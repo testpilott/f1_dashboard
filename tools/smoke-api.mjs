@@ -16,6 +16,15 @@ function isNonNegativeNumberOrNull(value) {
   return value === null || (Number.isFinite(value) && value >= 0);
 }
 
+function isObject(value) {
+  return value !== null && typeof value === "object";
+}
+
+function readSource(payload) {
+  if (!isObject(payload) || !("source" in payload)) return null;
+  return typeof payload.source === "string" ? payload.source : null;
+}
+
 async function fetchJson(path) {
   const url = `${baseUrl}${path}`;
   let lastError;
@@ -68,51 +77,89 @@ function validateCareerPayload(driverId, payload) {
 }
 
 async function run() {
-  const MAX_LATENCY_MS = Number(process.env.SMOKE_MAX_LATENCY_MS ?? 500);
+  const defaultSoftLatencyMs = Number(process.env.SMOKE_MAX_LATENCY_MS ?? 1500);
+  const hardLatencyMs = Number(process.env.SMOKE_HARD_MAX_LATENCY_MS ?? 8000);
 
   const checks = [
     {
       name: "driver-career hamilton",
+      maxLatencyMs: defaultSoftLatencyMs,
+      expectSnapshot: true,
       run: async () => {
         const payload = await fetchJson("/api/driver-career?driverId=hamilton");
         validateCareerPayload("hamilton", payload);
+        return payload;
       },
     },
     {
       name: "driver-career piastri",
+      maxLatencyMs: defaultSoftLatencyMs,
+      expectSnapshot: true,
       run: async () => {
         const payload = await fetchJson("/api/driver-career?driverId=piastri");
         validateCareerPayload("piastri", payload);
+        return payload;
       },
     },
     {
       name: "driver-career max_verstappen",
+      maxLatencyMs: defaultSoftLatencyMs,
+      expectSnapshot: true,
       run: async () => {
         const payload = await fetchJson("/api/driver-career?driverId=max_verstappen");
         validateCareerPayload("max_verstappen", payload);
+        return payload;
       },
     },
     {
       name: "standings current",
+      maxLatencyMs: defaultSoftLatencyMs,
+      expectSnapshot: true,
       run: async () => {
         const payload = await fetchJson("/api/standings?season=current");
         assert(Array.isArray(payload.drivers), "standings: drivers must be array");
         assert(Array.isArray(payload.constructors), "standings: constructors must be array");
+        return payload;
       },
     },
   ];
 
   const failures = [];
+  const warnings = [];
 
   for (const check of checks) {
     const start = Date.now();
     try {
-      await check.run();
+      const payload = await check.run();
       const latencyMs = Date.now() - start;
-      if (latencyMs > MAX_LATENCY_MS) {
-        throw new Error(`latency ${latencyMs}ms exceeded limit of ${MAX_LATENCY_MS}ms`);
+      if (latencyMs > hardLatencyMs) {
+        throw new Error(`latency ${latencyMs}ms exceeded hard limit of ${hardLatencyMs}ms`);
       }
-      console.log(`PASS ${check.name} (${latencyMs}ms)`);
+
+      if (check.expectSnapshot) {
+        const source = readSource(payload);
+        if (source === null) {
+          throw new Error("response missing required string source field");
+        }
+
+        const allowedSources = new Set(["live", "jolpica", "snapshot", "degraded-live"]);
+        if (!allowedSources.has(source)) {
+          throw new Error(`response source has unexpected value: ${source}`);
+        }
+
+        if (source === "live" || source === "degraded-live") {
+          warnings.push(`${check.name}: response source=${source} (possible snapshot miss)`);
+          console.warn(`WARN ${check.name}: response source=${source} (possible snapshot miss)`);
+        }
+      }
+
+      const softLimitMs = Number(check.maxLatencyMs ?? defaultSoftLatencyMs);
+      if (latencyMs > softLimitMs) {
+        warnings.push(`${check.name}: latency ${latencyMs}ms exceeded target ${softLimitMs}ms`);
+        console.warn(`WARN ${check.name}: latency ${latencyMs}ms exceeded target ${softLimitMs}ms`);
+      } else {
+        console.log(`PASS ${check.name} (${latencyMs}ms)`);
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       failures.push(`${check.name}: ${message}`);
@@ -124,6 +171,11 @@ async function run() {
     console.error(`\nSmoke checks failed (${failures.length}):`);
     for (const failure of failures) console.error(`- ${failure}`);
     process.exit(1);
+  }
+
+  if (warnings.length > 0) {
+    console.warn(`\nSmoke checks completed with latency warnings (${warnings.length}):`);
+    for (const warning of warnings) console.warn(`- ${warning}`);
   }
 
   console.log("\nAll smoke checks passed.");

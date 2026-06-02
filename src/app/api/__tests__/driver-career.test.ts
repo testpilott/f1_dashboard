@@ -60,8 +60,9 @@ describe("GET /api/driver-career", () => {
     const body = await res.json();
 
     expect(res.status).toBe(200);
-    expect(body).toEqual({
+    expect(body).toMatchObject({
       driverId: "max_verstappen",
+      source: "live",
       career: {
         wins: 60,
         podiums: 98,
@@ -70,6 +71,7 @@ describe("GET /api/driver-career", () => {
         championships: 0,
       },
     });
+    expect(typeof body.snapshotAt).toBe("string");
   });
 
   it("degrades to a best-effort 200 payload when a required upstream stat fetcher fails", async () => {
@@ -79,8 +81,9 @@ describe("GET /api/driver-career", () => {
 
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toEqual({
+    expect(body).toMatchObject({
       driverId: "hamilton",
+      source: "degraded-live",
       career: {
         wins: 60,
         podiums: 98,
@@ -89,6 +92,7 @@ describe("GET /api/driver-career", () => {
         championships: 0,
       },
     });
+    expect(typeof body.snapshotAt).toBe("string");
   });
 
   it("degrades to a best-effort 200 payload when championship lookup rejects", async () => {
@@ -98,8 +102,9 @@ describe("GET /api/driver-career", () => {
 
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toEqual({
+    expect(body).toMatchObject({
       driverId: "hamilton",
+      source: "degraded-live",
       career: {
         wins: 60,
         podiums: 98,
@@ -108,6 +113,7 @@ describe("GET /api/driver-career", () => {
         championships: null,
       },
     });
+    expect(typeof body.snapshotAt).toBe("string");
   });
 
   it("returns 500 when every upstream call fails", async () => {

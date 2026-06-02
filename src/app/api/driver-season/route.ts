@@ -41,7 +41,12 @@ export async function GET(req: Request) {
       dataClass: "careerStats",
       liveFn: async () => {
         const weekBucket = currentEtWeekBucket();
-        return getCachedDriverSeason(season, driverId, weekBucket);
+        const live = await getCachedDriverSeason(season, driverId, weekBucket);
+        return {
+          ...live,
+          snapshotAt: new Date().toISOString(),
+          source: "live",
+        };
       },
     });
     return cachedJson(payload, "careerStats");

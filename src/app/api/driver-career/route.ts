@@ -100,7 +100,12 @@ export async function GET(req: Request) {
       dataClass: "careerStats",
       liveFn: async () => {
         const weekBucket = currentEtWeekBucket();
-        return getCachedDriverCareer(driverId, weekBucket);
+        const live = await getCachedDriverCareer(driverId, weekBucket);
+        return {
+          ...live,
+          snapshotAt: new Date().toISOString(),
+          source: "live",
+        };
       },
     });
     return cachedJson(payload, "careerStats");
@@ -109,7 +114,11 @@ export async function GET(req: Request) {
     // best-effort uncached payload instead of an HTTP 500.
     try {
       const payload = await computeCareerBestEffort(driverId);
-      return NextResponse.json(payload);
+      return NextResponse.json({
+        ...payload,
+        snapshotAt: new Date().toISOString(),
+        source: "degraded-live",
+      });
     } catch {
       return serverError("driver-career", err);
     }
