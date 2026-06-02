@@ -14,6 +14,8 @@
     "test:ci": "vitest run --coverage",
     "type-check": "tsc --noEmit",
     "smoke:api": "node tools/smoke-api.mjs",
+    "snapshot:daily": "tsx tools/snapshot-daily.ts",
+    "snapshot:weekly": "tsx tools/snapshot-weekly.ts",
     "prepare": "husky"
   },
   "dependencies": {

@@ -1,0 +1,35 @@
+name: snapshot-daily
+
+on:
+  schedule:
+    - cron: "0 5 * * *"   # 00:00 ET / 05:00 UTC
+  workflow_dispatch: {}    # allow manual runs from the GitHub UI
+
+permissions:
+  contents: write           # required to commit the snapshot
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+      - run: npm ci
+      - run: npm run snapshot:daily
+      - name: commit snapshot if changed
+        run: |
+          git config user.name  "snapshot-bot"
+          git config user.email "snapshot-bot@users.noreply.github.com"
+          git add data/snapshots/
+          if git diff --cached --quiet; then
+            echo "No snapshot changes."
+            exit 0
+          fi
+          git commit -m "chore(snapshots): daily refresh ($(date -u +%Y-%m-%d))"
+          git push origin HEAD:main
