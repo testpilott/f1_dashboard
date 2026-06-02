@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
-import { unstable_cache } from "next/cache";
 import { badRequest, serverError } from "@/lib/api/routeHelpers";
 import { rateLimited } from "@/lib/api/withRateLimit";
 import { VALID_ID } from "@/lib/validators";
 import { getAllRaceResultsAtCircuit } from "@/lib/api/jolpica";
 import { computeCircuitRecords } from "@/lib/stats/circuitRecords";
-import { REVALIDATE_6H } from "@/lib/cacheStrategy";
+import { readSnapshotOrFetch } from "@/lib/snapshots/readSnapshotOrFetch";
 
 export const revalidate = 21600;
 
@@ -21,17 +20,22 @@ export async function GET(req: Request) {
   }
 
   try {
-    const getCached = unstable_cache(
-      async (id: string) => {
-        const allRaces = await getAllRaceResultsAtCircuit(id);
-        return computeCircuitRecords(allRaces);
+    const payload = await readSnapshotOrFetch({
+      key: `circuit-records-${circuitId}`,
+      dataClass: "circuitRecords",
+      liveFn: async () => {
+        const allRaces = await getAllRaceResultsAtCircuit(circuitId);
+        const records = computeCircuitRecords(allRaces);
+        return {
+          circuitId,
+          records,
+          raceCount: allRaces.length,
+          snapshotAt: new Date().toISOString(),
+          source: "live",
+        };
       },
-      ["circuit-records", circuitId],
-      { revalidate: REVALIDATE_6H }
-    );
-
-    const records = await getCached(circuitId);
-    return NextResponse.json({ circuitId, records });
+    });
+    return NextResponse.json(payload);
   } catch (err) {
     return serverError("circuit-records", err);
   }

@@ -1,7 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+const { mockReadSnapshotOrFetch } = vi.hoisted(() => ({
+  mockReadSnapshotOrFetch: vi.fn(),
+}));
+
 vi.mock("@/lib/api/withRateLimit", () => ({
   rateLimited: vi.fn(() => null),
+}));
+
+vi.mock("@/lib/snapshots/readSnapshotOrFetch", () => ({
+  readSnapshotOrFetch: mockReadSnapshotOrFetch,
 }));
 
 vi.mock("@/lib/api/jolpica", () => ({
@@ -11,7 +19,7 @@ vi.mock("@/lib/api/jolpica", () => ({
 }));
 
 import { GET } from "@/app/api/schedule/route";
-import { getLastRace, getNextRace, getSchedule } from "@/lib/api/jolpica";
+import { getLastRace, getNextRace } from "@/lib/api/jolpica";
 import { makeApiRequest } from "@/test/api";
 
 const MOCK_RACE = {
@@ -40,14 +48,20 @@ describe("GET /api/schedule", () => {
     expect(body.error).toMatch(/invalid season/i);
   });
 
-  it("returns races on the default schedule view", async () => {
-    vi.mocked(getSchedule).mockResolvedValue([MOCK_RACE] as never);
+  it("returns races from snapshot on the default schedule view", async () => {
+    mockReadSnapshotOrFetch.mockResolvedValue({
+      races: [MOCK_RACE],
+      snapshotAt: "2026-01-01T00:00:00.000Z",
+      source: "snapshot",
+    });
 
     const res = await GET(makeApiRequest("/api/schedule", { season: "2026" }));
     const body = await res.json();
 
     expect(res.status).toBe(200);
-    expect(getSchedule).toHaveBeenCalledWith("2026");
+    expect(mockReadSnapshotOrFetch).toHaveBeenCalledWith(
+      expect.objectContaining({ key: "schedule-2026", dataClass: "seasonSchedule" })
+    );
     expect(body.races).toHaveLength(1);
     expect(body.races[0].raceName).toBe("Monaco Grand Prix");
   });
@@ -62,8 +76,8 @@ describe("GET /api/schedule", () => {
     expect(body.race.raceName).toBe("Monaco Grand Prix");
   });
 
-  it("returns 500 when the schedule fetch fails", async () => {
-    vi.mocked(getSchedule).mockRejectedValue(new Error("timeout"));
+  it("returns 500 when the schedule snapshot and live both fail", async () => {
+    mockReadSnapshotOrFetch.mockRejectedValue(new Error("timeout"));
 
     const res = await GET(makeApiRequest("/api/schedule", { season: "2026" }));
     const body = await res.json();

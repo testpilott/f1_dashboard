@@ -19,6 +19,7 @@ import {
   buildCircuitHistoryRow,
   type CircuitHistoryRow,
 } from "@/lib/stats/compareHistory";
+import { readSnapshotOrFetch } from "@/lib/snapshots/readSnapshotOrFetch";
 
 export const revalidate = 300; // 5 min
 
@@ -115,11 +116,34 @@ export async function GET(req: Request) {
       return badRequest("Invalid constructor identifier");
     }
     try {
-      const [races, standings] = await Promise.all([
-        getSeasonRaceResults(season),
-        getConstructorStandings(season),
+      type StandingsSnapshot = { drivers: unknown[]; constructors: { Constructor: { constructorId: string }; position: string; wins: string }[] };
+      type SeasonResultsSnapshot = { races: { Results?: { position: string; Constructor?: { constructorId: string } }[] }[] };
+
+      const [standingsPayload, seasonResultsPayload] = await Promise.all([
+        readSnapshotOrFetch<StandingsSnapshot>({
+          key: `standings-${season}`,
+          dataClass: "liveStandings",
+          liveFn: async () => ({
+            drivers: [],
+            constructors: await getConstructorStandings(season),
+            snapshotAt: new Date().toISOString(),
+            source: "live",
+          }),
+        }),
+        readSnapshotOrFetch<SeasonResultsSnapshot>({
+          key: `season-results-${season}`,
+          dataClass: "results",
+          liveFn: async () => ({
+            races: await getSeasonRaceResults(season),
+            snapshotAt: new Date().toISOString(),
+            source: "live",
+          }),
+        }),
       ]);
-      const stats = constructorHeadToHead(races, constructorA, constructorB);
+
+      const standings = standingsPayload.constructors;
+      const races = seasonResultsPayload.races;
+      const stats = constructorHeadToHead(races as Parameters<typeof constructorHeadToHead>[0], constructorA, constructorB);
 
       // Build per-constructor context
       function buildContext(conId: string) {

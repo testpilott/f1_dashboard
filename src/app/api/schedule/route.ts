@@ -3,6 +3,7 @@ import { getSchedule, getNextRace, getLastRace } from "@/lib/api/jolpica";
 import { badRequest, serverError } from "@/lib/api/routeHelpers";
 import { rateLimited } from "@/lib/api/withRateLimit";
 import { VALID_SEASON, VALID_VIEW } from "@/lib/validators";
+import { readSnapshotOrFetch } from "@/lib/snapshots/readSnapshotOrFetch";
 
 export const revalidate = 3600; // 1 hour
 
@@ -30,8 +31,16 @@ export async function GET(req: Request) {
       const race = await getLastRace();
       return NextResponse.json({ race });
     }
-    const races = await getSchedule(season);
-    return NextResponse.json({ races });
+    const payload = await readSnapshotOrFetch({
+      key: `schedule-${season}`,
+      dataClass: "seasonSchedule",
+      liveFn: async () => ({
+        races: await getSchedule(season),
+        snapshotAt: new Date().toISOString(),
+        source: "live",
+      }),
+    });
+    return NextResponse.json(payload);
   } catch (err) {
     return serverError("schedule", err);
   }

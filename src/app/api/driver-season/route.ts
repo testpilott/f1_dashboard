@@ -6,6 +6,7 @@ import { VALID_SEASON, VALID_ID } from "@/lib/validators";
 import { getSeasonRaceResults } from "@/lib/api/jolpica";
 import { driverSeasonSummary } from "@/lib/stats/driverSeason";
 import { currentEtWeekBucket, WEEKLY_CACHE_REVALIDATE_SECONDS } from "@/lib/time/weeklyCache";
+import { readSnapshotOrFetch } from "@/lib/snapshots/readSnapshotOrFetch";
 
 export const revalidate = 604800;
 
@@ -35,8 +36,14 @@ export async function GET(req: Request) {
   }
 
   try {
-    const weekBucket = currentEtWeekBucket();
-    const payload = await getCachedDriverSeason(season, driverId, weekBucket);
+    const payload = await readSnapshotOrFetch({
+      key: `driver-seasons-${driverId}`,
+      dataClass: "careerStats",
+      liveFn: async () => {
+        const weekBucket = currentEtWeekBucket();
+        return getCachedDriverSeason(season, driverId, weekBucket);
+      },
+    });
     return NextResponse.json(payload);
   } catch (err) {
     return serverError("driver-season", err);

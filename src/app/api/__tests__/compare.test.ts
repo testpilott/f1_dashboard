@@ -1,7 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+const { mockReadSnapshotOrFetch } = vi.hoisted(() => ({
+  mockReadSnapshotOrFetch: vi.fn(),
+}));
+
 vi.mock("@/lib/api/withRateLimit", () => ({
   rateLimited: vi.fn(() => null),
+}));
+
+vi.mock("@/lib/snapshots/readSnapshotOrFetch", () => ({
+  readSnapshotOrFetch: mockReadSnapshotOrFetch,
 }));
 
 vi.mock("@/lib/api/jolpica", () => ({
@@ -21,43 +29,35 @@ vi.mock("@/lib/stats/constructorH2H", () => ({
 
 import { GET } from "@/app/api/compare/route";
 import { makeApiRequest } from "@/test/api";
-import {
-  getSeasonRaceResults,
-  getConstructorStandings,
-} from "@/lib/api/jolpica";
 import { constructorHeadToHead } from "@/lib/stats/constructorH2H";
+
+const MOCK_RACES = [
+  {
+    Results: [
+      { Constructor: { constructorId: "mercedes" }, position: "1" },
+      { Constructor: { constructorId: "ferrari" }, position: "2" },
+    ],
+  },
+];
+const MOCK_STANDINGS_CONSTRUCTORS = [
+  { position: "1", wins: "5", Constructor: { constructorId: "mercedes" } },
+  { position: "2", wins: "3", Constructor: { constructorId: "ferrari" } },
+];
 
 describe("/api/compare", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    vi.mocked(getSeasonRaceResults).mockResolvedValue([
-      {
-        Results: [
-          {
-            Constructor: { constructorId: "mercedes" },
-            position: "1",
-          },
-          {
-            Constructor: { constructorId: "ferrari" },
-            position: "2",
-          },
-        ],
-      },
-    ] as unknown as Awaited<ReturnType<typeof getSeasonRaceResults>>);
-
-    vi.mocked(getConstructorStandings).mockResolvedValue([
-      {
-        position: "1",
-        wins: "5",
-        Constructor: { constructorId: "mercedes" },
-      },
-      {
-        position: "2",
-        wins: "3",
-        Constructor: { constructorId: "ferrari" },
-      },
-    ] as unknown as Awaited<ReturnType<typeof getConstructorStandings>>);
+    // Return snapshot data keyed by the key argument
+    mockReadSnapshotOrFetch.mockImplementation(({ key }: { key: string }) => {
+      if (key.startsWith("standings-")) {
+        return Promise.resolve({ constructors: MOCK_STANDINGS_CONSTRUCTORS, drivers: [], snapshotAt: "2026-01-01T00:00:00.000Z", source: "snapshot" });
+      }
+      if (key.startsWith("season-results-")) {
+        return Promise.resolve({ races: MOCK_RACES, snapshotAt: "2026-01-01T00:00:00.000Z", source: "snapshot" });
+      }
+      return Promise.reject(new Error(`Unexpected snapshot key: ${key}`));
+    });
 
     vi.mocked(constructorHeadToHead).mockReturnValue({
       a: { racesEntered: 1 },

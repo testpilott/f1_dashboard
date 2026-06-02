@@ -13,6 +13,7 @@ import {
 } from "@/lib/api/jolpica";
 import { buildDriverCareerStats } from "@/lib/stats/driverCareer";
 import { currentEtWeekBucket, WEEKLY_CACHE_REVALIDATE_SECONDS } from "@/lib/time/weeklyCache";
+import { readSnapshotOrFetch } from "@/lib/snapshots/readSnapshotOrFetch";
 
 export const revalidate = 604800;
 
@@ -94,8 +95,14 @@ export async function GET(req: Request) {
   }
 
   try {
-    const weekBucket = currentEtWeekBucket();
-    const payload = await getCachedDriverCareer(driverId, weekBucket);
+    const payload = await readSnapshotOrFetch({
+      key: `driver-career-${driverId}`,
+      dataClass: "careerStats",
+      liveFn: async () => {
+        const weekBucket = currentEtWeekBucket();
+        return getCachedDriverCareer(driverId, weekBucket);
+      },
+    });
     return NextResponse.json(payload);
   } catch (err) {
     // Degrade gracefully for transient upstream issues by returning a
