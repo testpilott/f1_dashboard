@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { unstable_cache } from "next/cache";
-import { badRequest, serverError } from "@/lib/api/routeHelpers";
+import { badRequest, serverError, cachedJson } from "@/lib/api/routeHelpers";
 import { rateLimited } from "@/lib/api/withRateLimit";
 import { VALID_ID } from "@/lib/validators";
 import {
@@ -103,7 +103,7 @@ export async function GET(req: Request) {
         return getCachedDriverCareer(driverId, weekBucket);
       },
     });
-    return NextResponse.json(payload);
+    return cachedJson(payload, "careerStats");
   } catch (err) {
     // Degrade gracefully for transient upstream issues by returning a
     // best-effort uncached payload instead of an HTTP 500.

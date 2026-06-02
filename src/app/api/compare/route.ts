@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { unstable_cache } from "next/cache";
-import { badRequest, serverError } from "@/lib/api/routeHelpers";
+import { badRequest, serverError, cachedJson } from "@/lib/api/routeHelpers";
 import {
   getRaceResultsAtCircuit,
   getQualifyingResultsAtCircuit,
@@ -170,7 +170,7 @@ export async function GET(req: Request) {
         b: buildContext(constructorB),
       };
 
-      return NextResponse.json({ view: "teams", season, constructorA, constructorB, stats, context });
+      return cachedJson({ view: "teams", season, constructorA, constructorB, stats, context }, "liveStandings");
     } catch (err) {
       return serverError("compare-teams", err);
     }

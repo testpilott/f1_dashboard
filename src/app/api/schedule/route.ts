@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSchedule, getNextRace, getLastRace } from "@/lib/api/jolpica";
-import { badRequest, serverError } from "@/lib/api/routeHelpers";
+import { badRequest, serverError, cachedJson } from "@/lib/api/routeHelpers";
 import { rateLimited } from "@/lib/api/withRateLimit";
 import { VALID_SEASON, VALID_VIEW } from "@/lib/validators";
 import { readSnapshotOrFetch } from "@/lib/snapshots/readSnapshotOrFetch";
@@ -40,7 +40,7 @@ export async function GET(req: Request) {
         source: "live",
       }),
     });
-    return NextResponse.json(payload);
+    return cachedJson(payload, "seasonSchedule");
   } catch (err) {
     return serverError("schedule", err);
   }

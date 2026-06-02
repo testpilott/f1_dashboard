@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { type DataClass } from "@/lib/cacheStrategy";
+import { edgeCacheControl } from "@/lib/api/edgeHeaders";
 
 /** Standardized 400 response while preserving route-specific message text. */
 export function badRequest(message: string): NextResponse {
@@ -35,4 +37,15 @@ export function gracefulDegradation<T extends Record<string, unknown>>(
 ): NextResponse {
   if (err !== undefined) logRouteError(routeName, err);
   return NextResponse.json({ available: false, reason, ...extra });
+}
+
+/**
+ * JSON response with CDN Cache-Control headers appropriate to the DataClass.
+ * Prefer this over plain `NextResponse.json()` in API routes that serve
+ * snapshot-backed or ISR-backed data.
+ */
+export function cachedJson<T>(body: T, dataClass: DataClass): NextResponse<T> {
+  return NextResponse.json(body, {
+    headers: { "Cache-Control": edgeCacheControl(dataClass) },
+  });
 }

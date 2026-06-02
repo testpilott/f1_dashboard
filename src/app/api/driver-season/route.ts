@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { unstable_cache } from "next/cache";
-import { badRequest, serverError } from "@/lib/api/routeHelpers";
+import { badRequest, serverError, cachedJson } from "@/lib/api/routeHelpers";
 import { rateLimited } from "@/lib/api/withRateLimit";
 import { VALID_SEASON, VALID_ID } from "@/lib/validators";
 import { getSeasonRaceResults } from "@/lib/api/jolpica";
@@ -44,7 +44,7 @@ export async function GET(req: Request) {
         return getCachedDriverSeason(season, driverId, weekBucket);
       },
     });
-    return NextResponse.json(payload);
+    return cachedJson(payload, "careerStats");
   } catch (err) {
     return serverError("driver-season", err);
   }

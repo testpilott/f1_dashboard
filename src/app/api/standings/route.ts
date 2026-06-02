@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getDriverStandings, getConstructorStandings } from "@/lib/api/jolpica";
-import { badRequest, gracefulDegradation } from "@/lib/api/routeHelpers";
+import { badRequest, gracefulDegradation, cachedJson } from "@/lib/api/routeHelpers";
 import { rateLimited } from "@/lib/api/withRateLimit";
 import { VALID_SEASON } from "@/lib/validators";
 import { readSnapshotOrFetch } from "@/lib/snapshots/readSnapshotOrFetch";
@@ -29,7 +29,7 @@ export async function GET(req: Request) {
         source: "live",
       }),
     });
-    return NextResponse.json(payload);
+    return cachedJson(payload, "liveStandings");
   } catch (err) {
     return gracefulDegradation("standings", "upstream unavailable", err, {
       drivers: [] as unknown[],

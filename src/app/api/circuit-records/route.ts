@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { badRequest, serverError } from "@/lib/api/routeHelpers";
+import { badRequest, serverError, cachedJson } from "@/lib/api/routeHelpers";
 import { rateLimited } from "@/lib/api/withRateLimit";
 import { VALID_ID } from "@/lib/validators";
 import { getAllRaceResultsAtCircuit } from "@/lib/api/jolpica";
@@ -35,7 +35,7 @@ export async function GET(req: Request) {
         };
       },
     });
-    return NextResponse.json(payload);
+    return cachedJson(payload, "circuitRecords");
   } catch (err) {
     return serverError("circuit-records", err);
   }
