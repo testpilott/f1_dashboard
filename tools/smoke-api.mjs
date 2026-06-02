@@ -68,6 +68,8 @@ function validateCareerPayload(driverId, payload) {
 }
 
 async function run() {
+  const MAX_LATENCY_MS = Number(process.env.SMOKE_MAX_LATENCY_MS ?? 500);
+
   const checks = [
     {
       name: "driver-career hamilton",
@@ -103,9 +105,14 @@ async function run() {
   const failures = [];
 
   for (const check of checks) {
+    const start = Date.now();
     try {
       await check.run();
-      console.log(`PASS ${check.name}`);
+      const latencyMs = Date.now() - start;
+      if (latencyMs > MAX_LATENCY_MS) {
+        throw new Error(`latency ${latencyMs}ms exceeded limit of ${MAX_LATENCY_MS}ms`);
+      }
+      console.log(`PASS ${check.name} (${latencyMs}ms)`);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       failures.push(`${check.name}: ${message}`);

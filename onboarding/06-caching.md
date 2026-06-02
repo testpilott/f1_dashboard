@@ -139,3 +139,11 @@ There should be **zero** raw second-counts in `src/app/**` outside of:
 If lint or review flags a magic number, route it through `adaptiveRevalidate`.
 
 Next: [07 — API Routes Catalog](07-api-routes.md).
+
+## Snapshot cold tier
+
+Routes for standings, schedule, career stats, and circuit records read from
+pre-committed JSON snapshots in `data/snapshots/` before ever calling Jolpica.
+GitHub Actions refresh these on a cron schedule.
+
+**Operator reference:** [docs/RUNBOOK_SNAPSHOTS.md](../docs/RUNBOOK_SNAPSHOTS.md)
