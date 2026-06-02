@@ -22,6 +22,10 @@ jobs:
           cache: "npm"
       - run: npm ci
       - run: npm run snapshot:weekly
+        env:
+          # Background batch job: allow large payloads / slow upstream without
+          # aborting on the 8 s user-request default.
+          JOLPICA_FETCH_TIMEOUT_MS: "30000"
       - name: commit snapshot if changed
         run: |
           git config user.name  "snapshot-bot"
