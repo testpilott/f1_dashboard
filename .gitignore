@@ -41,3 +41,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# snapshots — keep the directory and its JSON files in git
+!data/snapshots/
