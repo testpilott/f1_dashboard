@@ -120,6 +120,27 @@ describe("snapshot-weekly writer", () => {
 
     // 2 writes per driver (career + seasons) + 1 per circuit
     expect(mockAtomicWriteJson).toHaveBeenCalledTimes(3 * 2 + 2);
+
+    // driver-career snapshot must match the route's `{ driverId, career }`
+    // shape (NOT a flat object) so consumers can read `payload.career.*`.
+    const careerCall = mockAtomicWriteJson.mock.calls.find(
+      (call) => typeof call[0] === "string" && call[0].includes("driver-career-verstappen"),
+    );
+    expect(careerCall).toBeDefined();
+    const careerPayload = careerCall![1] as {
+      driverId: string;
+      career: { wins: number | null; podiums: number | null; championships: number | null };
+      seasons: number[];
+    };
+    expect(careerPayload.driverId).toBe("verstappen");
+    expect(careerPayload.career).toMatchObject({
+      wins: 10,
+      podiums: 45, // wins(10) + p2(20) + p3(15)
+      starts: 100,
+      fastestLaps: 5,
+      championships: 4,
+    });
+    expect(careerPayload.seasons).toEqual([2021, 2022, 2023, 2024, 2025]);
   });
 
   it("a single failing driver does not stop the other drivers or circuits", async () => {

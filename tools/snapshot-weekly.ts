@@ -14,6 +14,7 @@ import {
   getAllRaceResultsAtCircuit,
 } from "@/lib/api/jolpica";
 import { computeCircuitRecords } from "@/lib/stats/circuitRecords";
+import { buildDriverCareerStats } from "@/lib/stats/driverCareer";
 
 const OUT_DIR = path.join(process.cwd(), "data", "snapshots");
 
@@ -41,14 +42,13 @@ async function snapshotDriverCareer(driverId: string): Promise<void> {
     withLimit(() => getDriverSeasons(driverId)),
   ]);
 
+  // Mirror the EXACT shape that /api/driver-career's liveFn returns
+  // (`{ driverId, career }`). The route reads this snapshot verbatim, so a flat
+  // `{ wins, p2, p3, … }` shape would break every consumer that expects
+  // `payload.career.wins` (the UI panel and the production smoke test).
   await atomicWriteJson(path.join(OUT_DIR, `driver-career-${driverId}.json`), {
     driverId,
-    wins,
-    p2,
-    p3,
-    starts,
-    fastestLaps,
-    championships,
+    career: buildDriverCareerStats({ wins, p2, p3, starts, fastestLaps, championships }),
     seasons,
     snapshotAt: new Date().toISOString(),
     source: "jolpica",

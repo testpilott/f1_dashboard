@@ -4,6 +4,13 @@ on:
   schedule:
     - cron: "0 5 * * *"   # 00:00 ET / 05:00 UTC
   workflow_dispatch: {}    # allow manual runs from the GitHub UI
+  # Re-warm daily snapshots on every deploy so a fresh production deploy is
+  # never left cold. paths-ignore excludes the bot's own snapshot commits,
+  # so this never re-triggers itself (the commit step also diff-guards).
+  push:
+    branches: [main]
+    paths-ignore:
+      - "data/snapshots/**"
 
 permissions:
   contents: write           # required to commit the snapshot
