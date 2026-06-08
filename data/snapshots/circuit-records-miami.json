@@ -1,0 +1,24 @@
+{
+  "circuitId": "miami",
+  "records": {
+    "mostWins": {
+      "driverId": "max_verstappen",
+      "name": "Max Verstappen",
+      "count": 2
+    },
+    "mostPoles": {
+      "driverId": "max_verstappen",
+      "name": "Max Verstappen",
+      "count": 2
+    },
+    "fastestLap": {
+      "driverId": "max_verstappen",
+      "name": "Max Verstappen",
+      "time": "1:29.708",
+      "year": 2023
+    }
+  },
+  "raceCount": 5,
+  "snapshotAt": "2026-06-08T07:08:06.334Z",
+  "source": "jolpica"
+}

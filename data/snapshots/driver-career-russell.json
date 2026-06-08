@@ -1,0 +1,22 @@
+{
+  "driverId": "russell",
+  "career": {
+    "wins": 6,
+    "podiums": 26,
+    "starts": 158,
+    "fastestLaps": 11,
+    "championships": 0
+  },
+  "seasons": [
+    2019,
+    2020,
+    2021,
+    2022,
+    2023,
+    2024,
+    2025,
+    2026
+  ],
+  "snapshotAt": "2026-06-08T07:06:16.434Z",
+  "source": "jolpica"
+}

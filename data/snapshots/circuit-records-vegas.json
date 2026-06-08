@@ -1,0 +1,24 @@
+{
+  "circuitId": "vegas",
+  "records": {
+    "mostWins": {
+      "driverId": "max_verstappen",
+      "name": "Max Verstappen",
+      "count": 2
+    },
+    "mostPoles": {
+      "driverId": "leclerc|russell|norris",
+      "name": "Charles Leclerc / George Russell / Lando Norris",
+      "count": 1
+    },
+    "fastestLap": {
+      "driverId": "max_verstappen",
+      "name": "Max Verstappen",
+      "time": "1:33.365",
+      "year": 2025
+    }
+  },
+  "raceCount": 3,
+  "snapshotAt": "2026-06-08T07:09:00.775Z",
+  "source": "jolpica"
+}

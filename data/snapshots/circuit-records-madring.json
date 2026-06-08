@@ -1,0 +1,11 @@
+{
+  "circuitId": "madring",
+  "records": {
+    "mostWins": null,
+    "mostPoles": null,
+    "fastestLap": null
+  },
+  "raceCount": 0,
+  "snapshotAt": "2026-06-08T07:08:39.946Z",
+  "source": "jolpica"
+}
