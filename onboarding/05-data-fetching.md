@@ -71,20 +71,20 @@ helpers. Open these to see real usage:
 | [jolpica.ts](../src/lib/api/jolpica.ts) | `https://api.jolpi.ca/ergast/f1` | `seasonSchedule`, `liveStandings`, `careerStats`, `circuitRecords` |
 | [openf1.ts](../src/lib/api/openf1.ts) | `https://api.openf1.org/v1` | `liveTelemetry`, `liveResults` |
 | [openmeteo.ts](../src/lib/api/openmeteo.ts) | Open-Meteo forecast | `weather` |
-| [wikidata.ts](../src/lib/api/wikidata.ts) | Wikidata SPARQL/REST | `socialBio` (30-day) |
-| [rss.ts](../src/lib/api/rss.ts) | Various RSS feeds | `news` |
+| [wikidata.ts](../src/lib/api/wikidata.ts) | Wikidata SPARQL/REST | `socialBio` |
+| [rss.ts](../src/lib/api/rss.ts) | Various RSS feeds | `newsFeed` |
 | [multiviewer.ts](../src/lib/api/multiviewer.ts) | MultiViewer API | `circuitMeta`, `liveIncidents` |
 
 Skeleton of a wrapper (paraphrased):
 
 ```ts
-// src/lib/api/jolpica.ts
+// src/lib/api/jolpica.ts (internal helper pattern)
 import { createApiFetcher } from "@/lib/api/createApiFetcher";
 import { adaptiveRevalidate, type DataClass } from "@/lib/cacheStrategy";
 
 const jolpicaFetch = createApiFetcher("https://api.jolpi.ca/ergast/f1", "jolpica");
 
-export async function fetchJolpica<T>(path: string, dataClass: DataClass): Promise<T> {
+async function jolpicaApi<T>(path: string, dataClass: DataClass): Promise<T> {
   return jolpicaFetch<T>(path, adaptiveRevalidate(dataClass));
 }
 ```
@@ -92,19 +92,31 @@ export async function fetchJolpica<T>(path: string, dataClass: DataClass): Promi
 **The `dataClass` argument is mandatory** — that's the only knob you turn for
 freshness. Never pass a raw integer.
 
+## Jolpica helper pattern
+
+For Jolpica fetchers, prefer shared MRData helpers instead of ad hoc envelope
+unwrapping and custom pagination loops:
+
+- `firstRaceField(data, "Results")` for `MRData.RaceTable.Races[0]?.Results ?? []`
+- `firstRace(data)` for `MRData.RaceTable.Races[0] ?? null`
+- `paginateMRData(fetchPage, extractRows, pageSize)` for limit/offset/total loops
+
+Source of truth: [src/lib/api/mrData.ts](../src/lib/api/mrData.ts).
+
 ## Route helpers
 
 [src/lib/api/routeHelpers.ts](../src/lib/api/routeHelpers.ts) exports:
 
 ```ts
 badRequest(message: string)                    // 400 with { error }
-serverError(err: unknown, routeKey: string)    // 500 with stable log key
 notFound(message?: string)                     // 404
-unavailable(reason: string)                    // 503 with { available: false, reason }
+serverError(routeName: string, err: unknown)   // 500 with stable log key
+gracefulDegradation(routeName, reason, err?, extra?) // 200 with { available:false, reason }
+cachedJson(body, dataClass)                    // JSON + Cache-Control via edgeCacheControl()
 ```
 
-Always use these instead of `new NextResponse(...)`. They keep the wire shape
-consistent and log a stable `routeKey` so Vercel logs are grep-able.
+Always use these instead of hand-rolled `NextResponse` shapes. They keep the
+wire contract consistent and log a stable `routeKey` so Vercel logs are grep-able.
 
 `routeKey` examples: `compare-season`, `driver-photos`, `projections-snapshot`.
 Do **not** include query strings.
@@ -152,7 +164,7 @@ Override per query when the data tier demands it:
 ```ts
 const { data } = useQuery({
   queryKey: ["telemetry", sessionKey],
-  queryFn: () => fetch(`/api/telemetry?session=${sessionKey}`).then(r => r.json()),
+  queryFn: () => fetchJson<TelemetryPayload>(`/api/telemetry?session=${sessionKey}`),
   staleTime: 5_000,
   refetchInterval: 10_000, // sub-minute polling for live data
 });
@@ -160,6 +172,15 @@ const { data } = useQuery({
 
 For long-lived static-ish data, push `staleTime` up to an hour or more (driver
 profiles, schedule).
+
+When a page owns several related queries, extract them to a dedicated hook so
+the page can focus on rendering. Example:
+`src/hooks/useDriverDetails.ts` centralizes the drivers-page standings, photos,
+news, season, career, and wikidata queries and returns typed slices.
+
+Additional hook extraction examples:
+- `src/hooks/useDriverComparison.ts` for compare-page standings/schedule/season/circuit queries
+- `src/hooks/useCircuitData.ts` for circuit-info + race-incidents query pairing
 
 ## When upstream is wholly unavailable
 

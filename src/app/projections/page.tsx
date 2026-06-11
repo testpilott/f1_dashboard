@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import type { ChampionshipProjection, DriverProjection } from "@/lib/types";
+import { fetchJson } from "@/lib/api/clientFetch";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 
@@ -15,9 +16,7 @@ function isAvailable(data: ProjectionsResponse | undefined): data is Championshi
 }
 
 async function fetchProjections(): Promise<ProjectionsResponse> {
-  const res = await fetch("/api/projections");
-  if (!res.ok) throw new Error("Failed");
-  return res.json() as Promise<ProjectionsResponse>;
+  return fetchJson<ProjectionsResponse>("/api/projections");
 }
 
 function ProjectionRow({ driver, maxWinProb }: { driver: DriverProjection; maxWinProb: number }) {

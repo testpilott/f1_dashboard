@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Radio, ChevronDown, ChevronUp } from "lucide-react";
+import { fetchJson } from "@/lib/api/clientFetch";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getTeamColor } from "@/lib/constants";
 import { cn } from "@/lib/utils";
@@ -17,9 +18,7 @@ interface DriverRadio {
 }
 
 async function fetchRadio(year: string, round: string): Promise<{ available: boolean; reason?: string; sessionName?: string; items?: DriverRadio[] }> {
-  const res = await fetch(`/api/team-radio?year=${year}&round=${round}`);
-  if (!res.ok) throw new Error("Failed to load team radio");
-  return res.json();
+  return fetchJson<{ available: boolean; reason?: string; sessionName?: string; items?: DriverRadio[] }>(`/api/team-radio?year=${year}&round=${round}`);
 }
 
 function formatTime(iso: string): string {

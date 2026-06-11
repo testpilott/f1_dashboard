@@ -1,9 +1,9 @@
-import { NextResponse } from "next/server";
 import { getDriverStandings, getConstructorStandings } from "@/lib/api/jolpica";
 import { badRequest, gracefulDegradation, cachedJson } from "@/lib/api/routeHelpers";
 import { rateLimited } from "@/lib/api/withRateLimit";
 import { VALID_SEASON } from "@/lib/validators";
 import { readSnapshotOrFetch } from "@/lib/snapshots/readSnapshotOrFetch";
+import type { StandingsSnapshot } from "@/lib/snapshots/types";
 
 export const revalidate = 300; // 5 minutes
 
@@ -19,7 +19,7 @@ export async function GET(req: Request) {
   }
 
   try {
-    const payload = await readSnapshotOrFetch({
+    const payload = await readSnapshotOrFetch<StandingsSnapshot>({
       key: `standings-${season}`,
       dataClass: "liveStandings",
       liveFn: async () => ({

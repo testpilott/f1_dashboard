@@ -4,6 +4,7 @@ import { badRequest, serverError, cachedJson } from "@/lib/api/routeHelpers";
 import { rateLimited } from "@/lib/api/withRateLimit";
 import { VALID_SEASON, VALID_VIEW } from "@/lib/validators";
 import { readSnapshotOrFetch } from "@/lib/snapshots/readSnapshotOrFetch";
+import type { ScheduleSnapshot } from "@/lib/snapshots/types";
 
 export const revalidate = 3600; // 1 hour
 
@@ -31,7 +32,7 @@ export async function GET(req: Request) {
       const race = await getLastRace();
       return NextResponse.json({ race });
     }
-    const payload = await readSnapshotOrFetch({
+    const payload = await readSnapshotOrFetch<ScheduleSnapshot>({
       key: `schedule-${season}`,
       dataClass: "seasonSchedule",
       liveFn: async () => ({

@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import type { NewsItem } from "@/lib/types";
+import { fetchJson } from "@/lib/api/clientFetch";
 import { formatDistanceToNow } from "date-fns";
 import { ExternalLink } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -10,9 +11,8 @@ import { useState } from "react";
 
 async function fetchNews(filter?: string) {
   const url = filter ? `/api/news?filter=${encodeURIComponent(filter)}` : "/api/news";
-  const res = await fetch(url);
-  if (!res.ok) throw new Error("Failed");
-  return res.json().then((d) => (Array.isArray(d.items) ? d.items : []) as NewsItem[]);
+  const d = await fetchJson<{ items?: NewsItem[] }>(url);
+  return (Array.isArray(d.items) ? d.items : []) as NewsItem[];
 }
 
 const NEWS_FILTERS = [

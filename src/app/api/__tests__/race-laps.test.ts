@@ -1,13 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-
 vi.mock("@/lib/api/withRateLimit", () => ({
   rateLimited: vi.fn(),
 }));
 
-vi.mock("@/lib/api/jolpica", () => ({
-  getRaceLaps: vi.fn(),
-  getRacePitstops: vi.fn(),
-}));
+vi.mock("@/lib/api/jolpica", async () => {
+  const { createJolpicaMocks } = await import("@/test/mockJolpica");
+  return createJolpicaMocks();
+});
 
 import { GET } from "@/app/api/race-laps/route";
 import { rateLimited } from "@/lib/api/withRateLimit";

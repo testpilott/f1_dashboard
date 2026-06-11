@@ -5,31 +5,27 @@ Copy-paste templates for the things you'll do in your first month.
 ## Add an API route
 
 ```ts
-// src/app/api/foo/route.ts
-import { NextRequest, NextResponse } from "next/server";
+// app/api/<route>/route.ts
+import { NextRequest } from "next/server";
 import { rateLimited } from "@/lib/api/withRateLimit";
-import { badRequest, serverError } from "@/lib/api/routeHelpers";
-import { validateYear } from "@/lib/validators";
-import { adaptiveRevalidate } from "@/lib/cacheStrategy";
-import { fetchJolpica } from "@/lib/api/jolpica";
+import { badRequest, cachedJson, serverError } from "@/lib/api/routeHelpers";
+import { VALID_YEAR } from "@/lib/validators";
+import { getDriverStandings } from "@/lib/api/jolpica";
 
 export const revalidate = 3600; // literal — see cacheStrategy.ts
 
 export async function GET(req: NextRequest) {
-  const limited = rateLimited(req, "foo");
-  if (limited) return limited;
+  const blocked = rateLimited(req, "example");
+  if (blocked) return blocked;
 
   const year = req.nextUrl.searchParams.get("year");
-  if (!validateYear(year)) return badRequest("Invalid year");
+  if (!VALID_YEAR.test(year ?? "")) return badRequest("Invalid year");
 
   try {
-    const data = await fetchJolpica<MyShape>(`whatever/${year}.json`, "seasonSchedule");
-    return NextResponse.json(
-      { items: data.MRData.something },
-      { headers: { "Cache-Control": `s-maxage=${adaptiveRevalidate("seasonSchedule")}` } },
-    );
+    const drivers = await getDriverStandings(year ?? "current");
+    return cachedJson({ drivers }, "liveStandings");
   } catch (err) {
-    return serverError(err, "foo");
+    return serverError("example", err);
   }
 }
 ```
@@ -37,32 +33,37 @@ export async function GET(req: NextRequest) {
 And its test:
 
 ```ts
-// src/app/api/__tests__/foo.test.ts
+// app/api/__tests__/<route>.test.ts
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { GET } from "@/app/api/foo/route";
+import { GET } from "@/app/api/example/route";
 import { makeApiRequest } from "@/test/makeApiRequest";
 
-vi.mock("@/lib/api/jolpica");
-import { fetchJolpica } from "@/lib/api/jolpica";
+const { mockGetDriverStandings } = vi.hoisted(() => ({
+  mockGetDriverStandings: vi.fn(),
+}));
 
-describe("/api/foo", () => {
+vi.mock("@/lib/api/jolpica", () => ({
+  getDriverStandings: mockGetDriverStandings,
+}));
+
+describe("/api/example", () => {
   beforeEach(() => vi.resetAllMocks());
 
   it("400s on invalid year", async () => {
-    const res = await GET(makeApiRequest("http://x/api/foo?year=NaN"));
+    const res = await GET(makeApiRequest("http://x/api/example?year=NaN"));
     expect(res.status).toBe(400);
   });
 
   it("200s with shape", async () => {
-    vi.mocked(fetchJolpica).mockResolvedValueOnce({ MRData: { something: [1, 2] } });
-    const res = await GET(makeApiRequest("http://x/api/foo?year=2024"));
+    mockGetDriverStandings.mockResolvedValueOnce([{ position: "1" }]);
+    const res = await GET(makeApiRequest("http://x/api/example?year=2024"));
     expect(res.status).toBe(200);
-    await expect(res.json()).resolves.toEqual({ items: [1, 2] });
+    await expect(res.json()).resolves.toMatchObject({ drivers: expect.any(Array) });
   });
 
   it("500s on upstream failure", async () => {
-    vi.mocked(fetchJolpica).mockRejectedValueOnce(new Error("boom"));
-    const res = await GET(makeApiRequest("http://x/api/foo?year=2024"));
+    mockGetDriverStandings.mockRejectedValueOnce(new Error("boom"));
+    const res = await GET(makeApiRequest("http://x/api/example?year=2024"));
     expect(res.status).toBe(500);
   });
 });
@@ -73,7 +74,7 @@ describe("/api/foo", () => {
 If a new external API joins (rare):
 
 ```ts
-// src/lib/api/newapi.ts
+// lib/api/<service>.ts
 import { createApiFetcher } from "@/lib/api/createApiFetcher";
 import { adaptiveRevalidate, type DataClass } from "@/lib/cacheStrategy";
 
@@ -107,7 +108,7 @@ export function validateSessionKey(v: string | null | undefined): v is string {
 }
 ```
 
-And its test (`src/lib/__tests__/validators.test.ts`):
+And add route-level assertions in `src/app/api/__tests__/validation.test.ts`:
 
 ```ts
 it("accepts valid keys", () => {
@@ -121,7 +122,7 @@ it("rejects path traversal", () => {
 ## Add a stat / pure computation
 
 ```ts
-// src/lib/stats/quali.ts
+// src/lib/stats/<feature>.ts
 export function computeQualiGap(rows: QualiRow[]): number | null {
   const [p1, p2] = rows.slice(0, 2);
   if (!p1?.timeMs || !p2?.timeMs) return null;
@@ -145,7 +146,7 @@ Wire into a route only after the function is green.
 ## Add a page
 
 ```tsx
-// src/app/foo/page.tsx
+// app/<page>/page.tsx
 import { Suspense } from "react";
 import { FooClient } from "./FooClient";
 
@@ -171,14 +172,15 @@ export default async function Page() {
 ## Add a client component with React Query
 
 ```tsx
-// src/app/foo/FooClient.tsx
+// app/<page>/FooClient.tsx
 "use client";
 import { useQuery } from "@tanstack/react-query";
+import { fetchJson } from "@/lib/api/clientFetch";
 
 export function FooClient({ initialData }: { initialData: Foo }) {
   const { data } = useQuery({
     queryKey: ["foo", 2025],
-    queryFn: () => fetch("/api/foo?year=2025").then(r => r.json()),
+    queryFn: () => fetchJson<Foo>("/api/foo?year=2025"),
     initialData,
     staleTime: 60 * 60 * 1000,
   });

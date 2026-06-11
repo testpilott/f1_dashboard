@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { X } from "lucide-react";
+import { fetchJson } from "@/lib/api/clientFetch";
 import TeamLogo from "@/components/ui/TeamLogo";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -24,9 +25,7 @@ type DriverSeasonData = {
 };
 
 async function fetchDriverSeason(season: string, driverId: string): Promise<DriverSeasonData> {
-  const res = await fetch(`/api/driver-season?season=${season}&driverId=${encodeURIComponent(driverId)}`);
-  if (!res.ok) throw new Error("Failed to fetch driver season data");
-  return res.json() as Promise<DriverSeasonData>;
+  return fetchJson<DriverSeasonData>(`/api/driver-season?season=${season}&driverId=${encodeURIComponent(driverId)}`);
 }
 
 export default function DriverSeasonDialog({

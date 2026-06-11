@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { TEAM_LOGOS } from "@/lib/constants";
-import { badRequest } from "@/lib/api/routeHelpers";
+import { badRequest, notFound } from "@/lib/api/routeHelpers";
 import { rateLimited } from "@/lib/api/withRateLimit";
 
 /**
@@ -24,7 +24,7 @@ export async function GET(req: Request) {
   // TEAM_LOGOS is a compile-time whitelist — no user-controlled URL construction
   const logoPath = TEAM_LOGOS[team];
   if (!logoPath) {
-    return NextResponse.json({ error: "unknown team" }, { status: 404 });
+    return notFound("unknown team");
   }
 
   // Redirect to the static file; path is always a safe /logos/*.webp local path

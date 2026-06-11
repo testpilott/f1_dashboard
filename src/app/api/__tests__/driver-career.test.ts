@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-
 vi.mock("next/cache", () => ({
   unstable_cache: (fn: unknown) => fn,
 }));
@@ -8,14 +7,10 @@ vi.mock("@/lib/api/withRateLimit", () => ({
   rateLimited: vi.fn(),
 }));
 
-vi.mock("@/lib/api/jolpica", () => ({
-  getDriverCareerWins: vi.fn(),
-  getDriverCareerP2: vi.fn(),
-  getDriverCareerP3: vi.fn(),
-  getDriverCareerStarts: vi.fn(),
-  getDriverCareerFastestLaps: vi.fn(),
-  getDriverCareerChampionships: vi.fn(),
-}));
+vi.mock("@/lib/api/jolpica", async () => {
+  const { createJolpicaMocks } = await import("@/test/mockJolpica");
+  return createJolpicaMocks();
+});
 
 import { GET } from "@/app/api/driver-career/route";
 import { rateLimited } from "@/lib/api/withRateLimit";
@@ -26,6 +21,7 @@ import {
   getDriverCareerStarts,
   getDriverCareerWins,
   getDriverCareerChampionships,
+  getDriverSeasons,
 } from "@/lib/api/jolpica";
 import { makeApiRequest } from "@/test/api";
 
@@ -39,6 +35,7 @@ describe("GET /api/driver-career", () => {
     vi.mocked(getDriverCareerStarts).mockResolvedValue("210");
     vi.mocked(getDriverCareerFastestLaps).mockResolvedValue("44");
     vi.mocked(getDriverCareerChampionships).mockResolvedValue("0");
+    vi.mocked(getDriverSeasons).mockResolvedValue([2021, 2022, 2023, 2024, 2025]);
   });
 
   it("returns rate-limit response when blocked", async () => {

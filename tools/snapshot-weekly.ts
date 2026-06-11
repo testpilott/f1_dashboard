@@ -15,6 +15,13 @@ import {
 } from "@/lib/api/jolpica";
 import { computeCircuitRecords } from "@/lib/stats/circuitRecords";
 import { buildDriverCareerStats } from "@/lib/stats/driverCareer";
+import type {
+  CircuitRecordsSnapshot,
+  DriverCareerSnapshot,
+  DriverSeasonsSnapshot,
+  ScheduleSnapshot,
+  StandingsSnapshot,
+} from "@/lib/snapshots/types";
 
 const OUT_DIR = path.join(process.cwd(), "data", "snapshots");
 
@@ -46,32 +53,35 @@ async function snapshotDriverCareer(driverId: string): Promise<void> {
   // (`{ driverId, career }`). The route reads this snapshot verbatim, so a flat
   // `{ wins, p2, p3, … }` shape would break every consumer that expects
   // `payload.career.wins` (the UI panel and the production smoke test).
-  await atomicWriteJson(path.join(OUT_DIR, `driver-career-${driverId}.json`), {
+  const careerPayload: DriverCareerSnapshot = {
     driverId,
     career: buildDriverCareerStats({ wins, p2, p3, starts, fastestLaps, championships }),
     seasons,
     snapshotAt: new Date().toISOString(),
     source: "jolpica",
-  });
+  };
+  await atomicWriteJson(path.join(OUT_DIR, `driver-career-${driverId}.json`), careerPayload);
 
-  await atomicWriteJson(path.join(OUT_DIR, `driver-seasons-${driverId}.json`), {
+  const seasonsPayload: DriverSeasonsSnapshot = {
     driverId,
     seasons,
     snapshotAt: new Date().toISOString(),
     source: "jolpica",
-  });
+  };
+  await atomicWriteJson(path.join(OUT_DIR, `driver-seasons-${driverId}.json`), seasonsPayload);
 }
 
 async function snapshotCircuitRecords(circuitId: string): Promise<void> {
   const races = await withLimit(() => getAllRaceResultsAtCircuit(circuitId));
   const records = computeCircuitRecords(races);
-  await atomicWriteJson(path.join(OUT_DIR, `circuit-records-${circuitId}.json`), {
+  const payload: CircuitRecordsSnapshot = {
     circuitId,
     records,
     raceCount: races.length,
     snapshotAt: new Date().toISOString(),
     source: "jolpica",
-  });
+  };
+  await atomicWriteJson(path.join(OUT_DIR, `circuit-records-${circuitId}.json`), payload);
 }
 
 export interface WeeklySnapshotResult {
@@ -88,12 +98,8 @@ export interface WeeklySnapshotResult {
 export async function runWeeklySnapshot(outDir = OUT_DIR): Promise<WeeklySnapshotResult> {
   const standingsRaw = await readFile(path.join(outDir, "standings-current.json"), "utf8");
   const scheduleRaw = await readFile(path.join(outDir, "schedule-current.json"), "utf8");
-  const standings = JSON.parse(standingsRaw) as {
-    drivers: { Driver: { driverId: string } }[];
-  };
-  const schedule = JSON.parse(scheduleRaw) as {
-    races: { Circuit: { circuitId: string } }[];
-  };
+  const standings = JSON.parse(standingsRaw) as StandingsSnapshot;
+  const schedule = JSON.parse(scheduleRaw) as ScheduleSnapshot;
 
   const driverIds = standings.drivers.map((d) => d.Driver.driverId);
   const circuitIds = [...new Set(schedule.races.map((r) => r.Circuit.circuitId))];

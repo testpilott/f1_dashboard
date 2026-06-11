@@ -21,50 +21,50 @@ const saturday = dateOnDay(6);
 const sunday = dateOnDay(0);
 
 describe("adaptiveRevalidate", () => {
-  it("returns base standings TTL on a weekday", () => {
-    expect(adaptiveRevalidate("standings", monday)).toBe(300);
+  it("returns base live standings TTL on a weekday", () => {
+    expect(adaptiveRevalidate("liveStandings", monday)).toBe(300);
   });
 
-  it("returns shorter standings TTL on Friday", () => {
-    expect(adaptiveRevalidate("standings", friday)).toBe(60);
+  it("returns shorter live standings TTL on Friday", () => {
+    expect(adaptiveRevalidate("liveStandings", friday)).toBe(60);
   });
 
-  it("returns shorter standings TTL on Saturday", () => {
-    expect(adaptiveRevalidate("standings", saturday)).toBe(60);
+  it("returns shorter live standings TTL on Saturday", () => {
+    expect(adaptiveRevalidate("liveStandings", saturday)).toBe(60);
   });
 
-  it("returns shorter standings TTL on Sunday", () => {
-    expect(adaptiveRevalidate("standings", sunday)).toBe(60);
+  it("returns shorter live standings TTL on Sunday", () => {
+    expect(adaptiveRevalidate("liveStandings", sunday)).toBe(60);
   });
 
-  it("schedule TTL is unchanged on race weekend (static data)", () => {
-    expect(adaptiveRevalidate("schedule", friday)).toBe(3600);
-    expect(adaptiveRevalidate("schedule", monday)).toBe(3600);
+  it("raceSchedule TTL is unchanged on race weekend (static data)", () => {
+    expect(adaptiveRevalidate("raceSchedule", friday)).toBe(3600);
+    expect(adaptiveRevalidate("raceSchedule", monday)).toBe(3600);
   });
 
-  it("telemetry TTL is shorter on race weekend", () => {
-    expect(adaptiveRevalidate("telemetry", friday)).toBe(30);
-    expect(adaptiveRevalidate("telemetry", monday)).toBe(60);
+  it("sessionTelemetry TTL is shorter on race weekend", () => {
+    expect(adaptiveRevalidate("sessionTelemetry", friday)).toBe(30);
+    expect(adaptiveRevalidate("sessionTelemetry", monday)).toBe(60);
   });
 
-  it("results TTL tightens on race weekend", () => {
-    expect(adaptiveRevalidate("results", saturday)).toBe(120);
-    expect(adaptiveRevalidate("results", monday)).toBe(3600);
+  it("historicalResults TTL tightens on race weekend", () => {
+    expect(adaptiveRevalidate("historicalResults", saturday)).toBe(120);
+    expect(adaptiveRevalidate("historicalResults", monday)).toBe(3600);
   });
 
-  it("projections TTL is 24h (cached daily, not per-request)", () => {
-    expect(adaptiveRevalidate("projections", friday)).toBe(86400);
-    expect(adaptiveRevalidate("projections", monday)).toBe(86400);
+  it("projectionCompute TTL is 24h (cached daily, not per-request)", () => {
+    expect(adaptiveRevalidate("projectionCompute", friday)).toBe(86400);
+    expect(adaptiveRevalidate("projectionCompute", monday)).toBe(86400);
   });
 
-  it("form TTL tightens on race weekend", () => {
-    expect(adaptiveRevalidate("form", sunday)).toBe(60);
-    expect(adaptiveRevalidate("form", monday)).toBe(300);
+  it("recentForm TTL tightens on race weekend", () => {
+    expect(adaptiveRevalidate("recentForm", sunday)).toBe(60);
+    expect(adaptiveRevalidate("recentForm", monday)).toBe(300);
   });
 
   it("defaults to current time when no date argument passed", () => {
     // Should not throw and should return a positive number
-    expect(adaptiveRevalidate("standings")).toBeGreaterThan(0);
+    expect(adaptiveRevalidate("liveStandings")).toBeGreaterThan(0);
   });
 });
 
@@ -140,6 +140,6 @@ describe("cacheKeySuffix", () => {
   });
 
   it("different DataClasses produce different suffixes", () => {
-    expect(cacheKeySuffix("weather")).not.toBe(cacheKeySuffix("news"));
+    expect(cacheKeySuffix("weather")).not.toBe(cacheKeySuffix("newsFeed"));
   });
 });

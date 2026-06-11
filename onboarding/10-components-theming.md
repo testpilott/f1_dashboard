@@ -17,8 +17,32 @@ Typical pattern for a page with interactivity:
 ```
 src/app/schedule/
   page.tsx              // server: fetch initial data
-  ScheduleClient.tsx    // client: takes initialData prop, hosts useQuery + UI
+src/components/schedule/
+  ScheduleClient.tsx    // client orchestrator
+  ScheduleRow.tsx       // extracted row shell + expand/collapse
+  SessionRow.tsx        // extracted session/time row
+  Countdown.tsx         // extracted ticking countdown
 ```
+
+Driver detail panel content sections now live in dedicated files:
+
+```
+src/components/drivers/sections/
+  DriverBioSection.tsx
+  DriverQuotesSection.tsx
+  DriverSeasonSection.tsx
+  DriverCareerSection.tsx
+  DriverNewsSection.tsx
+```
+
+Standings uses `MedalPositionBadge` and compare uses `PositionBadge`; these are
+not interchangeable because they intentionally render different UI.
+
+Fetch-owning composition hooks live in `src/hooks/` when a page/component needs
+to orchestrate multiple related queries. Example:
+`src/hooks/useDriverDetails.ts` is consumed by `src/app/drivers/page.tsx`.
+`src/hooks/useDriverComparison.ts` and `src/hooks/useCircuitData.ts` follow the
+same pattern.
 
 ## The design system
 
@@ -129,7 +153,7 @@ Reach for these in order:
 1. **URL** (search params, route params) — the most boring + sharable
 2. **React Query cache** — for server data
 3. **`useSyncExternalStore`** + a small helper — for SSR-safe browser-only
-   state like `isClient`, `now`. See [src/lib/hooks/](../src/lib/hooks/).
+  state like `isClient`, `now`. See [src/hooks/](../src/hooks/).
 4. **`useState`** in a leaf client component — for purely UI-local state
 5. Avoid global stores (Redux, Zustand) — the data model fits without them
 

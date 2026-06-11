@@ -42,6 +42,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 4. **Parallelize independent fetches.** Use `Promise.all()` for required sibling calls and `Promise.allSettled()` where partial data is acceptable.
 5. **Gracefully degrade optional data.** If a source is optional, prefer a typed `{ available: false, reason }` response over an HTTP 500.
 6. **Use stable route identifiers in logs.** `serverError()` names should be stable identifiers such as `compare-season`, not query-string fragments.
+7. **`gracefulDegradation` vs `serverError`.** Return HTTP 200 with `{ available: false }` only when the client has a designed empty-state for optional enrichment (currently `/api/standings`, `/api/circuit-info`, `/api/race-incidents`). Return `serverError` for primary-content routes where clients branch on `!res.ok`. Do not flip existing routes between these modes without coordinated client updates.
 
 ## Cache And Timing Rules
 

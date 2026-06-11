@@ -2,8 +2,7 @@
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
-const SEASONS = Array.from({ length: 6 }, (_, i) => String(2026 - i)); // 2026–2021
+import { RECENT_SEASONS } from "@/lib/season";
 
 export default function SeasonPicker({ current }: { current: string }) {
   const router = useRouter();
@@ -21,7 +20,7 @@ export default function SeasonPicker({ current }: { current: string }) {
     router.push(`${pathname}?${params.toString()}`);
   }
 
-  const display = current === "current" ? "2026" : current;
+  const display = current === "current" ? RECENT_SEASONS[0] : current;
 
   return (
     <Select value={current} onValueChange={handleChange}>
@@ -29,8 +28,8 @@ export default function SeasonPicker({ current }: { current: string }) {
         <SelectValue>{display}</SelectValue>
       </SelectTrigger>
       <SelectContent className="bg-surface-2 border-border">
-        {SEASONS.map((yr) => (
-          <SelectItem key={yr} value={yr === "2026" ? "current" : yr}>
+        {RECENT_SEASONS.map((yr, index) => (
+          <SelectItem key={yr} value={index === 0 ? "current" : yr}>
             {yr}
           </SelectItem>
         ))}

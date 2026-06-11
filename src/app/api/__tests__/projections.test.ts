@@ -1,14 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-
 vi.mock("@/lib/api/withRateLimit", () => ({
   rateLimited: vi.fn(() => null),
 }));
 
-vi.mock("@/lib/api/jolpica", () => ({
-  getDriverStandings: vi.fn(),
-  getSchedule: vi.fn(),
-  getSeasonResults: vi.fn(),
-}));
+vi.mock("@/lib/api/jolpica", async () => {
+  const { createJolpicaMocks } = await import("@/test/mockJolpica");
+  return createJolpicaMocks();
+});
 
 vi.mock("@/lib/projections/montecarlo", () => ({
   runProjections: vi.fn(),
@@ -29,7 +27,6 @@ import {
   getSeasonResults,
 } from "@/lib/api/jolpica";
 import { runProjections } from "@/lib/projections/montecarlo";
-import { _resetSnapshotState } from "@/lib/projections/snapshot";
 import { makeApiRequest } from "@/test/api";
 
 function authedRequest(path: string, params: Record<string, string> = {}) {
@@ -41,7 +38,6 @@ function authedRequest(path: string, params: Record<string, string> = {}) {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  _resetSnapshotState();
   process.env.CRON_SECRET = "test-secret";
 });
 

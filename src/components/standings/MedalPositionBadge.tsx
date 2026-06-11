@@ -1,12 +1,13 @@
 import { Badge } from "@/components/ui/badge";
 
+// Not interchangeable with compare/PositionBadge: this is the medal-style standings badge.
 const MEDAL: Record<number, string> = {
   1: "bg-medal-gold text-medal-foreground",
   2: "bg-medal-silver text-medal-foreground",
   3: "bg-medal-bronze text-medal-foreground",
 };
 
-export default function PositionBadge({ pos }: { pos: number }) {
+export default function MedalPositionBadge({ pos }: { pos: number }) {
   const medal = MEDAL[pos];
   if (medal)
     return (

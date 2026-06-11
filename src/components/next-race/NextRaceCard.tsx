@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import type { Race, WeatherForecast } from "@/lib/types";
 import { useNow } from "@/lib/hooks/useNow";
+import { fetchJson } from "@/lib/api/clientFetch";
 import { CIRCUIT_COORDS, getWeatherIcon, getWeatherLabel, getCircuitImageUrl } from "@/lib/constants";
 import CircuitThumb from "@/components/schedule/CircuitThumb";
 import Link from "next/link";
@@ -13,16 +14,12 @@ import { MapPin, Clock, Cloud } from "lucide-react";
 import { format, parseISO } from "date-fns";
 
 async function fetchNextRace() {
-  const res = await fetch("/api/schedule?view=next");
-  if (!res.ok) throw new Error("Failed");
-  const data = await res.json();
+  const data = await fetchJson<{ race?: Race | null }>("/api/schedule?view=next");
   return data.race as Race | null;
 }
 
 async function fetchWeatherForRace(country: string) {
-  const res = await fetch(`/api/weather?country=${encodeURIComponent(country)}`);
-  if (!res.ok) return null;
-  return res.json() as Promise<WeatherForecast>;
+  return fetchJson<WeatherForecast>(`/api/weather?country=${encodeURIComponent(country)}`);
 }
 
 function CountdownSegment({ value, label }: { value: number; label: string }) {

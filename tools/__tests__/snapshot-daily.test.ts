@@ -10,20 +10,21 @@ vi.mock("@/lib/snapshots/atomicWriteJson", () => ({
 }));
 
 // Mock Jolpica fetchers
-const { mockGetDriverStandings, mockGetConstructorStandings, mockGetSchedule, mockGetSeasonResults } =
-  vi.hoisted(() => ({
-    mockGetDriverStandings: vi.fn(),
-    mockGetConstructorStandings: vi.fn(),
-    mockGetSchedule: vi.fn(),
-    mockGetSeasonResults: vi.fn(),
-  }));
-
-vi.mock("@/lib/api/jolpica", () => ({
-  getDriverStandings: mockGetDriverStandings,
-  getConstructorStandings: mockGetConstructorStandings,
-  getSchedule: mockGetSchedule,
-  getSeasonResults: mockGetSeasonResults,
+const jolpica = vi.hoisted(() => ({
+  getDriverStandings: vi.fn(),
+  getConstructorStandings: vi.fn(),
+  getSchedule: vi.fn(),
+  getSeasonResults: vi.fn(),
 }));
+const mockGetDriverStandings = jolpica.getDriverStandings;
+const mockGetConstructorStandings = jolpica.getConstructorStandings;
+const mockGetSchedule = jolpica.getSchedule;
+const mockGetSeasonResults = jolpica.getSeasonResults;
+
+vi.mock("@/lib/api/jolpica", async () => {
+  const { createJolpicaMocks } = await import("@/test/mockJolpica");
+  return { ...createJolpicaMocks(), ...jolpica };
+});
 
 // Shared test fixtures
 const driverStandingFixture = [{ position: "1", Driver: { driverId: "verstappen" } }];

@@ -10,7 +10,10 @@ import { currentEtWeekBucket, WEEKLY_CACHE_REVALIDATE_SECONDS } from "@/lib/time
 export const revalidate = 604800;
 
 const getCachedWikidataProfile = unstable_cache(
-  async (wikiUrl: string, _weekBucket: string) => getWikidataDriverProfile(wikiUrl),
+  async (wikiUrl: string, _unusedWeekBucket: string) => {
+    void _unusedWeekBucket;
+    return getWikidataDriverProfile(wikiUrl);
+  },
   ["wikidata-v2-weekly"],
   { revalidate: WEEKLY_CACHE_REVALIDATE_SECONDS, tags: ["wikidata"] }
 );

@@ -1,16 +1,16 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import PositionBadge from "@/components/standings/PositionBadge";
+import MedalPositionBadge from "@/components/standings/MedalPositionBadge";
 
-describe("<PositionBadge />", () => {
+describe("<MedalPositionBadge />", () => {
   it("renders medal styling for podium positions", () => {
-    const { container } = render(<PositionBadge pos={1} />);
+    const { container } = render(<MedalPositionBadge pos={1} />);
     expect(screen.getByText("1")).toBeInTheDocument();
     expect(container.querySelector(".bg-medal-gold")).toBeInTheDocument();
   });
 
   it("renders plain text styling for non-podium positions", () => {
-    const { container } = render(<PositionBadge pos={7} />);
+    const { container } = render(<MedalPositionBadge pos={7} />);
     expect(screen.getByText("7")).toBeInTheDocument();
     expect(container.querySelector(".bg-medal-gold")).not.toBeInTheDocument();
   });

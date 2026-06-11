@@ -2,7 +2,6 @@
 
 import type { CSSProperties } from "react";
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -17,11 +16,11 @@ import {
 } from "@/components/ui/dialog";
 import { getSectorId } from "@/lib/geometry/track";
 import TrackSVG, {
-  type CircuitInfoPayload,
   type IncidentMarker,
   type IncidentMeta,
   type SectorId,
 } from "@/components/race/TrackSVG";
+import { useCircuitData } from "@/hooks/useCircuitData";
 
 const SECTORS = [
   {
@@ -66,52 +65,12 @@ function chipSectorStyle(sector: (typeof SECTORS)[number]): CSSProperties {
   };
 }
 
-interface IncidentsPayload {
-  available: boolean;
-  reason?: string;
-  incidents?: Array<{
-    x: number | null;
-    y: number | null;
-    lap_number: number | null;
-    driver_number: number | null;
-    flag: string | null;
-    category: string;
-    message: string;
-  }>;
-}
-
-async function fetchCircuitInfo(year: string, round: string): Promise<CircuitInfoPayload> {
-  const res = await fetch(
-    `/api/circuit-info?year=${encodeURIComponent(year)}&round=${encodeURIComponent(round)}`,
-  );
-  if (!res.ok) throw new Error("Failed to load circuit info");
-  return res.json() as Promise<CircuitInfoPayload>;
-}
-
-async function fetchRaceIncidents(year: string, round: string): Promise<IncidentsPayload> {
-  const res = await fetch(
-    `/api/race-incidents?year=${encodeURIComponent(year)}&round=${encodeURIComponent(round)}`,
-  );
-  if (!res.ok) return { available: false, reason: "Failed to load incidents" };
-  return res.json() as Promise<IncidentsPayload>;
-}
-
 export default function CircuitMap({ year, round }: { year: string; round: string }) {
   const [selectedCorners, setSelectedCorners] = useState<Set<number>>(new Set());
   const [selectedIncident, setSelectedIncident] = useState<IncidentMeta | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  const { data, isLoading, isError } = useQuery<CircuitInfoPayload>({
-    queryKey: ["circuit-info", year, round],
-    queryFn: () => fetchCircuitInfo(year, round),
-    staleTime: 24 * 60 * 60 * 1000,
-  });
-
-  const { data: incidentsData } = useQuery<IncidentsPayload>({
-    queryKey: ["race-incidents", year, round],
-    queryFn: () => fetchRaceIncidents(year, round),
-    staleTime: 5 * 60 * 1000,
-  });
+  const { data, incidentsData, isLoading, isError } = useCircuitData(year, round);
 
   const markers = useMemo<IncidentMarker[]>(() => {
     if (!incidentsData?.available || !incidentsData.incidents) return [];
