@@ -1,6 +1,5 @@
-import { NextResponse } from "next/server";
 import { unstable_cache } from "next/cache";
-import { badRequest, notFound, serverError } from "@/lib/api/routeHelpers";
+import { badRequest, notFound, serverError, cachedJson } from "@/lib/api/routeHelpers";
 import { rateLimited } from "@/lib/api/withRateLimit";
 import { VALID_WIKI_TITLE } from "@/lib/validators";
 import { getWikidataDriverProfile } from "@/lib/api/wikidata";
@@ -41,7 +40,7 @@ export async function GET(req: Request) {
     if (!profile) {
       return notFound("Profile not found");
     }
-    return NextResponse.json(profile);
+    return cachedJson(profile, "socialBio");
   } catch (err) {
     return serverError("wikidata", err);
   }

@@ -11,5 +11,6 @@ export async function GET(req: Request) {
     allowLatest: false,
     fetcher: (key) => getPitStops(key as number),
     responseKey: "pit",
+    dataClass: "liveTelemetry",
   });
 }

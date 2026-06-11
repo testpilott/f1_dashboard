@@ -1,12 +1,17 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { fetchJson } from "@/lib/api/clientFetch";
 import type { StintSummary } from "@/lib/stats/pace";
 import type { LapSeriesPoint, PitstopMarker } from "@/lib/stats/lapAnalysis";
-import LapTimeFallbackChart from "@/components/race/LapTimeFallbackChart";
+
+const LapTimeFallbackChart = dynamic(() => import("@/components/race/LapTimeFallbackChart"), {
+  ssr: false,
+  loading: () => <Skeleton className="h-72 w-full" />,
+});
 
 interface TelemetryDriver {
   driverNumber: number;

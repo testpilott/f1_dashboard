@@ -6,9 +6,10 @@ a single `route.ts` file that follows the same skeleton:
 1. `rateLimited(req, routeKey)` — bail if over the window
 2. Validate every input via [validators.ts](../src/lib/validators.ts)
 3. Call an `src/lib/api/*` fetcher (which calls `createApiFetcher`)
-4. Return `cachedJson(...)` with a DataClass-backed `Cache-Control` header, or
-  `badRequest()` / `serverError()` / `gracefulDegradation()` from
-   [routeHelpers.ts](../src/lib/api/routeHelpers.ts)
+4. Return `cachedJson(...)` on every cache-eligible 200-OK JSON success path,
+  with a DataClass-backed `Cache-Control` header, or `badRequest()` /
+  `serverError()` / `gracefulDegradation()` from
+  [routeHelpers.ts](../src/lib/api/routeHelpers.ts)
 
 The complete inventory:
 
@@ -92,6 +93,10 @@ try {
 
 A `{ available: false, reason }` response should always carry a 200 status — the
 *upstream* failed, but our route succeeded.
+
+Error and degraded payloads must stay uncached. Only successful 200-OK payloads
+should use `cachedJson(...)`; avoid caching `serverError(...)` and
+`gracefulDegradation(...)` responses.
 
 Policy baseline (mirrors `AGENTS.md`): use HTTP 200 + `{ available:false }`
 only for optional enrichment routes with designed empty-states (currently

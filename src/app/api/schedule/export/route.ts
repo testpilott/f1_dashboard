@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSchedule } from "@/lib/api/jolpica";
 import { badRequest, serverError } from "@/lib/api/routeHelpers";
+import { edgeCacheControl } from "@/lib/api/edgeHeaders";
 import { rateLimited } from "@/lib/api/withRateLimit";
 import { VALID_SEASON } from "@/lib/validators";
 import { buildICS } from "@/lib/ical";
@@ -26,7 +27,7 @@ export async function GET(req: Request) {
       headers: {
         "Content-Type": "text/calendar; charset=utf-8",
         "Content-Disposition": `attachment; filename="f1-${season}.ics"`,
-        "Cache-Control": "public, max-age=3600",
+        "Cache-Control": edgeCacheControl("raceSchedule"),
       },
     });
   } catch (err) {

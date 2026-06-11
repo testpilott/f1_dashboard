@@ -1,5 +1,6 @@
 import type { DriverStanding, ConstructorStanding, Race, WeatherForecast } from "@/lib/types";
 import { Suspense } from "react";
+import { QueryClient, HydrationBoundary, dehydrate } from "@tanstack/react-query";
 import StandingsTables from "@/components/standings/StandingsTables";
 import NextRaceCard from "@/components/next-race/NextRaceCard";
 import { getDriverStandings, getConstructorStandings, getNextRace } from "@/lib/api/jolpica";
@@ -24,42 +25,50 @@ export default async function HomePage() {
   const initialConstructors: ConstructorStanding[] = extractFulfilled(constructorsResult, []);
   const initialRace: Race | null = extractFulfilled<Race | null>(raceResult, null);
 
-  return (
-    <div className="grid grid-cols-1 xl:grid-cols-[1fr_340px] gap-6">
-      {/* Left column — standings */}
-      <section>
-        <h1 className="text-2xl font-bold mb-4">Championship Standings</h1>
-        <StandingsTables
-          initialData={{ drivers: initialDrivers, constructors: initialConstructors }}
-        />
-      </section>
+  const queryClient = new QueryClient();
+  queryClient.setQueryData(["standings", "current"], {
+    drivers: initialDrivers,
+    constructors: initialConstructors,
+  });
 
-      {/* Right column — next race + quick links (shown first on mobile) */}
-      <aside className="space-y-6 order-first xl:order-last">
-        <div>
-            <h2 className="text-base font-semibold text-muted-foreground mb-3">Next Race</h2>
-            <Suspense fallback={<div className="h-64 bg-surface-2 border border-border rounded-xl animate-pulse" />}>
-              <NextRaceSection initialRace={initialRace} />
-            </Suspense>
+  return (
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <div className="grid grid-cols-1 xl:grid-cols-[1fr_340px] gap-6">
+        {/* Left column — standings */}
+        <section>
+          <h1 className="text-2xl font-bold mb-4">Championship Standings</h1>
+          <StandingsTables
+            initialData={{ drivers: initialDrivers, constructors: initialConstructors }}
+          />
+        </section>
+
+        {/* Right column — next race + quick links (shown first on mobile) */}
+        <aside className="space-y-6 order-first xl:order-last">
+          <div>
+              <h2 className="text-base font-semibold text-muted-foreground mb-3">Next Race</h2>
+              <Suspense fallback={<div className="h-64 bg-surface-2 border border-border rounded-xl animate-pulse" />}>
+                <NextRaceSection initialRace={initialRace} />
+              </Suspense>
+            </div>
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              { href: "/schedule", label: "Calendar", sub: "Full 2026 schedule" },
+              { href: "/projections", label: "Projections", sub: "Monte Carlo sim" },
+              { href: "/news", label: "News", sub: "Latest F1 news" },
+            ].map(({ href, label, sub }) => (
+              <a
+                key={href}
+                href={href}
+                className="block bg-surface-2 border border-border hover:bg-accent rounded-lg p-3 transition-colors"
+              >
+                <p className="text-sm font-semibold">{label}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>
+              </a>
+            ))}
           </div>
-        <div className="grid grid-cols-2 gap-3">
-          {[
-            { href: "/schedule", label: "Calendar", sub: "Full 2026 schedule" },
-            { href: "/projections", label: "Projections", sub: "Monte Carlo sim" },
-            { href: "/news", label: "News", sub: "Latest F1 news" },
-          ].map(({ href, label, sub }) => (
-            <a
-              key={href}
-              href={href}
-              className="block bg-surface-2 border border-border hover:bg-accent rounded-lg p-3 transition-colors"
-            >
-              <p className="text-sm font-semibold">{label}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>
-            </a>
-          ))}
-        </div>
-      </aside>
-    </div>
+        </aside>
+      </div>
+    </HydrationBoundary>
   );
 }
 

@@ -50,6 +50,7 @@ export default function Navbar() {
               alt="Formula 1"
               width={80}
               height={20}
+              priority
               className="h-5 w-auto"
               style={{ filter: "var(--f1-logo-filter)" }}
             />
@@ -91,6 +92,7 @@ export default function Navbar() {
             alt="Formula 1"
             width={64}
             height={16}
+            priority
             className="h-4 w-auto"
             style={{ filter: "var(--f1-logo-filter)" }}
           />

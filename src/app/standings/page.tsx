@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { QueryClient, HydrationBoundary, dehydrate } from "@tanstack/react-query";
 import type { DriverStanding, ConstructorStanding } from "@/lib/types";
 import StandingsTables from "@/components/standings/StandingsTables";
 import SeasonPicker from "@/components/ui/SeasonPicker";
@@ -28,18 +29,26 @@ export default async function StandingsPage({
   const initialDrivers: DriverStanding[] = extractFulfilled(driversResult, []);
   const initialConstructors: ConstructorStanding[] = extractFulfilled(constructorsResult, []);
 
+  const queryClient = new QueryClient();
+  queryClient.setQueryData(["standings", season], {
+    drivers: initialDrivers,
+    constructors: initialConstructors,
+  });
+
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">{seasonLabel(season)} Standings</h1>
-        <Suspense>
-          <SeasonPicker current={season} />
-        </Suspense>
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <div>
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-bold">{seasonLabel(season)} Standings</h1>
+          <Suspense>
+            <SeasonPicker current={season} />
+          </Suspense>
+        </div>
+        <StandingsTables
+          season={season}
+          initialData={{ drivers: initialDrivers, constructors: initialConstructors }}
+        />
       </div>
-      <StandingsTables
-        season={season}
-        initialData={{ drivers: initialDrivers, constructors: initialConstructors }}
-      />
-    </div>
+    </HydrationBoundary>
   );
 }

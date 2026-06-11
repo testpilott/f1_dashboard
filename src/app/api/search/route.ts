@@ -1,5 +1,4 @@
-import { NextResponse } from "next/server";
-import { badRequest } from "@/lib/api/routeHelpers";
+import { badRequest, cachedJson } from "@/lib/api/routeHelpers";
 import { extractFulfilled } from "@/lib/api/promiseHelpers";
 import { rateLimited } from "@/lib/api/withRateLimit";
 import { VALID_SEARCH_QUERY } from "@/lib/validators";
@@ -61,5 +60,5 @@ export async function GET(req: Request) {
   };
 
   const results: SearchResult[] = search(index, q, 12);
-  return NextResponse.json({ q, results });
+  return cachedJson({ q, results }, "raceSchedule");
 }

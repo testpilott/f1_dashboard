@@ -6,6 +6,8 @@ import { readSnapshotOrFetch } from "@/lib/snapshots/readSnapshotOrFetch";
 import type { StandingsSnapshot } from "@/lib/snapshots/types";
 
 export const revalidate = 300; // 5 minutes
+// Snapshot-backed: uses fs.readFile in readSnapshotOrFetch, so this route stays on Node.
+export const preferredRegion = "iad1";
 
 export async function GET(req: Request) {
   const blocked = rateLimited(req, "standings");

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSchedule } from "@/lib/api/jolpica";
-import { badRequest, serverError } from "@/lib/api/routeHelpers";
+import { badRequest, serverError, cachedJson } from "@/lib/api/routeHelpers";
 import {
   getSessions,
   getLaps,
@@ -72,13 +72,13 @@ export async function GET(req: Request) {
 
     const matched = sessions.find((s) => s.session_key === sessionKey);
 
-    return NextResponse.json({
+    return cachedJson({
       available: result.length > 0,
       race: race.raceName,
       sessionKey,
       sessionName: matched?.session_name ?? "Race",
       drivers: result,
-    });
+    }, "liveTelemetry");
   } catch (err) {
     return serverError("telemetry", err);
   }

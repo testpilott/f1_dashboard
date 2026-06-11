@@ -11,5 +11,6 @@ export async function GET(req: Request) {
     allowLatest: false,
     fetcher: (key) => getTrackWeather(key as number),
     responseKey: "weather",
+    dataClass: "weather",
   });
 }

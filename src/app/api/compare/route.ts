@@ -21,6 +21,8 @@ import {
 } from "@/app/api/compare/_views";
 
 export const revalidate = 300; // 5 min
+// Snapshot-backed: uses fs.readFile in readSnapshotOrFetch, so this route stays on Node.
+export const preferredRegion = "iad1";
 
 const getCircuitHistoryCached = unstable_cache(
   async (driverA: string, driverB: string, circuitId: string): Promise<CircuitHistoryRow[]> => {

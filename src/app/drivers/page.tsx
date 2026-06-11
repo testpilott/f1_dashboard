@@ -63,7 +63,7 @@ function DriversPageInner() {
             </div>
           )}
 
-          {displayDrivers.map((d) => {
+          {displayDrivers.map((d, idx) => {
             const team = d.Constructors[0]?.name ?? "Unknown";
             const color = getTeamColor(team);
             const pos = parseInt(d.position, 10);
@@ -87,7 +87,7 @@ function DriversPageInner() {
                     <div className="text-2xl sm:text-3xl font-black text-muted-foreground/40 w-7 sm:w-8 text-center tabular-nums shrink-0">
                       {pos}
                     </div>
-                    <DriverHeadshot driver={d} photos={photos ?? []} size={84} />
+                    <DriverHeadshot driver={d} photos={photos ?? []} size={84} priority={idx < 4} />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-0.5">
                         <span className="font-mono text-xs font-bold" style={{ color }}>

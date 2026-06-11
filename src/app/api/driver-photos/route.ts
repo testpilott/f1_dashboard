@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { unstable_cache } from "next/cache";
-import { logRouteError } from "@/lib/api/routeHelpers";
+import { cachedJson, logRouteError } from "@/lib/api/routeHelpers";
 import { rateLimited } from "@/lib/api/withRateLimit";
 import { getDriversForSession } from "@/lib/api/openf1";
 import type { OpenF1Driver } from "@/lib/types";
@@ -42,14 +42,14 @@ export async function GET(req: Request) {
 
     if (photos.length > 0) {
       lastKnownGoodPhotos = photos;
-      return NextResponse.json({ photos });
+      return cachedJson({ photos }, "driverProfile");
     }
 
     if (lastKnownGoodPhotos.length > 0) {
-      return NextResponse.json({ photos: lastKnownGoodPhotos });
+      return cachedJson({ photos: lastKnownGoodPhotos }, "driverProfile");
     }
 
-    return NextResponse.json({ photos });
+    return cachedJson({ photos }, "driverProfile");
   } catch (err) {
     // Intentional graceful degradation: photos are decorative — when the OpenF1
     // call fails we still want pages to render, falling back to team logos.

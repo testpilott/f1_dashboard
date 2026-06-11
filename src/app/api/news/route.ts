@@ -1,6 +1,5 @@
-import { NextResponse } from "next/server";
 import { fetchNewsFeeds } from "@/lib/api/rss";
-import { serverError } from "@/lib/api/routeHelpers";
+import { serverError, cachedJson } from "@/lib/api/routeHelpers";
 import { rateLimited } from "@/lib/api/withRateLimit";
 
 export const revalidate = 900; // 15 minutes
@@ -24,7 +23,7 @@ export async function GET(req: Request) {
           item.contentSnippet?.toLowerCase().includes(filter)
       );
     }
-    return NextResponse.json({ items: items.slice(0, 50) });
+    return cachedJson({ items: items.slice(0, 50) }, "newsFeed");
   } catch (err) {
     return serverError("news", err);
   }

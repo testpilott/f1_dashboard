@@ -1,6 +1,5 @@
-import { NextResponse } from "next/server";
 import { getSchedule, getRaceResults } from "@/lib/api/jolpica";
-import { badRequest, serverError } from "@/lib/api/routeHelpers";
+import { badRequest, serverError, cachedJson } from "@/lib/api/routeHelpers";
 import { rateLimited } from "@/lib/api/withRateLimit";
 import { VALID_SEASON } from "@/lib/validators";
 import { calculateDriverForm, type DriverForm } from "@/lib/stats/form";
@@ -56,7 +55,7 @@ export async function GET(req: Request) {
       form[id] = calculateDriverForm(races, id, WINDOW);
     }
 
-    return NextResponse.json({ season, window: WINDOW, form });
+    return cachedJson({ season, window: WINDOW, form }, "recentForm");
   } catch (err) {
     return serverError("form", err);
   }

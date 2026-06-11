@@ -1,5 +1,4 @@
-import { NextResponse } from "next/server";
-import { badRequest, gracefulDegradation } from "@/lib/api/routeHelpers";
+import { badRequest, gracefulDegradation, cachedJson } from "@/lib/api/routeHelpers";
 import { rateLimited } from "@/lib/api/withRateLimit";
 import { VALID_YEAR, VALID_ROUND } from "@/lib/validators";
 import { getSchedule } from "@/lib/api/jolpica";
@@ -63,7 +62,7 @@ export async function GET(req: Request) {
       length: typeof c.length === "number" ? c.length : 0,
     }));
 
-    return NextResponse.json({
+    return cachedJson({
       available: true,
       circuitName: race.Circuit.circuitName,
       country: race.Circuit.Location.country,
@@ -73,7 +72,7 @@ export async function GET(req: Request) {
       trackY: ensureArray<number>(info.y),
       trackPositionTime: ensureArray<number>(info.trackPositionTime),
       rotation: typeof info.rotation === "number" ? info.rotation : 0,
-    });
+    }, "circuitMeta");
   } catch (err) {
     return gracefulDegradation(
       "circuit-info",

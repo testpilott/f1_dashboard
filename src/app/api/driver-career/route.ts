@@ -18,6 +18,8 @@ import { readSnapshotOrFetch } from "@/lib/snapshots/readSnapshotOrFetch";
 import type { DriverCareerSnapshot } from "@/lib/snapshots/types";
 
 export const revalidate = 604800;
+// Snapshot-backed: uses fs.readFile in readSnapshotOrFetch, so this route stays on Node.
+export const preferredRegion = "iad1";
 
 async function computeCareerStrict(driverId: string) {
   // Use Promise.all (NOT allSettled) so that any individual upstream failure

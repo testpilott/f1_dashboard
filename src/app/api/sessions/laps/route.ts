@@ -11,5 +11,6 @@ export async function GET(req: Request) {
     allowLatest: false,
     fetcher: (key) => getLaps(key as number),
     responseKey: "laps",
+    dataClass: "liveTelemetry",
   });
 }

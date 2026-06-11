@@ -50,7 +50,6 @@ export function useDriverDetails(selectedDriverId: string | null, season: string
     queryKey: ["driver-photos"],
     queryFn: fetchDriverPhotos,
     staleTime: DRIVER_PHOTOS_STALE_MS,
-    refetchOnMount: "always",
   });
 
   const selectedDriver = standings?.find((d) => d.Driver.driverId === selectedDriverId) ?? null;

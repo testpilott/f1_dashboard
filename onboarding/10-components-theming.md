@@ -89,6 +89,13 @@ This rule applies to:
 Why: theme changes (dark/light, team paint schemes) must work by changing CSS
 variables alone, with zero JSX edits.
 
+## Chart loading
+
+Race charts that pull Nivo (`LapChart`, `LapTimeFallbackChart`) should be
+imported in their parent via `next/dynamic` with an explicit skeleton fallback.
+Keep `ssr: false` and match skeleton height to the loaded chart container to
+avoid CLS on mobile.
+
 ## Chart theming
 
 [src/lib/charts/theme.ts](../src/lib/charts/theme.ts) exports a Nivo theme bound
@@ -129,6 +136,14 @@ pattern: try OpenF1, fall back to a static placeholder.
 The home of inputs is [src/components/ui/](../src/components/ui/) — shadcn
 primitives. Use `<Button>`, `<Card>`, `<Skeleton>`, `<Tooltip>`,
 `<SeasonPicker>` rather than rolling your own.
+
+## Reduced motion
+
+Global reduced-motion support is implemented in
+[src/app/globals.css](../src/app/globals.css) via
+`@media (prefers-reduced-motion: reduce)`. Keep this as a system-level override
+for animation and transition timing so OS accessibility settings are respected
+consistently.
 
 ## Accessibility checklist
 

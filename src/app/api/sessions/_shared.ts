@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
-import { badRequest, serverError } from "@/lib/api/routeHelpers";
+import { badRequest, serverError, cachedJson } from "@/lib/api/routeHelpers";
+import type { DataClass } from "@/lib/cacheStrategy";
 import { rateLimited } from "@/lib/api/withRateLimit";
 import { VALID_SESSION_KEY } from "@/lib/validators";
 
@@ -19,12 +19,14 @@ export async function handleSessionKeyedEndpoint<T>({
   allowLatest,
   fetcher,
   responseKey,
+  dataClass,
 }: {
   req: Request;
   routeKey: string;
   allowLatest: boolean;
   fetcher: (key: number | "latest") => Promise<T>;
   responseKey: string;
+  dataClass: DataClass;
 }): Promise<Response> {
   const blocked = rateLimited(req, routeKey);
   if (blocked) return blocked;
@@ -46,7 +48,7 @@ export async function handleSessionKeyedEndpoint<T>({
 
   try {
     const data = await fetcher(key as number | "latest");
-    return NextResponse.json({ [responseKey]: data });
+    return cachedJson({ [responseKey]: data }, dataClass);
   } catch (err) {
     return serverError(routeKey, err);
   }

@@ -11,5 +11,6 @@ export async function GET(req: Request) {
     allowLatest: false,
     fetcher: (key) => getRaceControl(key as number),
     responseKey: "raceControl",
+    dataClass: "liveIncidents",
   });
 }

@@ -1,5 +1,4 @@
-import { NextResponse } from "next/server";
-import { badRequest, serverError } from "@/lib/api/routeHelpers";
+import { badRequest, serverError, cachedJson } from "@/lib/api/routeHelpers";
 import { rateLimited } from "@/lib/api/withRateLimit";
 import { VALID_YEAR, VALID_ROUND } from "@/lib/validators";
 import { getRaceLaps, getRacePitstops } from "@/lib/api/jolpica";
@@ -37,7 +36,7 @@ export async function GET(req: Request) {
     const series = buildLapSeries(laps, driverIds);
     const markers = mapPitstops(pitstops, driverIds);
 
-    return NextResponse.json({ year, round, series, pitstops: markers });
+    return cachedJson({ year, round, series, pitstops: markers }, "historicalResults");
   } catch (err) {
     return serverError("race-laps", err);
   }

@@ -17,10 +17,12 @@ export default function DriverHeadshot({
   driver,
   photos,
   size = 24,
+  priority = false,
 }: {
   driver: DriverStanding;
   photos: DriverPhotoEntry[];
   size?: number;
+  priority?: boolean;
 }) {
   const [errored, setErrored] = useState(false);
   const team = driver.Constructors[0]?.name ?? "Unknown";
@@ -40,8 +42,9 @@ export default function DriverHeadshot({
       width={size}
       height={size}
       className="rounded-full object-cover shrink-0"
+      sizes="(max-width: 640px) 80px, 120px"
+      priority={priority}
       onError={() => setErrored(true)}
-      unoptimized
     />
   );
 }

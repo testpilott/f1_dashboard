@@ -11,5 +11,6 @@ export async function GET(req: Request) {
     allowLatest: false,
     fetcher: (key) => getStints(key as number),
     responseKey: "stints",
+    dataClass: "liveTelemetry",
   });
 }

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { badRequest, serverError } from "@/lib/api/routeHelpers";
+import { badRequest, serverError, cachedJson } from "@/lib/api/routeHelpers";
 import { rateLimited } from "@/lib/api/withRateLimit";
 import { VALID_YEAR, VALID_ROUND } from "@/lib/validators";
 import { getSchedule } from "@/lib/api/jolpica";
@@ -85,12 +85,12 @@ export async function GET(req: Request) {
       };
     });
 
-    return NextResponse.json({
+    return cachedJson({
       available: true,
       sessionKey,
       sessionName: matched?.session_name ?? "Race",
       items,
-    });
+    }, "liveResults");
   } catch (err) {
     return serverError("team-radio", err);
   }

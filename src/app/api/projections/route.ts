@@ -1,5 +1,4 @@
-import { NextResponse } from "next/server";
-import { badRequest, serverError } from "@/lib/api/routeHelpers";
+import { badRequest, serverError, cachedJson } from "@/lib/api/routeHelpers";
 import { rateLimited } from "@/lib/api/withRateLimit";
 import { VALID_SEASON } from "@/lib/validators";
 import { getCachedProjections } from "@/lib/projections/snapshot";
@@ -40,7 +39,7 @@ export async function GET(req: Request) {
 
   try {
     const projections = await getCachedProjections(season);
-    return NextResponse.json(projections);
+    return cachedJson(projections, "projectionCompute");
   } catch (err) {
     return serverError("projections", err);
   }

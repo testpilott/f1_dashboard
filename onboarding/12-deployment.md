@@ -67,6 +67,11 @@ A few build-time invariants you'll trip over:
 | Don't import client-only modules into server components without `dynamic({ ssr:false })` | Build error |
 | `next/image` `remotePatterns` must list every host you load images from | Otherwise images 404 |
 
+Snapshot-backed API routes pin `preferredRegion` using literal segment exports
+(for example `"iad1"`) while staying on Node runtime. Do not switch these
+routes to Edge runtime while they depend on filesystem snapshot reads via
+`readSnapshotOrFetch`.
+
 Run `npm run build` locally **before** pushing whenever you touch:
 
 - `src/app/**`

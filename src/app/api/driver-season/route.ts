@@ -8,6 +8,8 @@ import { currentEtWeekBucket, WEEKLY_CACHE_REVALIDATE_SECONDS } from "@/lib/time
 import { readSnapshotOrFetch } from "@/lib/snapshots/readSnapshotOrFetch";
 
 export const revalidate = 604800;
+// Snapshot-backed: uses fs.readFile in readSnapshotOrFetch, so this route stays on Node.
+export const preferredRegion = "iad1";
 
 const getCachedDriverSeason = unstable_cache(
   async (season: string, driverId: string, _unusedWeekBucket: string) => {

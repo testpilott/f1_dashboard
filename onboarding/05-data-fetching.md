@@ -151,9 +151,10 @@ new QueryClient({
     queries: {
       staleTime: 2 * 60 * 1000,     // 2 min
       gcTime: 10 * 60 * 1000,       // 10 min
-      retry: 1,
+      retry: 2,
+      retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 10000),
       refetchOnWindowFocus: false,
-      refetchOnReconnect: "always",
+      refetchOnReconnect: false,
     },
   },
 });
@@ -173,6 +174,11 @@ const { data } = useQuery({
 For long-lived static-ish data, push `staleTime` up to an hour or more (driver
 profiles, schedule).
 
+`refetchOnReconnect` is intentionally disabled globally. Mobile users can hop
+between towers/Wi-Fi frequently, and reconnect-triggered refetch bursts add
+latency and bandwidth cost without improving perceived freshness for this app's
+cache tiers.
+
 When a page owns several related queries, extract them to a dedicated hook so
 the page can focus on rendering. Example:
 `src/hooks/useDriverDetails.ts` centralizes the drivers-page standings, photos,
@@ -181,6 +187,25 @@ news, season, career, and wikidata queries and returns typed slices.
 Additional hook extraction examples:
 - `src/hooks/useDriverComparison.ts` for compare-page standings/schedule/season/circuit queries
 - `src/hooks/useCircuitData.ts` for circuit-info + race-incidents query pairing
+
+## Server hydration pattern
+
+When a server page already prefetches data, seed the React Query cache on the
+server and wrap the client island in `HydrationBoundary` so first paint can read
+from dehydrated cache without an extra round-trip.
+
+```ts
+const queryClient = new QueryClient();
+queryClient.setQueryData(["standings", season], { drivers, constructors });
+
+return (
+  <HydrationBoundary state={dehydrate(queryClient)}>
+    <StandingsTables season={season} />
+  </HydrationBoundary>
+);
+```
+
+Always keep query keys byte-for-byte aligned with the client `useQuery` keys.
 
 ## When upstream is wholly unavailable
 

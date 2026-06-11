@@ -1,6 +1,5 @@
-import { NextResponse } from "next/server";
 import { getSessions } from "@/lib/api/openf1";
-import { badRequest, serverError } from "@/lib/api/routeHelpers";
+import { badRequest, serverError, cachedJson } from "@/lib/api/routeHelpers";
 import { rateLimited } from "@/lib/api/withRateLimit";
 import { VALID_YEAR, VALID_MEETING_KEY } from "@/lib/validators";
 
@@ -28,7 +27,7 @@ export async function GET(req: Request) {
     if (meetingKey) params.meeting_key = meetingKey;
     if (!year && !meetingKey) params.meeting_key = "latest";
     const sessions = await getSessions(params);
-    return NextResponse.json({ sessions });
+    return cachedJson({ sessions }, "seasonSchedule");
   } catch (err) {
     return serverError("sessions-info", err);
   }

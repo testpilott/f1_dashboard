@@ -139,7 +139,7 @@ export default function NextRaceCard({
             className="block rounded-md border border-border bg-surface-3/40 py-2 flex justify-center hover:border-primary/60 hover:bg-surface-3/70 transition-colors cursor-pointer"
             title="View circuit map"
           >
-            <CircuitThumb url={circuitImgUrl} country={country} size={132} />
+            <CircuitThumb url={circuitImgUrl} country={country} size={132} priority />
           </Link>
         </div>
       )}

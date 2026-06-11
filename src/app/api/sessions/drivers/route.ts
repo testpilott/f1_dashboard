@@ -11,5 +11,6 @@ export async function GET(req: Request) {
     allowLatest: true,
     fetcher: (key) => getDriversForSession(key),
     responseKey: "drivers",
+    dataClass: "teams",
   });
 }

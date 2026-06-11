@@ -7,6 +7,8 @@ import { readSnapshotOrFetch } from "@/lib/snapshots/readSnapshotOrFetch";
 import type { CircuitRecordsSnapshot } from "@/lib/snapshots/types";
 
 export const revalidate = 21600;
+// Snapshot-backed: uses fs.readFile in readSnapshotOrFetch, so this route stays on Node.
+export const preferredRegion = "iad1";
 
 export async function GET(req: Request) {
   const blocked = rateLimited(req, "circuit-records");

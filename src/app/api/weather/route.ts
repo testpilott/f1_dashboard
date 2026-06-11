@@ -1,7 +1,6 @@
-import { NextResponse } from "next/server";
 import { getWeatherForecast } from "@/lib/api/openmeteo";
 import { CIRCUIT_COORDS } from "@/lib/constants";
-import { badRequest, serverError } from "@/lib/api/routeHelpers";
+import { badRequest, serverError, cachedJson } from "@/lib/api/routeHelpers";
 import { rateLimited } from "@/lib/api/withRateLimit";
 
 export const revalidate = 3600; // 1 hour
@@ -41,7 +40,7 @@ export async function GET(req: Request) {
 
   try {
     const forecast = await getWeatherForecast(latitude, longitude, timezone);
-    return NextResponse.json(forecast);
+    return cachedJson(forecast, "weather");
   } catch (err) {
     return serverError("weather", err);
   }

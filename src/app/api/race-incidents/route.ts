@@ -1,5 +1,4 @@
-import { NextResponse } from "next/server";
-import { badRequest, gracefulDegradation, serverError } from "@/lib/api/routeHelpers";
+import { badRequest, gracefulDegradation, serverError, cachedJson } from "@/lib/api/routeHelpers";
 import { rateLimited } from "@/lib/api/withRateLimit";
 import { VALID_YEAR, VALID_ROUND } from "@/lib/validators";
 import { getSchedule } from "@/lib/api/jolpica";
@@ -38,7 +37,7 @@ export async function GET(req: Request) {
       return gracefulDegradation("race-incidents", result.reason);
     }
 
-    return NextResponse.json({ available: true, incidents: result.incidents });
+    return cachedJson({ available: true, incidents: result.incidents }, "liveIncidents");
   } catch (err) {
     return serverError("race-incidents", err);
   }
