@@ -21,6 +21,9 @@ export const SEASON_OPTIONS: string[] = Array.from(
   (_, i) => String(CURRENT_YEAR - i)
 ); // ["2026", "2025", ..., "1950"]
 
+/** The seasons offered by SeasonPicker (most recent 6 only). */
+export const RECENT_SEASONS: string[] = SEASON_OPTIONS.slice(0, 6);
+
 /** True for "current" or any 4-digit year in the valid range. */
 export function isValidSeasonParam(value: string): boolean {
   if (value === "current") return true;

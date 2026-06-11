@@ -6,8 +6,8 @@ a single `route.ts` file that follows the same skeleton:
 1. `rateLimited(req, routeKey)` — bail if over the window
 2. Validate every input via [validators.ts](../src/lib/validators.ts)
 3. Call an `src/lib/api/*` fetcher (which calls `createApiFetcher`)
-4. Return `NextResponse.json(...)` with a `Cache-Control` header, or
-   `badRequest()` / `serverError()` from
+4. Return `cachedJson(...)` with a DataClass-backed `Cache-Control` header, or
+  `badRequest()` / `serverError()` / `gracefulDegradation()` from
    [routeHelpers.ts](../src/lib/api/routeHelpers.ts)
 
 The complete inventory:
@@ -25,18 +25,28 @@ The complete inventory:
 | `/api/driver-career` | [driver-career/](../src/app/api/driver-career/) | Jolpica | `careerStats` | Career totals |
 | `/api/driver-season` | [driver-season/](../src/app/api/driver-season/) | Jolpica | `careerStats` | Per-season splits |
 | `/api/driver-photos` | [driver-photos/](../src/app/api/driver-photos/) | OpenF1 + cache | `driverProfile` | Module-scoped `lastKnownGood` fallback |
-| `/api/form` | [form/](../src/app/api/form/) | Jolpica | `form` (legacy) | Last-N form chip data |
+| `/api/form` | [form/](../src/app/api/form/) | Jolpica | `recentForm` + `historicalResults` + `raceSchedule` | Last-N form chip data |
 | `/api/circuit-info` | [circuit-info/](../src/app/api/circuit-info/) | MultiViewer + Jolpica | `circuitMeta` | Layout + meta |
 | `/api/circuit-records` | [circuit-records/](../src/app/api/circuit-records/) | Jolpica | `circuitRecords` | Pole/lap records |
 | `/api/weather` | [weather/](../src/app/api/weather/) | Open-Meteo | `weather` | Forecast for race weekend |
 | `/api/wikidata` | [wikidata/](../src/app/api/wikidata/) | Wikidata | `socialBio` | 30-day cache |
-| `/api/news` | [news/](../src/app/api/news/) | RSS | `news` | Aggregated feed |
-| `/api/compare` | [compare/](../src/app/api/compare/) | Jolpica | `careerStats` | Head-to-head driver compare |
+| `/api/news` | [news/](../src/app/api/news/) | RSS | `newsFeed` | Aggregated feed |
+| `/api/compare` | [compare/](../src/app/api/compare/) | Jolpica | `careerStats`, `historicalResults`, `liveStandings` | Head-to-head driver compare |
 | `/api/projections` | [projections/](../src/app/api/projections/) | precomputed snapshot | `projectionSnapshot` | Returns `available: false` on cold cache; populated by cron |
 | `/api/search` | [search/](../src/app/api/search/) | local | static | Driver/team/race lookup |
 | `/api/logo` | [logo/](../src/app/api/logo/) | static SVG | static | Team logo passthrough with cache headers |
 
 ## Patterns you'll re-use
+
+### Dispatcher + view handlers
+
+`/api/compare` uses a thin dispatcher in
+[src/app/api/compare/route.ts](../src/app/api/compare/route.ts) and keeps
+view-specific logic in
+[src/app/api/compare/_views.ts](../src/app/api/compare/_views.ts).
+
+Use this pattern when one endpoint supports multiple `view=` modes but must
+keep a stable URL contract.
 
 ### Validation
 
@@ -44,23 +54,23 @@ Every external input goes through a named regex in
 [validators.ts](../src/lib/validators.ts):
 
 ```ts
-import { validateYear, validateRound, validateDriverId } from "@/lib/validators";
+import { VALID_YEAR, VALID_ROUND, VALID_ID } from "@/lib/validators";
 
-if (!validateYear(year)) return badRequest("Invalid year");
-if (!validateRound(round)) return badRequest("Invalid round");
-if (!validateDriverId(id)) return badRequest("Invalid driver id");
+if (!VALID_YEAR.test(year ?? "")) return badRequest("Invalid year");
+if (!VALID_ROUND.test(round ?? "")) return badRequest("Invalid round");
+if (!VALID_ID.test(id ?? "")) return badRequest("Invalid driver id");
 ```
 
 Add new patterns in `validators.ts` (with positive + injection-rejection tests
-in `src/lib/__tests__/validators.test.ts`) before wiring them into routes.
+in `src/app/api/__tests__/validation.test.ts`) before wiring them into routes.
 
 ### Parallel fan-out
 
 ```ts
 const [standings, schedule, lastRace] = await Promise.all([
-  fetchJolpica<...>("currentSeason/driverStandings.json", "liveStandings"),
-  fetchJolpica<...>("currentSeason.json", "seasonSchedule"),
-  fetchJolpica<...>("currentSeason/last/results.json", "liveResults"),
+  getDriverStandings("current"),
+  getSchedule("current"),
+  getLastRace(),
 ]);
 ```
 
@@ -76,12 +86,19 @@ try {
   if (isOptionalUpstream(err)) {
     return NextResponse.json({ available: false, reason: "openf1-unavailable" });
   }
-  return serverError(err, "compare-season");
+  return serverError("compare-season", err);
 }
 ```
 
 A `{ available: false, reason }` response should always carry a 200 status — the
 *upstream* failed, but our route succeeded.
+
+Policy baseline (mirrors `AGENTS.md`): use HTTP 200 + `{ available:false }`
+only for optional enrichment routes with designed empty-states (currently
+`/api/standings`, `/api/circuit-info`, `/api/race-incidents`). Use
+`serverError(...)` for primary-content routes where clients branch on `!res.ok`.
+Do not flip existing routes between these modes without coordinated client
+changes.
 
 ### Cron-protected routes
 

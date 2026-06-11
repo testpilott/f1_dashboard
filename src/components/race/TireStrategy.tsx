@@ -3,19 +3,18 @@
 import { useQuery } from "@tanstack/react-query";
 import type { OpenF1Stint, OpenF1Driver } from "@/lib/types";
 import { TYRE_COLORS } from "@/lib/constants";
+import { fetchJson } from "@/lib/api/clientFetch";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 
 async function fetchStints(sessionKey: number) {
-  const res = await fetch(`/api/sessions/stints?session_key=${sessionKey}`);
-  if (!res.ok) throw new Error("Failed");
-  return res.json().then((d) => (Array.isArray(d.stints) ? d.stints : []) as OpenF1Stint[]);
+  const d = await fetchJson<{ stints?: OpenF1Stint[] }>(`/api/sessions/stints?session_key=${sessionKey}`);
+  return (Array.isArray(d.stints) ? d.stints : []) as OpenF1Stint[];
 }
 
 async function fetchDrivers(sessionKey: number) {
-  const res = await fetch(`/api/sessions/drivers?session_key=${sessionKey}`);
-  if (!res.ok) throw new Error("Failed");
-  return res.json().then((d) => (Array.isArray(d.drivers) ? d.drivers : []) as OpenF1Driver[]);
+  const d = await fetchJson<{ drivers?: OpenF1Driver[] }>(`/api/sessions/drivers?session_key=${sessionKey}`);
+  return (Array.isArray(d.drivers) ? d.drivers : []) as OpenF1Driver[];
 }
 
 export default function TireStrategy({ sessionKey }: { sessionKey: number }) {

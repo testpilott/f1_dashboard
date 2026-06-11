@@ -9,6 +9,7 @@ export default function PositionBadge({
   fastest?: boolean;
   color: string;
 }) {
+    // Not interchangeable with standings/MedalPositionBadge: this badge encodes result status text.
   if (pos === null && status && !["Finished", ""].includes(status)) {
     return <span className="text-xs text-muted-foreground font-mono tabular-nums">{status.slice(0, 3)}</span>;
   }

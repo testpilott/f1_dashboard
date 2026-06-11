@@ -1,4 +1,3 @@
-import { NextResponse } from "next/server";
 import { unstable_cache } from "next/cache";
 import { badRequest, serverError, cachedJson } from "@/lib/api/routeHelpers";
 import { rateLimited } from "@/lib/api/withRateLimit";
@@ -11,7 +10,8 @@ import { readSnapshotOrFetch } from "@/lib/snapshots/readSnapshotOrFetch";
 export const revalidate = 604800;
 
 const getCachedDriverSeason = unstable_cache(
-  async (season: string, driverId: string, _weekBucket: string) => {
+  async (season: string, driverId: string, _unusedWeekBucket: string) => {
+    void _unusedWeekBucket;
     const races = await getSeasonRaceResults(season);
     const summary = driverSeasonSummary(races, driverId);
     return { season, driverId, summary };

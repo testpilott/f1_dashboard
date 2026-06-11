@@ -14,21 +14,21 @@ Source: [src/lib/cacheStrategy.ts](../src/lib/cacheStrategy.ts).
 |---|---|---|---|
 | **live-session** | `liveTelemetry` | 10 s | 5 s |
 | **live-meta** | `liveStandings`, `liveResults`, `liveIncidents` | 5 min | 1 min |
-| **daily** | `weather`, `socialBio`, `news` | 15–60 min | 5–15 min |
+| **daily** | `weather`, `socialBio`, `newsFeed`, `recentForm` | 5–60 min | 1–15 min |
 | **weekly** | `careerStats`, `driverProfile`, `circuitRecords`, `projectionSnapshot` | 7 days | 7 days |
 | **seasonal** | `seasonSchedule`, `teams`, `circuitMeta` | 24 h | 6 h |
 
-(Legacy keys `standings`, `schedule`, `telemetry`, `news`, `results`,
-`projections`, `form` are kept as backwards-compat aliases. New code should
-prefer the five-tier keys.)
+TTL-preserving key names still used across some fetch paths:
+`historicalResults` (1 h / 2 min), `raceSchedule` (1 h / 1 h),
+`sessionTelemetry` (1 min / 30 s), and `projectionCompute` (24 h / 24 h).
 
 ```mermaid
 flowchart TD
     A[fetch needed] --> B{What kind of data?}
     B -->|live position deltas| C[liveTelemetry]
     B -->|standings during a race| D[liveStandings]
-    B -->|forecast / bio / news| E[weather/socialBio/news]
-    B -->|career totals / projections| F[careerStats/projectionSnapshot]
+    B -->|forecast / bio / form| E[weather/socialBio/newsFeed/recentForm]
+    B -->|career totals / weekly projections| F[careerStats/projectionSnapshot]
     B -->|calendar / teams / circuit| G[seasonSchedule/teams/circuitMeta]
     C --> H[adaptiveRevalidate]
     D --> H
@@ -145,5 +145,10 @@ Next: [07 — API Routes Catalog](07-api-routes.md).
 Routes for standings, schedule, career stats, and circuit records read from
 pre-committed JSON snapshots in `data/snapshots/` before ever calling Jolpica.
 GitHub Actions refresh these on a cron schedule.
+
+Snapshot payload contracts are centralized in
+[src/lib/snapshots/types.ts](../src/lib/snapshots/types.ts). Both `tools/`
+writers and route readers import these interfaces so writer/route drift fails
+at compile time.
 
 **Operator reference:** [docs/RUNBOOK_SNAPSHOTS.md](../docs/RUNBOOK_SNAPSHOTS.md)

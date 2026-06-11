@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { unstable_cache } from "next/cache";
-import { badRequest, serverError, cachedJson } from "@/lib/api/routeHelpers";
+import { badRequest, serverError, cachedJson, logRouteError } from "@/lib/api/routeHelpers";
 import { rateLimited } from "@/lib/api/withRateLimit";
 import { VALID_ID } from "@/lib/validators";
 import {
@@ -10,10 +10,12 @@ import {
   getDriverCareerStarts,
   getDriverCareerFastestLaps,
   getDriverCareerChampionships,
+  getDriverSeasons,
 } from "@/lib/api/jolpica";
 import { buildDriverCareerStats } from "@/lib/stats/driverCareer";
 import { currentEtWeekBucket, WEEKLY_CACHE_REVALIDATE_SECONDS } from "@/lib/time/weeklyCache";
 import { readSnapshotOrFetch } from "@/lib/snapshots/readSnapshotOrFetch";
+import type { DriverCareerSnapshot } from "@/lib/snapshots/types";
 
 export const revalidate = 604800;
 
@@ -26,13 +28,14 @@ async function computeCareerStrict(driverId: string) {
   // championships is now resilient internally (floor-backed; never rejects),
   // so the only failure modes here are real Jolpica blips on the five stat
   // endpoints, which is exactly when we WANT to retry rather than cache.
-  const [wins, p2, p3, starts, fastestLaps, championships] = await Promise.all([
+  const [wins, p2, p3, starts, fastestLaps, championships, seasons] = await Promise.all([
     getDriverCareerWins(driverId),
     getDriverCareerP2(driverId),
     getDriverCareerP3(driverId),
     getDriverCareerStarts(driverId),
     getDriverCareerFastestLaps(driverId),
     getDriverCareerChampionships(driverId),
+    getDriverSeasons(driverId),
   ]);
 
   const career = buildDriverCareerStats({
@@ -44,17 +47,18 @@ async function computeCareerStrict(driverId: string) {
     championships,
   });
 
-  return { driverId, career };
+  return { driverId, career, seasons };
 }
 
 async function computeCareerBestEffort(driverId: string) {
-  const [wins, p2, p3, starts, fastestLaps, championships] = await Promise.allSettled([
+  const [wins, p2, p3, starts, fastestLaps, championships, seasons] = await Promise.allSettled([
     getDriverCareerWins(driverId),
     getDriverCareerP2(driverId),
     getDriverCareerP3(driverId),
     getDriverCareerStarts(driverId),
     getDriverCareerFastestLaps(driverId),
     getDriverCareerChampionships(driverId),
+    getDriverSeasons(driverId),
   ]);
 
   const settled = [wins, p2, p3, starts, fastestLaps, championships];
@@ -72,11 +76,16 @@ async function computeCareerBestEffort(driverId: string) {
     championships: championships.status === "fulfilled" ? championships.value : undefined,
   });
 
-  return { driverId, career };
+  return {
+    driverId,
+    career,
+    seasons: seasons.status === "fulfilled" ? seasons.value : [],
+  };
 }
 
 const getCachedDriverCareer = unstable_cache(
-  async (driverId: string, _weekBucket: string) => {
+  async (driverId: string, _unusedWeekBucket: string) => {
+    void _unusedWeekBucket;
     return computeCareerStrict(driverId);
   },
   ["driver-career-v5-weekly"],
@@ -95,7 +104,7 @@ export async function GET(req: Request) {
   }
 
   try {
-    const payload = await readSnapshotOrFetch({
+    const payload = await readSnapshotOrFetch<DriverCareerSnapshot>({
       key: `driver-career-${driverId}`,
       dataClass: "careerStats",
       liveFn: async () => {
@@ -109,18 +118,19 @@ export async function GET(req: Request) {
       },
     });
     return cachedJson(payload, "careerStats");
-  } catch (err) {
-    // Degrade gracefully for transient upstream issues by returning a
-    // best-effort uncached payload instead of an HTTP 500.
-    try {
-      const payload = await computeCareerBestEffort(driverId);
-      return NextResponse.json({
-        ...payload,
-        snapshotAt: new Date().toISOString(),
-        source: "degraded-live",
-      });
-    } catch {
-      return serverError("driver-career", err);
-    }
+  } catch (strictErr) {
+    logRouteError("driver-career", strictErr);
+  }
+
+  // Strict snapshot/live fetch failed — return an uncached best-effort payload.
+  try {
+    const payload = await computeCareerBestEffort(driverId);
+    return NextResponse.json({
+      ...payload,
+      snapshotAt: new Date().toISOString(),
+      source: "degraded-live",
+    });
+  } catch (bestEffortErr) {
+    return serverError("driver-career", bestEffortErr);
   }
 }

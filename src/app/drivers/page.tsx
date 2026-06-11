@@ -1,56 +1,18 @@
 "use client";
 
 import { Fragment, Suspense, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
-import type { DriverStanding, NewsItem } from "@/lib/types";
-import type { WikidataDriverProfile } from "@/lib/types/wikidata";
+import type { DriverStanding } from "@/lib/types";
 import { getTeamColor } from "@/lib/constants";
 import { normalizeSeason, seasonLabel } from "@/lib/season";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import SeasonPicker from "@/components/ui/SeasonPicker";
-import DriverHeadshot, { type DriverPhotoEntry } from "@/components/drivers/DriverHeadshot";
-import DriverDetailPanel, { type DriverSeasonData } from "@/components/drivers/DriverDetailPanel";
+import DriverHeadshot from "@/components/drivers/DriverHeadshot";
+import DriverDetailPanel from "@/components/drivers/DriverDetailPanel";
 import FavoriteStar from "@/components/drivers/FavoriteStar";
 import { useFavorites } from "@/hooks/useFavorites";
-
-const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
-const DRIVER_PHOTOS_STALE_MS = 5 * 60 * 1000;
-
-async function fetchStandings(season: string) {
-  const res = await fetch(`/api/standings?season=${encodeURIComponent(season)}`);
-  if (!res.ok) throw new Error("Failed to load standings");
-  const d = await res.json();
-  return (Array.isArray(d.drivers) ? d.drivers : []) as DriverStanding[];
-}
-
-async function fetchDriverNews(lastName: string): Promise<NewsItem[]> {
-  const res = await fetch(`/api/news?filter=${encodeURIComponent(lastName.toLowerCase())}`);
-  if (!res.ok) return [];
-  const d = await res.json();
-  return Array.isArray(d.items) ? d.items : [];
-}
-
-async function fetchDriverPhotos(): Promise<DriverPhotoEntry[]> {
-  const res = await fetch("/api/driver-photos");
-  if (!res.ok) return [];
-  const d = await res.json();
-  return Array.isArray(d.photos) ? d.photos : [];
-}
-
-async function fetchDriverSeason(driverId: string, season: string): Promise<DriverSeasonData> {
-  const res = await fetch(`/api/driver-season?season=${encodeURIComponent(season)}&driverId=${encodeURIComponent(driverId)}`);
-  if (!res.ok) throw new Error("Failed to load season stats");
-  return res.json() as Promise<DriverSeasonData>;
-}
-
-async function fetchWikidataProfile(wikiUrl: string): Promise<WikidataDriverProfile | null> {
-  if (!wikiUrl) return null;
-  const res = await fetch(`/api/wikidata?wikiUrl=${encodeURIComponent(wikiUrl)}`);
-  if (!res.ok) return null;
-  return res.json() as Promise<WikidataDriverProfile>;
-}
+import { useDriverDetails } from "@/hooks/useDriverDetails";
 
 function DriversPageInner() {
   const searchParams = useSearchParams();
@@ -58,50 +20,21 @@ function DriversPageInner() {
   const [selected, setSelected] = useState<DriverStanding | null>(null);
   const { hydrated, toggle, isFavorite: isFav } = useFavorites();
 
-  const { data: drivers, isLoading, isError, refetch } = useQuery({
-    queryKey: ["driver-standings", season],
-    queryFn: () => fetchStandings(season),
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const { data: photos } = useQuery({
-    queryKey: ["driver-photos"],
-    queryFn: fetchDriverPhotos,
-    staleTime: DRIVER_PHOTOS_STALE_MS,
-    refetchOnMount: "always",
-  });
-
-  const { data: news, isLoading: newsLoading } = useQuery({
-    queryKey: ["driver-news", selected?.Driver.familyName],
-    queryFn: () => fetchDriverNews(selected!.Driver.familyName),
-    enabled: !!selected,
-    staleTime: 15 * 60 * 1000,
-  });
-
-  const { data: seasonStats, isLoading: seasonLoading } = useQuery({
-    queryKey: ["driver-season", season, selected?.Driver.driverId],
-    queryFn: () => fetchDriverSeason(selected!.Driver.driverId, season),
-    enabled: !!selected,
-    staleTime: ONE_WEEK_MS,
-  });
-
-  const { data: careerData, isLoading: careerLoading } = useQuery({
-    queryKey: ["driver-career", selected?.Driver.driverId],
-    queryFn: () =>
-      fetch(`/api/driver-career?driverId=${encodeURIComponent(selected!.Driver.driverId)}`)
-        .then((r) => r.json()) as Promise<{ driverId: string; career: import("@/lib/stats/driverCareer").DriverCareerStats }>,
-    enabled: !!selected,
-    staleTime: ONE_WEEK_MS,
-  });
-
-  const { data: wikidataProfile, isLoading: wikidataLoading } = useQuery({
-    queryKey: ["wikidata-profile", selected?.Driver.driverId],
-    queryFn: () => fetchWikidataProfile(selected!.Driver.url),
-    enabled: !!selected?.Driver.url,
-    staleTime: ONE_WEEK_MS,
-  });
-
-  const displayDrivers = drivers ?? [];
+  const {
+    standings: displayDrivers,
+    photos,
+    isLoading,
+    isError,
+    refetch,
+    news,
+    newsLoading,
+    seasonStats,
+    seasonLoading,
+    career,
+    careerLoading,
+    wikidata,
+    wikidataLoading,
+  } = useDriverDetails(selected?.Driver.driverId ?? null, season);
 
   return (
     <div>
@@ -193,9 +126,9 @@ function DriversPageInner() {
                       newsLoading={newsLoading}
                       seasonStats={seasonStats}
                       seasonLoading={seasonLoading}
-                      careerData={careerData?.career}
+                      careerData={career}
                       careerLoading={careerLoading}
-                      wikidataProfile={wikidataProfile ?? null}
+                      wikidataProfile={wikidata}
                       wikidataLoading={wikidataLoading}
                       onClose={() => setSelected(null)}
                     />
@@ -214,9 +147,9 @@ function DriversPageInner() {
               newsLoading={newsLoading}
               seasonStats={seasonStats}
               seasonLoading={seasonLoading}
-              careerData={careerData?.career}
+              careerData={career}
               careerLoading={careerLoading}
-              wikidataProfile={wikidataProfile ?? null}
+              wikidataProfile={wikidata}
               wikidataLoading={wikidataLoading}
               onClose={() => setSelected(null)}
             />

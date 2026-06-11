@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { normalizeSeason, isValidSeasonParam, seasonLabel, SEASON_OPTIONS } from "@/lib/season";
+import {
+  normalizeSeason,
+  isValidSeasonParam,
+  seasonLabel,
+  SEASON_OPTIONS,
+  RECENT_SEASONS,
+} from "@/lib/season";
 
 describe("normalizeSeason", () => {
   it("returns 'current' for null", () => {
@@ -90,5 +96,15 @@ describe("SEASON_OPTIONS", () => {
 
   it("is sorted descending", () => {
     expect(Number(SEASON_OPTIONS[0])).toBeGreaterThan(Number(SEASON_OPTIONS[1]));
+  });
+});
+
+describe("RECENT_SEASONS", () => {
+  it("contains 6 seasons", () => {
+    expect(RECENT_SEASONS).toHaveLength(6);
+  });
+
+  it("starts at the same season as SEASON_OPTIONS", () => {
+    expect(RECENT_SEASONS[0]).toBe(SEASON_OPTIONS[0]);
   });
 });

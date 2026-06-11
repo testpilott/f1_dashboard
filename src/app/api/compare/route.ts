@@ -1,17 +1,12 @@
-import { NextResponse } from "next/server";
 import { unstable_cache } from "next/cache";
-import { badRequest, serverError, cachedJson } from "@/lib/api/routeHelpers";
+import { badRequest } from "@/lib/api/routeHelpers";
 import {
   getRaceResultsAtCircuit,
   getQualifyingResultsAtCircuit,
-  getSeasonRaceResults,
-  getConstructorStandings,
   getDriverSeasons,
 } from "@/lib/api/jolpica";
 import { rateLimited } from "@/lib/api/withRateLimit";
 import { VALID_ID, VALID_SEASON, VALID_COMPARE_VIEW } from "@/lib/validators";
-import { seasonHeadToHead } from "@/lib/stats/headToHead";
-import { constructorHeadToHead } from "@/lib/stats/constructorH2H";
 import { REVALIDATE_6H } from "@/lib/cacheStrategy";
 import {
   computeComparisonYears,
@@ -19,7 +14,11 @@ import {
   buildCircuitHistoryRow,
   type CircuitHistoryRow,
 } from "@/lib/stats/compareHistory";
-import { readSnapshotOrFetch } from "@/lib/snapshots/readSnapshotOrFetch";
+import {
+  handleCircuitView,
+  handleSeasonView,
+  handleTeamsView,
+} from "@/app/api/compare/_views";
 
 export const revalidate = 300; // 5 min
 
@@ -93,13 +92,11 @@ export async function GET(req: Request) {
     if (!VALID_SEASON.test(season)) {
       return badRequest("Invalid season parameter");
     }
-    try {
-      const races = await getSeasonRaceResults(season);
-      const stats = seasonHeadToHead(races, seasonDriverA, seasonDriverB);
-      return NextResponse.json({ view: "season", season, driverA: seasonDriverA, driverB: seasonDriverB, stats });
-    } catch (err) {
-        return serverError("compare-season", err);
-    }
+    return handleSeasonView({
+      season,
+      driverA: seasonDriverA,
+      driverB: seasonDriverB,
+    });
   }
 
   // ── Constructor head-to-head ───────────────────────────────────────────────
@@ -115,93 +112,11 @@ export async function GET(req: Request) {
     if (!VALID_ID.test(constructorA) || !VALID_ID.test(constructorB)) {
       return badRequest("Invalid constructor identifier");
     }
-    try {
-      type SourceTag = "jolpica" | "snapshot" | "live" | "degraded-live";
-      type StandingsSnapshot = {
-        drivers: unknown[];
-        constructors: { Constructor: { constructorId: string }; position: string; wins: string }[];
-        snapshotAt?: string;
-        source?: SourceTag;
-      };
-      type SeasonResultsSnapshot = {
-        races: { Results?: { position: string; Constructor?: { constructorId: string } }[] }[];
-        snapshotAt?: string;
-        source?: SourceTag;
-      };
-
-      const [standingsPayload, seasonResultsPayload] = await Promise.all([
-        readSnapshotOrFetch<StandingsSnapshot>({
-          key: `standings-${season}`,
-          dataClass: "liveStandings",
-          liveFn: async () => ({
-            drivers: [],
-            constructors: await getConstructorStandings(season),
-            snapshotAt: new Date().toISOString(),
-            source: "live",
-          }),
-        }),
-        readSnapshotOrFetch<SeasonResultsSnapshot>({
-          key: `season-results-${season}`,
-          dataClass: "results",
-          liveFn: async () => ({
-            races: await getSeasonRaceResults(season),
-            snapshotAt: new Date().toISOString(),
-            source: "live",
-          }),
-        }),
-      ]);
-
-      const standings = standingsPayload.constructors;
-      const races = seasonResultsPayload.races;
-      const stats = constructorHeadToHead(races as Parameters<typeof constructorHeadToHead>[0], constructorA, constructorB);
-
-      // Build per-constructor context
-      function buildContext(conId: string) {
-        const standing = standings.find((s) => s.Constructor.constructorId === conId);
-        const allPositions: number[] = [];
-        for (const race of races) {
-          for (const r of race.Results ?? []) {
-            if (r.Constructor?.constructorId === conId) {
-              const pos = parseInt(r.position, 10);
-              if (!isNaN(pos) && pos > 0) allPositions.push(pos);
-            }
-          }
-        }
-        return {
-          position: standing ? parseInt(standing.position, 10) : null,
-          wins: standing ? parseInt(standing.wins, 10) : 0,
-          bestFinish: allPositions.length > 0 ? Math.min(...allPositions) : null,
-          racesEntered: stats[conId === constructorA ? "a" : "b"].racesEntered,
-        };
-      }
-
-      const context = {
-        a: buildContext(constructorA),
-        b: buildContext(constructorB),
-      };
-
-      const source = standingsPayload.source === "live" || seasonResultsPayload.source === "live"
-        ? "live"
-        : standingsPayload.source === "degraded-live" || seasonResultsPayload.source === "degraded-live"
-          ? "degraded-live"
-          : "jolpica";
-
-      return cachedJson(
-        {
-          view: "teams",
-          season,
-          constructorA,
-          constructorB,
-          stats,
-          context,
-          snapshotAt: new Date().toISOString(),
-          source,
-        },
-        "liveStandings"
-      );
-    } catch (err) {
-      return serverError("compare-teams", err);
-    }
+    return handleTeamsView({
+      season,
+      constructorA,
+      constructorB,
+    });
   }
 
   // ── Circuit history (default) ───────────────────────────────────────────────
@@ -212,15 +127,11 @@ export async function GET(req: Request) {
     return badRequest("Invalid circuit identifier");
   }
 
-  try {
-    const circuitDriverA = driverA as string;
-    const circuitDriverB = driverB as string;
-
-    const history = await getCircuitHistoryCached(circuitDriverA, circuitDriverB, circuitId);
-
-    return NextResponse.json({ circuitId, driverA: circuitDriverA, driverB: circuitDriverB, history });
-  } catch (err) {
-    return serverError("compare-circuit", err);
-  }
+  return handleCircuitView({
+    circuitId,
+    driverA: driverA as string,
+    driverB: driverB as string,
+    getCircuitHistory: getCircuitHistoryCached,
+  });
 }
 

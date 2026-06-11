@@ -11,9 +11,11 @@ if (Which tier?) then (live-session)
 elseif (live-meta) then
   :liveStandings / liveResults / liveIncidents;
 elseif (daily) then
-  :weather / socialBio / news;
+  :weather / socialBio / newsFeed / recentForm;
 elseif (weekly) then
   :careerStats / driverProfile /\ncircuitRecords / projectionSnapshot;
+elseif (ttl-preserving) then
+  :historicalResults / raceSchedule /\nsessionTelemetry / projectionCompute;
 else (seasonal)
   :seasonSchedule / teams / circuitMeta;
 endif

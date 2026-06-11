@@ -25,7 +25,7 @@ describe("edgeCacheControl", () => {
   });
 
   it("stale-while-revalidate is 7 days (604800 seconds)", () => {
-    const header = edgeCacheControl("results");
+    const header = edgeCacheControl("historicalResults");
     expect(header).toContain("stale-while-revalidate=604800");
   });
 });

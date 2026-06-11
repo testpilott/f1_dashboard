@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import type { ConstructorH2HResult } from "@/lib/stats/constructorH2H";
 import type { ConstructorStanding } from "@/lib/types";
+import { fetchJson } from "@/lib/api/clientFetch";
 import { getTeamColor } from "@/lib/constants";
 import TeamLogo from "@/components/ui/TeamLogo";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -22,9 +23,8 @@ interface ConstructorContext {
 }
 
 async function fetchConstructorStandings(season: string): Promise<ConstructorStanding[]> {
-  const res = await fetch(`/api/standings?season=${encodeURIComponent(season)}`);
-  if (!res.ok) throw new Error("Failed to load standings");
-  return res.json().then((d) => (Array.isArray(d.constructors) ? d.constructors : []));
+  const d = await fetchJson<{ constructors?: ConstructorStanding[] }>(`/api/standings?season=${encodeURIComponent(season)}`);
+  return Array.isArray(d.constructors) ? d.constructors : [];
 }
 
 async function fetchTeamsCompare(
@@ -32,11 +32,9 @@ async function fetchTeamsCompare(
   cB: string,
   season: string,
 ): Promise<{ stats: ConstructorH2HResult; context: { a: ConstructorContext; b: ConstructorContext }; season: string }> {
-  const res = await fetch(
+  return fetchJson<{ stats: ConstructorH2HResult; context: { a: ConstructorContext; b: ConstructorContext }; season: string }>(
     `/api/compare?view=teams&constructorA=${encodeURIComponent(cA)}&constructorB=${encodeURIComponent(cB)}&season=${encodeURIComponent(season)}`,
   );
-  if (!res.ok) throw new Error("Failed to load constructor comparison");
-  return res.json();
 }
 
 export default function TeamsCompareTab() {

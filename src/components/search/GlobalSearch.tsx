@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Search, X, Users, GitCompare, Calendar, Flag } from "lucide-react";
+import { fetchJson } from "@/lib/api/clientFetch";
 import type { SearchResult, SearchResultKind } from "@/lib/search";
 import { cn } from "@/lib/utils";
 
@@ -22,9 +23,7 @@ const KIND_LABEL: Record<SearchResultKind, string> = {
 
 async function fetchResults(q: string): Promise<SearchResult[]> {
   if (q.trim().length < 2) return [];
-  const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
-  if (!res.ok) return [];
-  const d = await res.json();
+  const d = await fetchJson<{ results?: SearchResult[] }>(`/api/search?q=${encodeURIComponent(q)}`);
   return Array.isArray(d.results) ? d.results : [];
 }
 

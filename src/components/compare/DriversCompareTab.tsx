@@ -1,8 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import type { DriverStanding, Race } from "@/lib/types";
 import { getTeamColor } from "@/lib/constants";
 import TeamLogo from "@/components/ui/TeamLogo";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -11,101 +9,30 @@ import { Badge } from "@/components/ui/badge";
 import { circuitHeadToHead, type CircuitComparisonRow } from "@/lib/stats/circuitHeadToHead";
 import StatBar from "@/components/compare/StatBar";
 import PositionBadge from "@/components/compare/PositionBadge";
-
-interface DriverResult {
-  race: {
-    position: number | null;
-    points: number;
-    status: string;
-    fastestLap: string | null;
-    hasFastestLap: boolean;
-  } | null;
-  quali: { position: number | null; bestTime: string | null } | null;
-}
-
-interface CompareData {
-  circuitId: string;
-  history: Array<{ year: number; a: DriverResult; b: DriverResult }>;
-}
-
-interface SeasonStats {
-  raceCompared: number;
-  raceAheadA: number;
-  raceAheadB: number;
-  qualiCompared: number;
-  qualiAheadA: number;
-  qualiAheadB: number;
-  a: { podiums: number; poles: number };
-  b: { podiums: number; poles: number };
-}
-
-async function fetchStandings(): Promise<DriverStanding[]> {
-  const res = await fetch("/api/standings?season=current");
-  if (!res.ok) throw new Error("Failed to load standings");
-  return res.json().then((d) => (Array.isArray(d.drivers) ? d.drivers : []));
-}
-
-async function fetchSchedule(): Promise<Race[]> {
-  const res = await fetch("/api/schedule?season=current");
-  if (!res.ok) throw new Error("Failed to load schedule");
-  return res.json().then((d) => (Array.isArray(d.races) ? d.races : []));
-}
-
-async function fetchCompare(dA: string, dB: string, cId: string): Promise<CompareData> {
-  const res = await fetch(
-    `/api/compare?driverA=${encodeURIComponent(dA)}&driverB=${encodeURIComponent(dB)}&circuitId=${encodeURIComponent(cId)}`,
-  );
-  if (!res.ok) throw new Error("Failed to load comparison");
-  return res.json();
-}
-
-async function fetchSeasonCompare(dA: string, dB: string): Promise<{ stats: SeasonStats }> {
-  const res = await fetch(
-    `/api/compare?view=season&driverA=${encodeURIComponent(dA)}&driverB=${encodeURIComponent(dB)}`,
-  );
-  if (!res.ok) throw new Error("Failed to load season comparison");
-  return res.json();
-}
+import { useDriverComparison } from "@/hooks/useDriverComparison";
 
 export default function DriversCompareTab() {
   const [driverAId, setDriverAId] = useState("");
   const [driverBId, setDriverBId] = useState("");
   const [circuitId, setCircuitId] = useState("");
 
-  const { data: standings, isLoading: standLoading } = useQuery({
-    queryKey: ["compare-standings"],
-    queryFn: fetchStandings,
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const { data: schedule, isLoading: schedLoading } = useQuery({
-    queryKey: ["compare-schedule"],
-    queryFn: fetchSchedule,
-    staleTime: 10 * 60 * 1000,
-  });
-
-  const driverA = standings?.find((d) => d.Driver.driverId === driverAId);
-  const driverB = standings?.find((d) => d.Driver.driverId === driverBId);
-  const bothSelected = Boolean(driverA && driverB);
+  const {
+    standings,
+    standLoading,
+    schedule,
+    schedLoading,
+    driverA,
+    driverB,
+    bothSelected,
+    compareData,
+    compareLoading,
+    compareError,
+    seasonData,
+    selectedCircuit,
+  } = useDriverComparison(driverAId, driverBId, circuitId);
 
   const colorA = getTeamColor(driverA?.Constructors[0]?.name ?? "");
   const colorB = getTeamColor(driverB?.Constructors[0]?.name ?? "");
-
-  const { data: compareData, isLoading: compareLoading, isError: compareError } = useQuery({
-    queryKey: ["circuit-compare", driverAId, driverBId, circuitId],
-    queryFn: () => fetchCompare(driverAId, driverBId, circuitId),
-    enabled: bothSelected && Boolean(circuitId),
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const { data: seasonData } = useQuery({
-    queryKey: ["season-compare", driverAId, driverBId],
-    queryFn: () => fetchSeasonCompare(driverAId, driverBId),
-    enabled: bothSelected,
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const selectedCircuit = schedule?.find((r) => r.Circuit.circuitId === circuitId);
 
   const circuitStats = useMemo(() => {
     const history: CircuitComparisonRow[] = compareData?.history ?? [];

@@ -10,15 +10,17 @@ flowchart TD
 
     Which -- live-session --> T1[liveTelemetry]
     Which -- live-meta --> T2[liveStandings / liveResults / liveIncidents]
-    Which -- daily --> T3[weather / socialBio / news]
+    Which -- daily --> T3[weather / socialBio / newsFeed / recentForm]
     Which -- weekly --> T4[careerStats / driverProfile /<br/>circuitRecords / projectionSnapshot]
     Which -- seasonal --> T5[seasonSchedule / teams / circuitMeta]
+    Which -- ttl-preserving --> T6[historicalResults / raceSchedule /<br/>sessionTelemetry / projectionCompute]
 
     T1 --> Adapt[adaptiveRevalidate dataClass]
     T2 --> Adapt
     T3 --> Adapt
     T4 --> Adapt
     T5 --> Adapt
+    T6 --> Adapt
 
     Adapt --> Weekend{isRaceWeekend now?<br/>Fri/Sat/Sun}
     Weekend -- yes --> TTLA[Race-weekend TTL<br/>tighter, e.g. 5–60s for live tiers]

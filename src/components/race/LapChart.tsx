@@ -3,21 +3,20 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import type { OpenF1Lap, OpenF1Driver } from "@/lib/types";
+import { fetchJson } from "@/lib/api/clientFetch";
 import { getTeamColor } from "@/lib/constants";
 import { nivoTheme } from "@/lib/charts/theme";
 import { ResponsiveLine } from "@nivo/line";
 import { Skeleton } from "@/components/ui/skeleton";
 
 async function fetchLaps(sessionKey: number) {
-  const res = await fetch(`/api/sessions/laps?session_key=${sessionKey}`);
-  if (!res.ok) throw new Error("Failed");
-  return res.json().then((d) => (Array.isArray(d.laps) ? d.laps : []) as OpenF1Lap[]);
+  const d = await fetchJson<{ laps?: OpenF1Lap[] }>(`/api/sessions/laps?session_key=${sessionKey}`);
+  return (Array.isArray(d.laps) ? d.laps : []) as OpenF1Lap[];
 }
 
 async function fetchDrivers(sessionKey: number) {
-  const res = await fetch(`/api/sessions/drivers?session_key=${sessionKey}`);
-  if (!res.ok) throw new Error("Failed");
-  return res.json().then((d) => (Array.isArray(d.drivers) ? d.drivers : []) as OpenF1Driver[]);
+  const d = await fetchJson<{ drivers?: OpenF1Driver[] }>(`/api/sessions/drivers?session_key=${sessionKey}`);
+  return (Array.isArray(d.drivers) ? d.drivers : []) as OpenF1Driver[];
 }
 
 function lapTimeToSeconds(ms: number | null | undefined): number | null {

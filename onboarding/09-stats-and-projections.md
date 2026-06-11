@@ -15,8 +15,8 @@ Folder: `src/lib/stats/`. Each file owns one concept.
 
 | Module | What it computes |
 |---|---|
-| `careerStats.ts` | Wins, podiums, poles, fastest laps, championships |
-| `seasonForm.ts` | Last-N race form chip (W/L/Δ position) |
+| `driverCareer.ts` | Typed career aggregate payload from upstream totals |
+| `form.ts` | Last-N race form chip inputs (avg points, podium ratio, trend) |
 | `headToHead.ts` | Compare two drivers across a season or career |
 | `pace.ts` | Race pace median + spread per stint |
 | `incidents.ts` | Roll up race-control events into per-driver summaries |
@@ -26,8 +26,8 @@ The API routes consume these by:
 
 ```ts
 // /api/driver-career/route.ts (paraphrased)
-const raw = await fetchJolpica(`drivers/${id}/results.json?limit=1000`, "careerStats");
-const stats = computeCareerStats(raw);
+const raw = { wins, p2, p3, starts, fastestLaps, championships };
+const stats = buildDriverCareerStats(raw);
 return NextResponse.json(stats);
 ```
 
@@ -114,14 +114,14 @@ tested — that's how we get away with parsing a free-text feed.
 The biggest payoff of the pure-function discipline is testability:
 
 ```ts
-// src/lib/stats/__tests__/careerStats.test.ts
-it("counts a sprint win as a regular win", () => {
-  const result = computeCareerStats(fixtures.sprintWin);
-  expect(result.wins).toBe(1);
+// src/lib/stats/__tests__/driverCareer.test.ts
+it("sums wins + p2 + p3 into podiums", () => {
+  const result = buildDriverCareerStats({ wins: "1", p2: "2", p3: "3" });
+  expect(result.podiums).toBe(6);
 });
 
-it("treats DSQ as a non-finish", () => {
-  expect(computeCareerStats(fixtures.dsq).finishes).toBe(0);
+it("keeps podiums null if any podium component is missing", () => {
+  expect(buildDriverCareerStats({ wins: "1", p2: "2" }).podiums).toBeNull();
 });
 ```
 

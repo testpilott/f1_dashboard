@@ -60,25 +60,9 @@ export const getCachedProjections = unstable_cache(
   { revalidate: PROJECTIONS_REVALIDATE_SECONDS, tags: [PROJECTIONS_CACHE_TAG] },
 );
 
-// In-memory record of which seasons have been warmed by this lambda instance.
-// Used only by tests + as advisory diagnostic info from the snapshot route.
-// The user-facing /api/projections route does NOT gate on this — it reads
-// directly from `getCachedProjections`, whose backing store is shared across
-// all instances via the Vercel Data Cache.
-const WARMED_SEASONS = new Set<string>();
-
-export function isSnapshotWarmed(season: string): boolean {
-  return WARMED_SEASONS.has(season);
-}
-
-/** Test/dev helper — reset warmed set between tests. */
-export function _resetSnapshotState(): void {
-  WARMED_SEASONS.clear();
-}
-
 /**
  * Cron entry point. Invalidates the previously-cached projection, recomputes,
- * stores the new value via `getCachedProjections`, and marks the season warmed.
+ * and stores the new value via `getCachedProjections`.
  *
  * Returns the freshly computed projection so the cron route can log basic info.
  */
@@ -87,7 +71,5 @@ export async function warmSnapshot(season: string): Promise<ChampionshipProjecti
   // Next.js 16 requires a profile argument; "max" yields stale-while-revalidate
   // semantics on subsequent reads.
   revalidateTag(PROJECTIONS_CACHE_TAG, "max");
-  const projection = await getCachedProjections(season);
-  WARMED_SEASONS.add(season);
-  return projection;
+  return getCachedProjections(season);
 }

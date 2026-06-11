@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { DriverStanding, ConstructorStanding } from "@/lib/types";
+import { fetchJson } from "@/lib/api/clientFetch";
 import {
   Table,
   TableBody,
@@ -16,7 +17,7 @@ import TeamLogo from "@/components/ui/TeamLogo";
 import { getTeamColor } from "@/lib/constants/teams";
 import type { DriverForm } from "@/lib/stats/form";
 import FormChip from "@/components/standings/FormChip";
-import PositionBadge from "@/components/standings/PositionBadge";
+import MedalPositionBadge from "@/components/standings/MedalPositionBadge";
 import StandingsSkeleton from "@/components/standings/StandingsSkeleton";
 import DriverSeasonDialog from "@/components/standings/DriverSeasonDialog";
 
@@ -30,15 +31,11 @@ type StandingsData = {
 // ─── Fetchers ─────────────────────────────────────────────────────────────────
 
 async function fetchStandings(season = "current") {
-  const res = await fetch(`/api/standings?season=${season}`);
-  if (!res.ok) throw new Error("Failed to fetch standings");
-  return res.json() as Promise<StandingsData>;
+  return fetchJson<StandingsData>(`/api/standings?season=${season}`);
 }
 
 async function fetchForm(season = "current") {
-  const res = await fetch(`/api/form?season=${season}`);
-  if (!res.ok) throw new Error("Failed to fetch form");
-  return res.json() as Promise<{ form: Record<string, DriverForm> }>;
+  return fetchJson<{ form: Record<string, DriverForm> }>(`/api/form?season=${season}`);
 }
 
 // ─── Main component ───────────────────────────────────────────────────────────
@@ -124,7 +121,7 @@ export default function StandingsTables({
                         aria-label={`View ${d.Driver.givenName} ${d.Driver.familyName} season stats`}
                       >
                         <TableCell className="py-2.5">
-                          <PositionBadge pos={pos} />
+                          <MedalPositionBadge pos={pos} />
                         </TableCell>
                         <TableCell className="py-2.5">
                           <div className="flex items-center gap-2">
@@ -179,7 +176,7 @@ export default function StandingsTables({
                     return (
                       <TableRow key={c.Constructor.constructorId} className="border-border hover:bg-accent/40">
                         <TableCell className="py-2.5">
-                          <PositionBadge pos={pos} />
+                          <MedalPositionBadge pos={pos} />
                         </TableCell>
                         <TableCell className="py-2.5">
                           <div className="flex items-center gap-2">

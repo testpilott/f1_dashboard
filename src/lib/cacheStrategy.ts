@@ -18,21 +18,17 @@
  *   seasonal      Things that are static for a season or longer
  *                 (calendar, team metadata, circuit geometry).
  *
- * The original DataClass keys ("standings", "schedule", "telemetry",
- * "news", "results", "projections", "form") are kept as backwards-compat
- * aliases — their TTLs are preserved exactly so existing callers do not
- * change behaviour. New code should prefer the five-tier keys.
+ * Legacy keys have been retired. Use the tier-style names below.
  */
 
 export type DataClass =
-  // ── legacy keys (kept for backwards-compat; do not remove without a sweep)
-  | "standings"
-  | "schedule"
-  | "telemetry"
-  | "news"
-  | "results"
-  | "projections"
-  | "form"
+  // ── TTL-preserving replacements for historical key names
+  | "historicalResults"
+  | "raceSchedule"
+  | "sessionTelemetry"
+  | "newsFeed"
+  | "projectionCompute"
+  | "recentForm"
   // ── live-session tier
   | "liveTelemetry"
   // ── live-meta tier
@@ -66,14 +62,13 @@ export const REVALIDATE_24H = 86400;
 export const REVALIDATE_7D = 604800;
 
 const BASE: Record<DataClass, number> = {
-  // legacy keys — preserve current behaviour
-  standings: REVALIDATE_5M,
-  schedule: REVALIDATE_1H,
-  telemetry: REVALIDATE_1M,
-  news: REVALIDATE_15M,
-  results: REVALIDATE_1H,
-  projections: REVALIDATE_24H,
-  form: REVALIDATE_5M,
+  // legacy-equivalent names with preserved TTL behavior
+  historicalResults: REVALIDATE_1H,
+  raceSchedule: REVALIDATE_1H,
+  sessionTelemetry: REVALIDATE_1M,
+  newsFeed: REVALIDATE_15M,
+  projectionCompute: REVALIDATE_24H,
+  recentForm: REVALIDATE_5M,
   // live-session
   liveTelemetry: REVALIDATE_10S,
   // live-meta
@@ -96,14 +91,13 @@ const BASE: Record<DataClass, number> = {
 
 // Race weekends (Fri–Sun): serve fresher data for live-changing fields.
 const RACE_WEEKEND: Record<DataClass, number> = {
-  // legacy keys — preserve current behaviour
-  standings: REVALIDATE_1M,
-  schedule: REVALIDATE_1H, // schedule doesn't change mid-weekend
-  telemetry: REVALIDATE_30S,
-  news: REVALIDATE_5M,
-  results: REVALIDATE_2M,
-  projections: REVALIDATE_24H,
-  form: REVALIDATE_1M,
+  // legacy-equivalent names with preserved TTL behavior
+  historicalResults: REVALIDATE_2M,
+  raceSchedule: REVALIDATE_1H,
+  sessionTelemetry: REVALIDATE_30S,
+  newsFeed: REVALIDATE_5M,
+  projectionCompute: REVALIDATE_24H,
+  recentForm: REVALIDATE_1M,
   // live-session
   liveTelemetry: REVALIDATE_5S,
   // live-meta

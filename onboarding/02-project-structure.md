@@ -27,7 +27,7 @@ src/app/
   schedule/        Race calendar
   race/[year]/[round]/   Race detail
   drivers/         Driver grid + profiles
-  weekend/         Live session view
+  weekend/         Parked route (returns notFound by product decision)
   projections/     Monte Carlo championship forecast
   compare/         Head-to-head
   news/            RSS-aggregated feed
@@ -43,7 +43,7 @@ Organised by feature, not by primitive vs composite.
 |---|---|
 | `layout/` | Navbar, sidebar, mobile nav |
 | `ui/` | shadcn primitives (Button, Card, Skeleton, Tooltip, SeasonPicker) |
-| `standings/` | StandingsTables, FormChip, PositionBadge |
+| `standings/` | StandingsTables, FormChip, MedalPositionBadge |
 | `race/` | RaceDetailClient, CircuitMap, TelemetryPanel |
 | `drivers/` | DriverHeadshot, DriverDetailPanel, FavoriteStar |
 | `schedule/` | CalendarGrid, ScheduleClient, CircuitThumb |
@@ -64,12 +64,16 @@ This is the biggest folder and the most important one. Read it once.
 src/lib/
   api/              HTTP fetchers, one file per upstream
     createApiFetcher.ts        Factory: limiter + retry + timeout
+    jolpicaLimits.ts           Named query-limit constants for Jolpica
     fetchWithTimeout.ts        AbortController-based fetch
     retry.ts                   Bounded retry with jitter
     concurrencyLimiter.ts      Per-service semaphore
     routeHelpers.ts            badRequest / serverError / etc.
+    clientFetch.ts             Browser fetch JSON helper
     withRateLimit.ts           Per-route IP rate limit
     jolpica.ts                 Ergast clone wrapper
+    mrData.ts                  MRData envelope + pagination helpers
+    championshipVerification.ts Championship counting helper
     openf1.ts                  Live session wrapper
     openmeteo.ts               Weather forecast wrapper
     wikidata.ts                Driver bio wrapper (30-day cache)
@@ -82,6 +86,7 @@ src/lib/
   constants/        Teams, circuits, scoring, feeds, nationality
   types/            TypeScript interfaces (jolpica, openf1, domain, …)
   time/             Race-weekend detection, weekly cache bucket
+    format.ts                 Schedule/time formatting helpers
   geometry/         Track coordinate helpers
   hooks/            useIsClient, useNow (SSR-safe state)
   cacheStrategy.ts  5-tier DataClass model + adaptiveRevalidate

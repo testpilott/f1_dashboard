@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { fetchJson } from "@/lib/api/clientFetch";
 import type { StintSummary } from "@/lib/stats/pace";
 import type { LapSeriesPoint, PitstopMarker } from "@/lib/stats/lapAnalysis";
 import LapTimeFallbackChart from "@/components/race/LapTimeFallbackChart";
@@ -31,15 +32,11 @@ interface RaceLapsResponse {
 }
 
 async function fetchTelemetry(year: string, round: string): Promise<TelemetryResponse> {
-  const res = await fetch(`/api/telemetry?year=${year}&round=${round}`);
-  if (!res.ok) throw new Error("Failed to fetch telemetry");
-  return res.json() as Promise<TelemetryResponse>;
+  return fetchJson<TelemetryResponse>(`/api/telemetry?year=${year}&round=${round}`);
 }
 
 async function fetchRaceLaps(year: string, round: string): Promise<RaceLapsResponse> {
-  const res = await fetch(`/api/race-laps?year=${year}&round=${round}`);
-  if (!res.ok) throw new Error("Failed to fetch race laps");
-  return res.json() as Promise<RaceLapsResponse>;
+  return fetchJson<RaceLapsResponse>(`/api/race-laps?year=${year}&round=${round}`);
 }
 
 /** Seconds → "m:ss.mmm" lap-time string. */

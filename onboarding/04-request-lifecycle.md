@@ -99,29 +99,26 @@ Diagram: [Mermaid (renders on GitHub)](diagrams/mermaid/request-lifecycle-api.md
 Authoritative skeleton (copy from [13-recipes.md](13-recipes.md)):
 
 ```ts
-// src/app/api/example/route.ts
-import { NextRequest, NextResponse } from "next/server";
+// app/api/<route>/route.ts
+import { NextRequest } from "next/server";
 import { rateLimited } from "@/lib/api/withRateLimit";
-import { badRequest, serverError } from "@/lib/api/routeHelpers";
-import { validateYear } from "@/lib/validators";
-import { adaptiveRevalidate } from "@/lib/cacheStrategy";
+import { badRequest, cachedJson, serverError } from "@/lib/api/routeHelpers";
+import { VALID_YEAR } from "@/lib/validators";
 
 export const revalidate = 21600; // see cacheStrategy.ts for the literal
 
 export async function GET(req: NextRequest) {
-  const limited = rateLimited(req, "example");
-  if (limited) return limited;
+  const blocked = rateLimited(req, "example");
+  if (blocked) return blocked;
 
   const year = req.nextUrl.searchParams.get("year");
-  if (!validateYear(year)) return badRequest("Invalid year");
+  if (!VALID_YEAR.test(year ?? "")) return badRequest("Invalid year");
 
   try {
     const data = await fetchExample(year!); // wraps createApiFetcher
-    return NextResponse.json(data, {
-      headers: { "Cache-Control": `s-maxage=${adaptiveRevalidate("seasonSchedule")}` },
-    });
+    return cachedJson(data, "seasonSchedule");
   } catch (err) {
-    return serverError(err, "example");
+    return serverError("example", err);
   }
 }
 ```
@@ -131,7 +128,7 @@ Why this order matters:
 - **Rate limit first** so abusive clients never reach the upstream API.
 - **Validate next** so we never forward garbage to Jolpica/OpenF1.
 - **Try / catch with stable identifier** so logs are grep-able
-  (`serverError(err, "compare-season")` not `"/api/compare?year=2025…"`).
+  (`serverError("compare-season", err)` not `"/api/compare?year=2025…"`).
 - **Headers last** so we attach the right `s-maxage` even if it's served from a
   warm cache hit.
 

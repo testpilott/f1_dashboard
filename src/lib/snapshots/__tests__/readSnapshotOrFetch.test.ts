@@ -27,7 +27,7 @@ describe("readSnapshotOrFetch", () => {
     const result = await readSnapshotOrFetch({
       key: "standings-current",
       liveFn,
-      dataClass: "standings",
+      dataClass: "liveStandings",
     });
 
     expect(result).toEqual(snapshot);
@@ -42,7 +42,7 @@ describe("readSnapshotOrFetch", () => {
     const result = await readSnapshotOrFetch({
       key: "standings-current",
       liveFn,
-      dataClass: "standings",
+      dataClass: "liveStandings",
     });
 
     expect(liveFn).toHaveBeenCalledOnce();
@@ -54,7 +54,7 @@ describe("readSnapshotOrFetch", () => {
     const liveFn = vi.fn().mockResolvedValue({ source: "live" });
     const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
 
-    await readSnapshotOrFetch({ key: "standings-current", liveFn, dataClass: "standings" });
+    await readSnapshotOrFetch({ key: "standings-current", liveFn, dataClass: "liveStandings" });
 
     expect(consoleSpy).toHaveBeenCalledWith(
       expect.stringContaining("[snapshot-miss] standings-current"),
@@ -76,7 +76,7 @@ describe("readSnapshotOrFetch", () => {
     const result = await readSnapshotOrFetch({
       key: "standings-current",
       liveFn,
-      dataClass: "standings",
+      dataClass: "liveStandings",
     });
 
     expect(result).toEqual(staleSnapshot);
@@ -90,7 +90,7 @@ describe("readSnapshotOrFetch", () => {
     vi.spyOn(console, "log").mockImplementation(() => {});
 
     await expect(
-      readSnapshotOrFetch({ key: "standings-current", liveFn, dataClass: "standings" }),
+      readSnapshotOrFetch({ key: "standings-current", liveFn, dataClass: "liveStandings" }),
     ).rejects.toThrow("upstream down");
   });
 
@@ -102,7 +102,7 @@ describe("readSnapshotOrFetch", () => {
     const result = await readSnapshotOrFetch({
       key: "schedule-current",
       liveFn,
-      dataClass: "schedule",
+      dataClass: "raceSchedule",
     });
 
     expect(result).toEqual(snapshot);

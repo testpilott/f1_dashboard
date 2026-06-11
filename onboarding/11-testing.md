@@ -29,10 +29,10 @@ Tests are **co-located** with the code they exercise:
 
 | Code | Tests |
 |---|---|
-| `src/lib/stats/seasonForm.ts` | `src/lib/stats/__tests__/seasonForm.test.ts` |
+| `src/lib/stats/form.ts` | `src/lib/stats/__tests__/form.test.ts` |
 | `src/lib/api/createApiFetcher.ts` | `src/lib/api/__tests__/createApiFetcher.test.ts` |
 | `src/app/api/standings/route.ts` | `src/app/api/__tests__/standings.test.ts` |
-| `src/components/drivers/DriverHeadshot.tsx` | `src/components/drivers/__tests__/DriverHeadshot.test.tsx` |
+| `src/components/drivers/DriverDetailPanel.tsx` | `src/components/drivers/__tests__/DriverDetailPanel.test.tsx` |
 
 ## Three patterns
 
@@ -40,19 +40,18 @@ Tests are **co-located** with the code they exercise:
 
 ```ts
 import { describe, expect, it } from "vitest";
-import { computeForm } from "@/lib/stats/seasonForm";
+import { calculateDriverForm } from "@/lib/stats/form";
 
-describe("computeForm", () => {
-  it("returns N=5 finishes for a full season", () => {
-    expect(computeForm(fullSeasonFixture)).toHaveLength(5);
+describe("calculateDriverForm", () => {
+  it("returns neutral shape for empty races", () => {
+    expect(calculateDriverForm([], "max_verstappen")).toMatchObject({
+      races: 0,
+      trend: "flat",
+    });
   });
 
-  it("handles empty results", () => {
-    expect(computeForm([])).toEqual([]);
-  });
-
-  it("rejects malformed dates", () => {
-    expect(() => computeForm(badDateFixture)).not.toThrow();
+  it("returns neutral shape for unknown driver", () => {
+    expect(calculateDriverForm(fullSeasonFixture, "not_present").races).toBe(0);
   });
 });
 ```
@@ -69,8 +68,14 @@ import { describe, expect, it, vi } from "vitest";
 import { GET } from "@/app/api/standings/route";
 import { makeApiRequest } from "@/test/makeApiRequest";
 
+const { mockGetDriverStandings, mockGetConstructorStandings } = vi.hoisted(() => ({
+  mockGetDriverStandings: vi.fn(),
+  mockGetConstructorStandings: vi.fn(),
+}));
+
 vi.mock("@/lib/api/jolpica", () => ({
-  fetchJolpica: vi.fn().mockResolvedValue(fakeStandings),
+  getDriverStandings: mockGetDriverStandings,
+  getConstructorStandings: mockGetConstructorStandings,
 }));
 
 it("400s on invalid year", async () => {
@@ -85,9 +90,9 @@ it("200s with normalized shape", async () => {
 });
 
 it("500s when upstream throws", async () => {
-  vi.mocked(fetchJolpica).mockRejectedValueOnce(new Error("upstream"));
+  mockGetDriverStandings.mockRejectedValueOnce(new Error("upstream"));
   const res = await GET(makeApiRequest("http://x/api/standings?year=2024"));
-  expect(res.status).toBe(500);
+  expect(res.status).toBe(200); // standings route degrades gracefully
 });
 ```
 
@@ -97,13 +102,13 @@ become readable and don't depend on URL/header trivia.
 ### 3) Component test (jsdom)
 
 ```tsx
-// src/components/drivers/__tests__/DriverHeadshot.test.tsx
+// src/components/standings/__tests__/FormChip.test.tsx
 import { render, screen } from "@testing-library/react";
-import { DriverHeadshot } from "@/components/drivers/DriverHeadshot";
+import FormChip from "@/components/standings/FormChip";
 
-it("renders the placeholder when src is missing", () => {
-  render(<DriverHeadshot driverId="HAM" src={null} />);
-  expect(screen.getByRole("img", { name: /Hamilton/i })).toBeInTheDocument();
+it("renders placeholder when form is missing", () => {
+  render(<FormChip form={undefined} />);
+  expect(screen.getByText("—")).toBeInTheDocument();
 });
 ```
 

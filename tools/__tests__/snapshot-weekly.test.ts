@@ -11,36 +11,29 @@ vi.mock("@/lib/snapshots/atomicWriteJson", () => ({
 }));
 
 // Mock Jolpica fetchers
-const {
-  mockGetDriverCareerWins,
-  mockGetDriverCareerP2,
-  mockGetDriverCareerP3,
-  mockGetDriverCareerStarts,
-  mockGetDriverCareerFastestLaps,
-  mockGetDriverCareerChampionships,
-  mockGetDriverSeasons,
-  mockGetAllRaceResultsAtCircuit,
-} = vi.hoisted(() => ({
-  mockGetDriverCareerWins: vi.fn(),
-  mockGetDriverCareerP2: vi.fn(),
-  mockGetDriverCareerP3: vi.fn(),
-  mockGetDriverCareerStarts: vi.fn(),
-  mockGetDriverCareerFastestLaps: vi.fn(),
-  mockGetDriverCareerChampionships: vi.fn(),
-  mockGetDriverSeasons: vi.fn(),
-  mockGetAllRaceResultsAtCircuit: vi.fn(),
+const jolpica = vi.hoisted(() => ({
+  getDriverCareerWins: vi.fn(),
+  getDriverCareerP2: vi.fn(),
+  getDriverCareerP3: vi.fn(),
+  getDriverCareerStarts: vi.fn(),
+  getDriverCareerFastestLaps: vi.fn(),
+  getDriverCareerChampionships: vi.fn(),
+  getDriverSeasons: vi.fn(),
+  getAllRaceResultsAtCircuit: vi.fn(),
 }));
+const mockGetDriverCareerWins = jolpica.getDriverCareerWins;
+const mockGetDriverCareerP2 = jolpica.getDriverCareerP2;
+const mockGetDriverCareerP3 = jolpica.getDriverCareerP3;
+const mockGetDriverCareerStarts = jolpica.getDriverCareerStarts;
+const mockGetDriverCareerFastestLaps = jolpica.getDriverCareerFastestLaps;
+const mockGetDriverCareerChampionships = jolpica.getDriverCareerChampionships;
+const mockGetDriverSeasons = jolpica.getDriverSeasons;
+const mockGetAllRaceResultsAtCircuit = jolpica.getAllRaceResultsAtCircuit;
 
-vi.mock("@/lib/api/jolpica", () => ({
-  getDriverCareerWins: mockGetDriverCareerWins,
-  getDriverCareerP2: mockGetDriverCareerP2,
-  getDriverCareerP3: mockGetDriverCareerP3,
-  getDriverCareerStarts: mockGetDriverCareerStarts,
-  getDriverCareerFastestLaps: mockGetDriverCareerFastestLaps,
-  getDriverCareerChampionships: mockGetDriverCareerChampionships,
-  getDriverSeasons: mockGetDriverSeasons,
-  getAllRaceResultsAtCircuit: mockGetAllRaceResultsAtCircuit,
-}));
+vi.mock("@/lib/api/jolpica", async () => {
+  const { createJolpicaMocks } = await import("@/test/mockJolpica");
+  return { ...createJolpicaMocks(), ...jolpica };
+});
 
 // Mock circuitRecords compute
 const { mockComputeCircuitRecords } = vi.hoisted(() => ({
@@ -53,6 +46,7 @@ vi.mock("@/lib/stats/circuitRecords", () => ({
 // We'll write real fixture files to a temp dir and pass that to runWeeklySnapshot
 import { writeFile, mkdir } from "node:fs/promises";
 import { runWeeklySnapshot } from "../snapshot-weekly";
+import type { DriverCareerSnapshot } from "@/lib/snapshots/types";
 
 const standings = {
   drivers: [
@@ -132,6 +126,8 @@ describe("snapshot-weekly writer", () => {
       career: { wins: number | null; podiums: number | null; championships: number | null };
       seasons: number[];
     };
+    const _shapeCheck: DriverCareerSnapshot = careerCall![1] as DriverCareerSnapshot;
+    expect(_shapeCheck.source).toBe("jolpica");
     expect(careerPayload.driverId).toBe("verstappen");
     expect(careerPayload.career).toMatchObject({
       wins: 10,

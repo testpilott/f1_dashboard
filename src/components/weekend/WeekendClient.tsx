@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import type { OpenF1Meeting, OpenF1Session, OpenF1SessionResult, OpenF1Driver } from "@/lib/types";
+import { fetchJson } from "@/lib/api/clientFetch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -25,23 +26,17 @@ type WeekendData = {
 };
 
 async function fetchSessionsForMeeting(meetingKey: number) {
-  const res = await fetch(`/api/sessions/info?meeting_key=${meetingKey}`);
-  if (!res.ok) throw new Error("Failed");
-  const data = await res.json();
+  const data = await fetchJson<{ sessions?: OpenF1Session[] }>(`/api/sessions/info?meeting_key=${meetingKey}`);
   return (Array.isArray(data.sessions) ? data.sessions : []) as OpenF1Session[];
 }
 
 async function fetchSessionResult(sessionKey: number) {
-  const res = await fetch(`/api/sessions/result?session_key=${sessionKey}`);
-  if (!res.ok) throw new Error("Failed");
-  const data = await res.json();
+  const data = await fetchJson<{ results?: OpenF1SessionResult[] }>(`/api/sessions/result?session_key=${sessionKey}`);
   return (Array.isArray(data.results) ? data.results : []) as OpenF1SessionResult[];
 }
 
 async function fetchSessionDrivers(sessionKey: number) {
-  const res = await fetch(`/api/sessions/drivers?session_key=${sessionKey}`);
-  if (!res.ok) throw new Error("Failed");
-  const data = await res.json();
+  const data = await fetchJson<{ drivers?: OpenF1Driver[] }>(`/api/sessions/drivers?session_key=${sessionKey}`);
   return (Array.isArray(data.drivers) ? data.drivers : []) as OpenF1Driver[];
 }
 

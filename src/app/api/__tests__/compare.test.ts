@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-
 const { mockReadSnapshotOrFetch } = vi.hoisted(() => ({
   mockReadSnapshotOrFetch: vi.fn(),
 }));
@@ -12,12 +11,10 @@ vi.mock("@/lib/snapshots/readSnapshotOrFetch", () => ({
   readSnapshotOrFetch: mockReadSnapshotOrFetch,
 }));
 
-vi.mock("@/lib/api/jolpica", () => ({
-  getRaceResultsAtCircuit: vi.fn(),
-  getQualifyingResultsAtCircuit: vi.fn(),
-  getSeasonRaceResults: vi.fn(),
-  getConstructorStandings: vi.fn(),
-}));
+vi.mock("@/lib/api/jolpica", async () => {
+  const { createJolpicaMocks } = await import("@/test/mockJolpica");
+  return createJolpicaMocks();
+});
 
 vi.mock("@/lib/stats/headToHead", () => ({
   seasonHeadToHead: vi.fn(),

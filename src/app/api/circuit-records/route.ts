@@ -1,10 +1,10 @@
-import { NextResponse } from "next/server";
 import { badRequest, serverError, cachedJson } from "@/lib/api/routeHelpers";
 import { rateLimited } from "@/lib/api/withRateLimit";
 import { VALID_ID } from "@/lib/validators";
 import { getAllRaceResultsAtCircuit } from "@/lib/api/jolpica";
 import { computeCircuitRecords } from "@/lib/stats/circuitRecords";
 import { readSnapshotOrFetch } from "@/lib/snapshots/readSnapshotOrFetch";
+import type { CircuitRecordsSnapshot } from "@/lib/snapshots/types";
 
 export const revalidate = 21600;
 
@@ -20,7 +20,7 @@ export async function GET(req: Request) {
   }
 
   try {
-    const payload = await readSnapshotOrFetch({
+    const payload = await readSnapshotOrFetch<CircuitRecordsSnapshot>({
       key: `circuit-records-${circuitId}`,
       dataClass: "circuitRecords",
       liveFn: async () => {
