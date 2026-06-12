@@ -25,6 +25,19 @@ function readSource(payload) {
   return typeof payload.source === "string" ? payload.source : null;
 }
 
+// Snapshot freshness: when a payload claims source="jolpica" (i.e. it came from
+// the committed data/snapshots/*.json files), the snapshotAt must be recent.
+// A stuck snapshot-daily workflow would silently serve >48h-old data; this
+// check turns the smoke red so GitHub notifies.
+const SNAPSHOT_MAX_AGE_HOURS = Number(process.env.SMOKE_SNAPSHOT_MAX_AGE_HOURS ?? 48);
+
+function readSnapshotAgeHours(payload) {
+  if (!isObject(payload) || typeof payload.snapshotAt !== "string") return null;
+  const ts = Date.parse(payload.snapshotAt);
+  if (!Number.isFinite(ts)) return null;
+  return (Date.now() - ts) / 3.6e6;
+}
+
 async function fetchJson(path) {
   const url = `${baseUrl}${path}`;
   let lastError;
@@ -150,6 +163,15 @@ async function run() {
         if (source === "live" || source === "degraded-live") {
           warnings.push(`${check.name}: response source=${source} (possible snapshot miss)`);
           console.warn(`WARN ${check.name}: response source=${source} (possible snapshot miss)`);
+        }
+
+        if (source === "jolpica") {
+          const ageHours = readSnapshotAgeHours(payload);
+          if (ageHours !== null && ageHours > SNAPSHOT_MAX_AGE_HOURS) {
+            throw new Error(
+              `snapshot is ${ageHours.toFixed(1)}h stale (max ${SNAPSHOT_MAX_AGE_HOURS}h) — snapshot-daily workflow may be stuck`,
+            );
+          }
         }
       }
 
