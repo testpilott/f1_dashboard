@@ -22,10 +22,17 @@ type DriverSeasonData = {
   season: string;
   driverId: string;
   summary: DriverSeasonSummary;
+  resultsFeedLag?: {
+    pendingRaceNames: string[];
+    pendingRounds: number[];
+    checkAgainAfterMs: number;
+    asOf: string;
+  } | null;
 };
 
 const CURRENT_SEASON_STALE_MS = 5 * 60 * 1000;
 const HISTORICAL_SEASON_STALE_MS = 60 * 60 * 1000;
+const RESULTS_FEED_RECHECK_MS = 2 * 60 * 1000;
 
 async function fetchDriverSeason(season: string, driverId: string): Promise<DriverSeasonData> {
   const params = new URLSearchParams({
@@ -61,6 +68,11 @@ export default function DriverSeasonDialog({
     queryFn: () => fetchDriverSeason(season, driver!.Driver.driverId),
     enabled: open && !!driver,
     staleTime: season === "current" ? CURRENT_SEASON_STALE_MS : HISTORICAL_SEASON_STALE_MS,
+    refetchInterval: (query) => {
+      const payload = query.state.data as DriverSeasonData | undefined;
+      if (season !== "current") return false;
+      return payload?.resultsFeedLag ? RESULTS_FEED_RECHECK_MS : false;
+    },
   });
 
   return (
@@ -102,6 +114,11 @@ export default function DriverSeasonDialog({
             )}
             {isError && (
               <p className="text-sm text-muted-foreground">Failed to load season data.</p>
+            )}
+            {data?.resultsFeedLag && (
+              <p className="mb-3 text-xs text-amber-500/90">
+                Results feed update pending for: {data.resultsFeedLag.pendingRaceNames.join(", ")}. Auto-checking every 2 minutes.
+              </p>
             )}
             {data && <DriverSeasonStats summary={data.summary} />}
             {data && data.summary.rows.length === 0 && (

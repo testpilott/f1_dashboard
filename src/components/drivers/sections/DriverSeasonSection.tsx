@@ -7,6 +7,12 @@ export type DriverSeasonData = {
   season: string;
   driverId: string;
   summary: DriverSeasonSummary;
+  resultsFeedLag?: {
+    pendingRaceNames: string[];
+    pendingRounds: number[];
+    checkAgainAfterMs: number;
+    asOf: string;
+  } | null;
 };
 
 export default function DriverSeasonSection({
@@ -30,6 +36,11 @@ export default function DriverSeasonSection({
             <Skeleton key={i} className="h-12 rounded-lg" />
           ))}
         </div>
+      )}
+      {seasonStats?.resultsFeedLag && (
+        <p className="mb-3 text-xs text-amber-500/90">
+          Results feed update pending for: {seasonStats.resultsFeedLag.pendingRaceNames.join(", ")}. Auto-checking every 2 minutes.
+        </p>
       )}
       {seasonStats?.summary && (
         <DriverSeasonStats summary={seasonStats.summary} />
