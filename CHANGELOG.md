@@ -4,6 +4,20 @@ All notable changes to this project are documented here.
 
 ---
 
+## [Unreleased]
+
+### Fixed
+- **Driver season dialog crash** — Opening a driver from the standings threw `can't access property "rows", d.summary is undefined`. The `/api/driver-season` route read snapshot key `driver-seasons-{id}`, but that file held a season-year list (`{ seasons: [...] }`, the `driver-career` payload) instead of the `{ season, driverId, summary }` shape the route and `DriverSeasonDialog` expect. The route now reads `driver-season-{season}-{id}`, and `tools/snapshot-weekly.ts` writes a correctly-shaped `driver-season-current-{id}.json` snapshot.
+
+### Changed
+- **`tools/snapshot-weekly.ts`** — Fetches current-season race results once and writes a per-driver `driver-season-current-{id}.json` summary snapshot (skipped if the fetch fails, to avoid clobbering a good snapshot with empty data)
+- **`src/lib/snapshots/types.ts`** — Added `DriverSeasonSnapshot`; removed the now-unused `DriverSeasonsSnapshot`
+
+### Removed
+- **Stale snapshots** — Deleted the wrong-shaped `driver-seasons-antonelli.json` / `driver-seasons-russell.json`; the route falls through to live fetch until the weekly cron regenerates correctly-shaped files
+
+---
+
 ## [0.3.0] - 2026-06-01
 
 ### Added

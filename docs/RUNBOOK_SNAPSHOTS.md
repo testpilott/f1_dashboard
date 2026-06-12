@@ -35,7 +35,12 @@ either:
 |---|---|---|
 | `standings-current` | `snapshot-daily.ts` | `/api/standings?season=current` |
 | `schedule-current` | `snapshot-daily.ts` | `/api/schedule?season=current` |
-| `season-results-current` | `snapshot-daily.ts` | `/api/driver-season?season=current` |
+| `season-results-current` | `snapshot-daily.ts` | `/api/compare` |
 | `driver-career-{id}` | `snapshot-weekly.ts` | `/api/driver-career?driverId={id}` |
-| `driver-seasons-{id}` | `snapshot-weekly.ts` | `/api/driver-season?season=current&driverId={id}` |
+| `driver-season-current-{id}` | `snapshot-weekly.ts` | `/api/driver-season?season=current&driverId={id}` |
 | `circuit-records-{id}` | `snapshot-weekly.ts` | `/api/circuit-records?circuitId={id}` |
+
+> The `/api/driver-season` route reads `driver-season-{season}-{id}`, whose payload
+> mirrors the route's `{ season, driverId, summary }` shape so the standings driver
+> dialog can read `data.summary.rows` directly. The weekly writer only emits the
+> `current` season; other seasons fall through to a live Jolpica fetch.

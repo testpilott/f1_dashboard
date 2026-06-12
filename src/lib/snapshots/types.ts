@@ -1,5 +1,6 @@
 import type { DriverStanding, ConstructorStanding, Race } from "@/lib/types";
 import type { DriverCareerStats } from "@/lib/stats/driverCareer";
+import type { DriverSeasonSummary } from "@/lib/stats/driverSeason";
 import type { CircuitRecords } from "@/lib/stats/circuitRecords";
 
 export type SnapshotSource = "jolpica" | "live";
@@ -28,9 +29,10 @@ export interface DriverCareerSnapshot extends SnapshotMeta {
   seasons: number[];
 }
 
-export interface DriverSeasonsSnapshot extends SnapshotMeta {
+export interface DriverSeasonSnapshot extends SnapshotMeta {
+  season: string;
   driverId: string;
-  seasons: number[];
+  summary: DriverSeasonSummary;
 }
 
 export interface CircuitRecordsSnapshot extends SnapshotMeta {

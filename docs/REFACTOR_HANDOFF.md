@@ -298,9 +298,10 @@ a compile error instead of a production outage.
      career: DriverCareerStats;
      seasons: number[];
    }
-   export interface DriverSeasonsSnapshot extends SnapshotMeta {
+   export interface DriverSeasonSnapshot extends SnapshotMeta {
+     season: string;
      driverId: string;
-     seasons: number[];
+     summary: DriverSeasonSummary;
    }
    ```
    (Check the actual current writer payloads field-by-field before finalizing —

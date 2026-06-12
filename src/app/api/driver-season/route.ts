@@ -39,7 +39,7 @@ export async function GET(req: Request) {
 
   try {
     const payload = await readSnapshotOrFetch({
-      key: `driver-seasons-${driverId}`,
+      key: `driver-season-${season}-${driverId}`,
       dataClass: "careerStats",
       liveFn: async () => {
         const weekBucket = currentEtWeekBucket();

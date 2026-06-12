@@ -11,14 +11,17 @@ import {
   getDriverCareerFastestLaps,
   getDriverCareerChampionships,
   getDriverSeasons,
+  getSeasonRaceResults,
   getAllRaceResultsAtCircuit,
 } from "@/lib/api/jolpica";
 import { computeCircuitRecords } from "@/lib/stats/circuitRecords";
 import { buildDriverCareerStats } from "@/lib/stats/driverCareer";
+import { driverSeasonSummary } from "@/lib/stats/driverSeason";
+import type { Race } from "@/lib/types";
 import type {
   CircuitRecordsSnapshot,
   DriverCareerSnapshot,
-  DriverSeasonsSnapshot,
+  DriverSeasonSnapshot,
   ScheduleSnapshot,
   StandingsSnapshot,
 } from "@/lib/snapshots/types";
@@ -38,7 +41,7 @@ async function withLimit<T>(fn: () => Promise<T>): Promise<T> {
   }
 }
 
-async function snapshotDriverCareer(driverId: string): Promise<void> {
+async function snapshotDriverCareer(driverId: string, seasonRaces: Race[] | null): Promise<void> {
   const [wins, p2, p3, starts, fastestLaps, championships, seasons] = await Promise.all([
     withLimit(() => getDriverCareerWins(driverId)),
     withLimit(() => getDriverCareerP2(driverId)),
@@ -62,13 +65,24 @@ async function snapshotDriverCareer(driverId: string): Promise<void> {
   };
   await atomicWriteJson(path.join(OUT_DIR, `driver-career-${driverId}.json`), careerPayload);
 
-  const seasonsPayload: DriverSeasonsSnapshot = {
-    driverId,
-    seasons,
-    snapshotAt: new Date().toISOString(),
-    source: "jolpica",
-  };
-  await atomicWriteJson(path.join(OUT_DIR, `driver-seasons-${driverId}.json`), seasonsPayload);
+  // Mirror the EXACT shape that /api/driver-season's liveFn returns
+  // (`{ season, driverId, summary }`). The route reads this snapshot verbatim,
+  // so the UI's `data.summary.rows` access must resolve. Skip when the season
+  // race results were unavailable so we never overwrite a good snapshot with
+  // an empty one.
+  if (seasonRaces !== null) {
+    const seasonPayload: DriverSeasonSnapshot = {
+      season: "current",
+      driverId,
+      summary: driverSeasonSummary(seasonRaces, driverId),
+      snapshotAt: new Date().toISOString(),
+      source: "jolpica",
+    };
+    await atomicWriteJson(
+      path.join(OUT_DIR, `driver-season-current-${driverId}.json`),
+      seasonPayload,
+    );
+  }
 }
 
 async function snapshotCircuitRecords(circuitId: string): Promise<void> {
@@ -107,9 +121,23 @@ export async function runWeeklySnapshot(outDir = OUT_DIR): Promise<WeeklySnapsho
   const driverErrors: string[] = [];
   const circuitErrors: string[] = [];
 
+  // Fetch the full current-season race results once and reuse it to compute
+  // every driver's per-season summary. A null result (fetch failed) signals
+  // snapshotDriverCareer to skip the season-summary write rather than clobber
+  // a good snapshot with empty data.
+  let seasonRaces: Race[] | null = null;
+  try {
+    seasonRaces = await withLimit(() => getSeasonRaceResults("current"));
+  } catch (err) {
+    console.error(
+      "✘ season race results:",
+      err instanceof Error ? err.message : err,
+    );
+  }
+
   for (const driverId of driverIds) {
     try {
-      await snapshotDriverCareer(driverId);
+      await snapshotDriverCareer(driverId, seasonRaces);
       console.log(`✔ driver ${driverId}`);
     } catch (err) {
       console.error(`✘ driver ${driverId}:`, err instanceof Error ? err.message : err);

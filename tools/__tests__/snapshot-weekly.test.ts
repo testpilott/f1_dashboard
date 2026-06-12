@@ -19,6 +19,7 @@ const jolpica = vi.hoisted(() => ({
   getDriverCareerFastestLaps: vi.fn(),
   getDriverCareerChampionships: vi.fn(),
   getDriverSeasons: vi.fn(),
+  getSeasonRaceResults: vi.fn(),
   getAllRaceResultsAtCircuit: vi.fn(),
 }));
 const mockGetDriverCareerWins = jolpica.getDriverCareerWins;
@@ -28,6 +29,7 @@ const mockGetDriverCareerStarts = jolpica.getDriverCareerStarts;
 const mockGetDriverCareerFastestLaps = jolpica.getDriverCareerFastestLaps;
 const mockGetDriverCareerChampionships = jolpica.getDriverCareerChampionships;
 const mockGetDriverSeasons = jolpica.getDriverSeasons;
+const mockGetSeasonRaceResults = jolpica.getSeasonRaceResults;
 const mockGetAllRaceResultsAtCircuit = jolpica.getAllRaceResultsAtCircuit;
 
 vi.mock("@/lib/api/jolpica", async () => {
@@ -46,7 +48,7 @@ vi.mock("@/lib/stats/circuitRecords", () => ({
 // We'll write real fixture files to a temp dir and pass that to runWeeklySnapshot
 import { writeFile, mkdir } from "node:fs/promises";
 import { runWeeklySnapshot } from "../snapshot-weekly";
-import type { DriverCareerSnapshot } from "@/lib/snapshots/types";
+import type { DriverCareerSnapshot, DriverSeasonSnapshot } from "@/lib/snapshots/types";
 
 const standings = {
   drivers: [
@@ -98,13 +100,14 @@ describe("snapshot-weekly writer", () => {
     mockGetDriverCareerFastestLaps.mockResolvedValue("5");
     mockGetDriverCareerChampionships.mockResolvedValue("4");
     mockGetDriverSeasons.mockResolvedValue([2021, 2022, 2023, 2024, 2025]);
+    mockGetSeasonRaceResults.mockResolvedValue([]);
     mockGetAllRaceResultsAtCircuit.mockResolvedValue([]);
     mockComputeCircuitRecords.mockReturnValue({});
     vi.spyOn(console, "log").mockImplementation(() => {});
     vi.spyOn(console, "error").mockImplementation(() => {});
   });
 
-  it("writes driver-career and driver-seasons files for all 3 drivers and 2 unique circuits", async () => {
+  it("writes driver-career and driver-season files for all 3 drivers and 2 unique circuits", async () => {
     const result = await runWeeklySnapshot(tempDir);
 
     expect(result.driverCount).toBe(3);
@@ -112,8 +115,20 @@ describe("snapshot-weekly writer", () => {
     expect(result.driverErrors).toHaveLength(0);
     expect(result.circuitErrors).toHaveLength(0);
 
-    // 2 writes per driver (career + seasons) + 1 per circuit
+    // 2 writes per driver (career + season summary) + 1 per circuit
     expect(mockAtomicWriteJson).toHaveBeenCalledTimes(3 * 2 + 2);
+
+    // driver-season snapshot must match /api/driver-season's `{ season,
+    // driverId, summary }` shape so the UI's `data.summary.rows` resolves.
+    const seasonCall = mockAtomicWriteJson.mock.calls.find(
+      (call) => typeof call[0] === "string" && call[0].includes("driver-season-current-verstappen"),
+    );
+    expect(seasonCall).toBeDefined();
+    const seasonPayload = seasonCall![1] as DriverSeasonSnapshot;
+    expect(seasonPayload.season).toBe("current");
+    expect(seasonPayload.driverId).toBe("verstappen");
+    expect(seasonPayload.summary.rows).toEqual([]);
+    expect(seasonPayload.source).toBe("jolpica");
 
     // driver-career snapshot must match the route's `{ driverId, career }`
     // shape (NOT a flat object) so consumers can read `payload.career.*`.

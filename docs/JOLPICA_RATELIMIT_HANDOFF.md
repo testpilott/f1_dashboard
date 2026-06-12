@@ -45,7 +45,7 @@ available on cold start with zero network IO, and are auditable in PRs.
 | `data/snapshots/season-results-{season}.json` | Daily | `10 5 * * *` | `tools/snapshot-daily.ts` |
 | `data/snapshots/driver-career-{id}.json` | Weekly Mon | `30 5 * * 1` | `tools/snapshot-weekly.ts` |
 | `data/snapshots/circuit-records-{id}.json` | Weekly Mon | `40 5 * * 1` | `tools/snapshot-weekly.ts` |
-| `data/snapshots/driver-seasons-{id}.json` | Weekly Mon | `50 5 * * 1` | `tools/snapshot-weekly.ts` |
+| `data/snapshots/driver-season-current-{id}.json` | Weekly Mon | `50 5 * * 1` | `tools/snapshot-weekly.ts` |
 
 `05:00 UTC` = `00:00 ET` (matches existing `weeklyCache.ts` Monday rollover).
 West-coast races are over hours earlier; pre-race anticipation builds before
@@ -522,7 +522,7 @@ async function withLimit<T>(fn: () => Promise<T>): Promise<T> {
   finally { limiter.release(); }
 }
 
-async function snapshotDriverCareer(driverId: string): Promise<void> {
+async function snapshotDriverCareer(driverId: string, seasonRaces: Race[] | null): Promise<void> {
   const [wins, p2, p3, starts, fastestLaps, championships, seasons] = await Promise.all([
     withLimit(() => getDriverCareerWins(driverId)),
     withLimit(() => getDriverCareerP2(driverId)),
@@ -535,17 +535,24 @@ async function snapshotDriverCareer(driverId: string): Promise<void> {
 
   await atomicWriteJson(path.join(OUT_DIR, `driver-career-${driverId}.json`), {
     driverId,
-    wins, p2, p3, starts, fastestLaps, championships,
+    career: buildDriverCareerStats({ wins, p2, p3, starts, fastestLaps, championships }),
     seasons,
     snapshotAt: new Date().toISOString(),
     source: "jolpica",
   });
 
-  await atomicWriteJson(path.join(OUT_DIR, `driver-seasons-${driverId}.json`), {
-    driverId, seasons,
-    snapshotAt: new Date().toISOString(),
-    source: "jolpica",
-  });
+  // Mirror /api/driver-season's `{ season, driverId, summary }` shape so the
+  // standings driver dialog can read `data.summary.rows`. Skip when the season
+  // results were unavailable so we never clobber a good snapshot with empty data.
+  if (seasonRaces !== null) {
+    await atomicWriteJson(path.join(OUT_DIR, `driver-season-current-${driverId}.json`), {
+      season: "current",
+      driverId,
+      summary: driverSeasonSummary(seasonRaces, driverId),
+      snapshotAt: new Date().toISOString(),
+      source: "jolpica",
+    });
+  }
 }
 
 async function snapshotCircuitRecords(circuitId: string): Promise<void> {
