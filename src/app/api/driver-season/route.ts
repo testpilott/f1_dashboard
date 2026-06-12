@@ -36,7 +36,7 @@ export async function GET(req: Request) {
           snapshotAt: new Date().toISOString(),
           source: "live",
         },
-        "historicalResults"
+        "liveResults"
       );
     }
 

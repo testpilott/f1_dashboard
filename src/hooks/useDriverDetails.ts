@@ -27,7 +27,18 @@ async function fetchDriverPhotos(): Promise<DriverPhotoEntry[]> {
 }
 
 async function fetchDriverSeason(driverId: string, season: string): Promise<DriverSeasonData> {
-  return fetchJson<DriverSeasonData>(`/api/driver-season?season=${encodeURIComponent(season)}&driverId=${encodeURIComponent(driverId)}`);
+  const params = new URLSearchParams({
+    season,
+    driverId,
+  });
+
+  // Bucketed cache-buster avoids serving stale edge rows after new race data
+  // lands while keeping calls stable within each 5-minute window.
+  if (season === "current") {
+    params.set("_cb", String(Math.floor(Date.now() / CURRENT_SEASON_STALE_MS)));
+  }
+
+  return fetchJson<DriverSeasonData>(`/api/driver-season?${params.toString()}`);
 }
 
 async function fetchWikidataProfile(wikiUrl: string): Promise<WikidataDriverProfile | null> {

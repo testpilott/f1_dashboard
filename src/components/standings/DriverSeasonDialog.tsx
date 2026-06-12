@@ -28,7 +28,18 @@ const CURRENT_SEASON_STALE_MS = 5 * 60 * 1000;
 const HISTORICAL_SEASON_STALE_MS = 60 * 60 * 1000;
 
 async function fetchDriverSeason(season: string, driverId: string): Promise<DriverSeasonData> {
-  return fetchJson<DriverSeasonData>(`/api/driver-season?season=${season}&driverId=${encodeURIComponent(driverId)}`);
+  const params = new URLSearchParams({
+    season,
+    driverId,
+  });
+
+  // Bucketed cache-buster avoids serving long-lived stale edge entries after
+  // a race weekend update while still keeping requests deduplicated.
+  if (season === "current") {
+    params.set("_cb", String(Math.floor(Date.now() / CURRENT_SEASON_STALE_MS)));
+  }
+
+  return fetchJson<DriverSeasonData>(`/api/driver-season?${params.toString()}`);
 }
 
 export default function DriverSeasonDialog({

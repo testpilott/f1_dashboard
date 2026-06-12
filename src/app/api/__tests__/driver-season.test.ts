@@ -17,6 +17,7 @@ vi.mock("@/lib/snapshots/readSnapshotOrFetch", () => ({
 import { GET } from "@/app/api/driver-season/route";
 import { getSeasonRaceResults } from "@/lib/api/jolpica";
 import { readSnapshotOrFetch } from "@/lib/snapshots/readSnapshotOrFetch";
+import { edgeCacheControl } from "@/lib/api/edgeHeaders";
 import { makeApiRequest } from "@/test/api";
 
 const mockGetRaces = getSeasonRaceResults as ReturnType<typeof vi.fn>;
@@ -105,6 +106,7 @@ describe("GET /api/driver-season", () => {
     const res = await GET(makeApiRequest("/api/driver-season", { season: "current", driverId: "max_verstappen" }));
     expect(res.status).toBe(200);
     expect(mockReadSnapshotOrFetch).not.toHaveBeenCalled();
+    expect(res.headers.get("cache-control")).toBe(edgeCacheControl("liveResults"));
   });
 
   it("handles empty Races array gracefully", async () => {
