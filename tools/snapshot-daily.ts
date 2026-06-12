@@ -87,7 +87,13 @@ export async function runDailySnapshot(): Promise<{ key: string; ok: boolean; er
     });
   }
 
-  return Promise.all(jobs.map(runJob));
+  // Serial, not Promise.all — gentler on Jolpica's 4 rps burst limit and
+  // avoids self-induced throttling when the runner IP is already warm.
+  const results: { key: string; ok: boolean; err?: string }[] = [];
+  for (const job of jobs) {
+    results.push(await runJob(job));
+  }
+  return results;
 }
 
 async function main(): Promise<void> {

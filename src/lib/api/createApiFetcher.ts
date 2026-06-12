@@ -24,6 +24,11 @@ export function createApiFetcher(
   baseUrl: string,
   serviceName: string,
   maxConcurrent: number = DEFAULT_MAX_CONCURRENT,
+  // Per-request timeout (ms). Omit to use fetchWithTimeout's 8 s default —
+  // appropriate for user requests. Background batch jobs (the snapshot
+  // writers) pass a generous value so large payloads / a slow upstream
+  // don't abort prematurely.
+  timeoutMs?: number,
 ) {
   const limiter = createConcurrencyLimiter(maxConcurrent);
 
@@ -31,10 +36,15 @@ export function createApiFetcher(
     return withRetry(async () => {
       await limiter.acquire();
       try {
-        const res = await fetchWithTimeout(`${baseUrl}${path}`, {
+        const url = `${baseUrl}${path}`;
+        const init = {
           next: { revalidate },
           headers: { Accept: "application/json" },
-        });
+        };
+        const res =
+          timeoutMs === undefined
+            ? await fetchWithTimeout(url, init)
+            : await fetchWithTimeout(url, init, timeoutMs);
         if (!res.ok) {
           throw new Error(`${serviceName} fetch failed: ${res.status} ${path}`);
         }

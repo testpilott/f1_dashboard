@@ -26,6 +26,20 @@ describe("createApiFetcher", () => {
     });
   });
 
+  it("passes a custom timeout through to fetchWithTimeout when provided", async () => {
+    const response = new Response(JSON.stringify({ ok: true }), { status: 200 });
+    vi.mocked(fetchWithTimeout).mockResolvedValueOnce(response);
+
+    const apiFetch = createApiFetcher("https://example.test", "Example", 2, 30_000);
+    await apiFetch("/slow", 300);
+
+    expect(fetchWithTimeout).toHaveBeenCalledWith(
+      "https://example.test/slow",
+      { next: { revalidate: 300 }, headers: { Accept: "application/json" } },
+      30_000,
+    );
+  });
+
   it("throws service/status/path message for non-ok responses", async () => {
     const response = new Response("nope", { status: 404 });
     vi.mocked(fetchWithTimeout).mockResolvedValueOnce(response);

@@ -24,7 +24,11 @@ import {
 import { firstRace, firstRaceField, paginateMRData } from "@/lib/api/mrData";
 
 const JOLPICA_BASE = "https://api.jolpi.ca/ergast/f1";
-const jolpicaApi = createApiFetcher(JOLPICA_BASE, "Jolpica");
+// Background snapshot writers set JOLPICA_FETCH_TIMEOUT_MS (e.g. 30000) so a
+// large season-results payload or a slow/tarpitted upstream doesn't abort on
+// the 8 s user-request default. Unset in production → default applies.
+const JOLPICA_TIMEOUT_MS = Number(process.env.JOLPICA_FETCH_TIMEOUT_MS) || undefined;
+const jolpicaApi = createApiFetcher(JOLPICA_BASE, "Jolpica", undefined, JOLPICA_TIMEOUT_MS);
 
 async function jolpicaFetch<T>(path: string, dataClass: DataClass = "liveStandings"): Promise<T> {
   return jolpicaApi<T>(path, adaptiveRevalidate(dataClass));
