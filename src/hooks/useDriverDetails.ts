@@ -9,6 +9,7 @@ import type { DriverSeasonData } from "@/components/drivers/DriverDetailPanel";
 
 const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 const DRIVER_PHOTOS_STALE_MS = 5 * 60 * 1000;
+const CURRENT_SEASON_STALE_MS = 5 * 60 * 1000;
 
 async function fetchStandings(season: string) {
   const d = await fetchJson<{ drivers?: DriverStanding[] }>(`/api/standings?season=${encodeURIComponent(season)}`);
@@ -65,7 +66,7 @@ export function useDriverDetails(selectedDriverId: string | null, season: string
     queryKey: ["driver-season", season, selectedDriverId],
     queryFn: () => fetchDriverSeason(selectedDriverId!, season),
     enabled: Boolean(selectedDriverId),
-    staleTime: ONE_WEEK_MS,
+    staleTime: season === "current" ? CURRENT_SEASON_STALE_MS : ONE_WEEK_MS,
   });
 
   const { data: careerData, isLoading: careerLoading } = useQuery({

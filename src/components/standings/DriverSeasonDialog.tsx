@@ -24,6 +24,9 @@ type DriverSeasonData = {
   summary: DriverSeasonSummary;
 };
 
+const CURRENT_SEASON_STALE_MS = 5 * 60 * 1000;
+const HISTORICAL_SEASON_STALE_MS = 60 * 60 * 1000;
+
 async function fetchDriverSeason(season: string, driverId: string): Promise<DriverSeasonData> {
   return fetchJson<DriverSeasonData>(`/api/driver-season?season=${season}&driverId=${encodeURIComponent(driverId)}`);
 }
@@ -46,7 +49,7 @@ export default function DriverSeasonDialog({
     queryKey: ["driver-season", season, driver?.Driver.driverId],
     queryFn: () => fetchDriverSeason(season, driver!.Driver.driverId),
     enabled: open && !!driver,
-    staleTime: 60 * 60 * 1000,
+    staleTime: season === "current" ? CURRENT_SEASON_STALE_MS : HISTORICAL_SEASON_STALE_MS,
   });
 
   return (

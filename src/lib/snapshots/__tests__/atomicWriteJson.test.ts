@@ -8,9 +8,15 @@ const { mockWriteFile, mockMkdir, mockRename } = vi.hoisted(() => ({
 }));
 
 vi.mock("node:fs/promises", () => ({
+  __esModule: true,
   writeFile: mockWriteFile,
   mkdir: mockMkdir,
   rename: mockRename,
+  default: {
+    writeFile: mockWriteFile,
+    mkdir: mockMkdir,
+    rename: mockRename,
+  },
 }));
 
 import { atomicWriteJson } from "@/lib/snapshots/atomicWriteJson";

@@ -7,10 +7,7 @@ export default defineConfig({
   },
   test: {
     globals: true,
-    environment: "node",
-    environmentMatchGlobs: [
-      ["src/**/*.test.tsx", "jsdom"],
-    ],
+    environment: "jsdom",
     setupFiles: ["./vitest.setup.ts"],
     coverage: {
       provider: "v8",

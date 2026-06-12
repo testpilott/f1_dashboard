@@ -5,7 +5,11 @@ const { mockReadFile } = vi.hoisted(() => ({
 }));
 
 vi.mock("node:fs/promises", () => ({
+  __esModule: true,
   readFile: mockReadFile,
+  default: {
+    readFile: mockReadFile,
+  },
 }));
 
 import { readSnapshot, SNAPSHOT_DIR_PATH } from "@/lib/snapshots/readSnapshot";

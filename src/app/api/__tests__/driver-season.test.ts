@@ -10,12 +10,17 @@ vi.mock("@/lib/api/jolpica", async () => {
 vi.mock("@/lib/api/withRateLimit", () => ({
   rateLimited: vi.fn(() => null),
 }));
+vi.mock("@/lib/snapshots/readSnapshotOrFetch", () => ({
+  readSnapshotOrFetch: vi.fn(async ({ liveFn }: { liveFn: () => Promise<unknown> }) => liveFn()),
+}));
 
 import { GET } from "@/app/api/driver-season/route";
 import { getSeasonRaceResults } from "@/lib/api/jolpica";
+import { readSnapshotOrFetch } from "@/lib/snapshots/readSnapshotOrFetch";
 import { makeApiRequest } from "@/test/api";
 
 const mockGetRaces = getSeasonRaceResults as ReturnType<typeof vi.fn>;
+const mockReadSnapshotOrFetch = readSnapshotOrFetch as ReturnType<typeof vi.fn>;
 
 const BASE_DRIVER = {
   driverId: "max_verstappen",
@@ -93,6 +98,13 @@ describe("GET /api/driver-season", () => {
     mockGetRaces.mockRejectedValueOnce(new Error("timeout"));
     const res = await GET(makeApiRequest("/api/driver-season", { season: "2026", driverId: "max_verstappen" }));
     expect(res.status).toBe(500);
+  });
+
+  it("bypasses snapshot reads for current season freshness", async () => {
+    mockGetRaces.mockResolvedValueOnce(MOCK_RACES);
+    const res = await GET(makeApiRequest("/api/driver-season", { season: "current", driverId: "max_verstappen" }));
+    expect(res.status).toBe(200);
+    expect(mockReadSnapshotOrFetch).not.toHaveBeenCalled();
   });
 
   it("handles empty Races array gracefully", async () => {
