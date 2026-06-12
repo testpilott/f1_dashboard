@@ -32,7 +32,7 @@ type DriverSeasonData = {
 
 const CURRENT_SEASON_STALE_MS = 5 * 60 * 1000;
 const HISTORICAL_SEASON_STALE_MS = 60 * 60 * 1000;
-const RESULTS_FEED_RECHECK_MS = 2 * 60 * 1000;
+const RESULTS_FEED_RECHECK_MS = 24 * 60 * 60 * 1000;
 
 async function fetchDriverSeason(season: string, driverId: string): Promise<DriverSeasonData> {
   const params = new URLSearchParams({
@@ -117,7 +117,7 @@ export default function DriverSeasonDialog({
             )}
             {data?.resultsFeedLag && (
               <p className="mb-3 text-xs text-amber-500/90">
-                Results feed update pending for: {data.resultsFeedLag.pendingRaceNames.join(", ")}. Auto-checking every 2 minutes.
+                Results feed update pending for: {data.resultsFeedLag.pendingRaceNames.join(", ")}. Auto-checking every 24 hours.
               </p>
             )}
             {data && <DriverSeasonStats summary={data.summary} />}

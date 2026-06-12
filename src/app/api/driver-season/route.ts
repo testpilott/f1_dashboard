@@ -10,7 +10,7 @@ export const revalidate = 604800;
 // Snapshot-backed: uses fs.readFile in readSnapshotOrFetch, so this route stays on Node.
 export const preferredRegion = "iad1";
 
-const RESULTS_FEED_RECHECK_MS = 2 * 60 * 1000;
+const RESULTS_FEED_RECHECK_MS = 24 * 60 * 60 * 1000;
 
 function raceTimestampMs(race: Race): number {
   // Jolpica dates are UTC dates; include time when present to avoid

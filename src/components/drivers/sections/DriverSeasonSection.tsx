@@ -39,7 +39,7 @@ export default function DriverSeasonSection({
       )}
       {seasonStats?.resultsFeedLag && (
         <p className="mb-3 text-xs text-amber-500/90">
-          Results feed update pending for: {seasonStats.resultsFeedLag.pendingRaceNames.join(", ")}. Auto-checking every 2 minutes.
+          Results feed update pending for: {seasonStats.resultsFeedLag.pendingRaceNames.join(", ")}. Auto-checking every 24 hours.
         </p>
       )}
       {seasonStats?.summary && (
