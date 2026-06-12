@@ -142,11 +142,15 @@ Next: [07 — API Routes Catalog](07-api-routes.md).
 
 ## Snapshot cold tier
 
-Routes for standings, schedule, career stats, and circuit records read from
-pre-committed JSON snapshots in `data/snapshots/` before ever calling Jolpica.
-GitHub Actions refresh these on a cron schedule.
+Routes for standings, schedule, season results, career stats, per-season
+splits, and circuit records read from pre-committed JSON snapshots in
+`data/snapshots/` before ever calling Jolpica. GitHub Actions refresh these on
+a cron schedule.
 
-Snapshot payload contracts are centralized in
+Each snapshot mirrors the exact payload its route returns, so the route can
+serve the file verbatim — e.g. `driver-season-{season}-{id}.json` holds
+`{ season, driverId, summary }`, matching `/api/driver-season`. Snapshot
+payload contracts are centralized in
 [src/lib/snapshots/types.ts](../src/lib/snapshots/types.ts). Both `tools/`
 writers and route readers import these interfaces so writer/route drift fails
 at compile time.
