@@ -1,9 +1,21 @@
 import { Suspense } from "react";
+import type { Metadata } from "next";
 import { getSchedule } from "@/lib/api/jolpica";
 import ScheduleClient from "@/components/schedule/ScheduleClient";
 import SeasonPicker from "@/components/ui/SeasonPicker";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Schedule",
+  description:
+    "Full Formula 1 season schedule with race times, circuits and links to results.",
+  openGraph: {
+    title: "Schedule · F1 Dashboard",
+    description:
+      "Full Formula 1 season schedule with race times, circuits and links to results.",
+  },
+};
 
 export default async function SchedulePage({
   searchParams,
