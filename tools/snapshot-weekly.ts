@@ -27,6 +27,7 @@ import type {
 } from "@/lib/snapshots/types";
 
 const OUT_DIR = path.join(process.cwd(), "data", "snapshots");
+const REQUIRED_DRIVER_IDS = ["hamilton", "piastri", "max_verstappen"] as const;
 
 // Cap to 2 concurrent. createApiFetcher's internal limiter is 2; this keeps
 // the writer well below the 4 rps burst even with retries.
@@ -115,7 +116,9 @@ export async function runWeeklySnapshot(outDir = OUT_DIR): Promise<WeeklySnapsho
   const standings = JSON.parse(standingsRaw) as StandingsSnapshot;
   const schedule = JSON.parse(scheduleRaw) as ScheduleSnapshot;
 
-  const driverIds = standings.drivers.map((d) => d.Driver.driverId);
+  const driverIds = [
+    ...new Set([...REQUIRED_DRIVER_IDS, ...standings.drivers.map((d) => d.Driver.driverId)]),
+  ];
   const circuitIds = [...new Set(schedule.races.map((r) => r.Circuit.circuitId))];
 
   const driverErrors: string[] = [];

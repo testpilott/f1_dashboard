@@ -3,6 +3,10 @@ vi.mock("next/cache", () => ({
   unstable_cache: (fn: unknown) => fn,
 }));
 
+vi.mock("@/lib/snapshots/readSnapshotOrFetch", () => ({
+  readSnapshotOrFetch: async <T,>(opts: { liveFn: () => Promise<T> }) => opts.liveFn(),
+}));
+
 vi.mock("@/lib/api/withRateLimit", () => ({
   rateLimited: vi.fn(),
 }));

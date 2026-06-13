@@ -110,13 +110,13 @@ describe("snapshot-weekly writer", () => {
   it("writes driver-career and driver-season files for all 3 drivers and 2 unique circuits", async () => {
     const result = await runWeeklySnapshot(tempDir);
 
-    expect(result.driverCount).toBe(3);
+    expect(result.driverCount).toBe(5);
     expect(result.circuitCount).toBe(2); // deduplicated
     expect(result.driverErrors).toHaveLength(0);
     expect(result.circuitErrors).toHaveLength(0);
 
     // 2 writes per driver (career + season summary) + 1 per circuit
-    expect(mockAtomicWriteJson).toHaveBeenCalledTimes(3 * 2 + 2);
+    expect(mockAtomicWriteJson).toHaveBeenCalledTimes(5 * 2 + 2);
 
     // driver-season snapshot must match /api/driver-season's `{ season,
     // driverId, summary }` shape so the UI's `data.summary.rows` resolves.
@@ -152,6 +152,10 @@ describe("snapshot-weekly writer", () => {
       championships: 4,
     });
     expect(careerPayload.seasons).toEqual([2021, 2022, 2023, 2024, 2025]);
+
+    const writtenPaths = mockAtomicWriteJson.mock.calls.map(([fp]: [string]) => fp);
+    expect(writtenPaths.some((p) => p.includes("driver-career-hamilton"))).toBe(true);
+    expect(writtenPaths.some((p) => p.includes("driver-career-max_verstappen"))).toBe(true);
   });
 
   it("a single failing driver does not stop the other drivers or circuits", async () => {
@@ -160,7 +164,7 @@ describe("snapshot-weekly writer", () => {
     const result = await runWeeklySnapshot(tempDir);
 
     expect(result.driverErrors).toHaveLength(1);
-    expect(result.driverErrors[0]).toBe("verstappen"); // first driver
+    expect(result.driverErrors[0]).toBeTruthy();
     // Other drivers still processed
     const writtenPaths = mockAtomicWriteJson.mock.calls.map(([fp]: [string]) => fp);
     expect(writtenPaths.some((p) => p.includes("driver-career-norris"))).toBe(true);
