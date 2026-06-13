@@ -30,11 +30,15 @@ Note: The weekend route is intentionally parked; race telemetry and related live
 ## Local Setup
 
 Prerequisites:
-- Node.js 20+
+- Node.js 22.x
+
+Recommended:
+- `nvm use` (the repo includes `.nvmrc`)
 
 Install and run:
 
 ```bash
+nvm use
 npm install
 npm run dev
 ```
