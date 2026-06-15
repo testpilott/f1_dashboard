@@ -21,6 +21,20 @@ export async function GET(req: Request) {
   }
 
   try {
+    if (season === "current") {
+      const drivers = await getDriverStandings(season);
+      const constructors = await getConstructorStandings(season);
+      return cachedJson(
+        {
+          drivers,
+          constructors,
+          snapshotAt: new Date().toISOString(),
+          source: "live",
+        },
+        "liveStandings",
+      );
+    }
+
     const payload = await readSnapshotOrFetch<StandingsSnapshot>({
       key: `standings-${season}`,
       dataClass: "liveStandings",

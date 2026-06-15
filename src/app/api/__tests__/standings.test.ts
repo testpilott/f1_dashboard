@@ -12,12 +12,40 @@ vi.mock("@/lib/snapshots/readSnapshotOrFetch", () => ({
   readSnapshotOrFetch: mockReadSnapshotOrFetch,
 }));
 
+vi.mock("@/lib/api/jolpica", async () => {
+  const { createJolpicaMocks } = await import("@/test/mockJolpica");
+  return createJolpicaMocks();
+});
+
 import { GET } from "@/app/api/standings/route";
+import { getDriverStandings, getConstructorStandings } from "@/lib/api/jolpica";
 import { makeApiRequest } from "@/test/api";
+
+const mockGetDriverStandings = getDriverStandings as ReturnType<typeof vi.fn>;
+const mockGetConstructorStandings = getConstructorStandings as ReturnType<typeof vi.fn>;
 
 describe("GET /api/standings", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  it("bypasses snapshots and returns live data for current season", async () => {
+    mockGetDriverStandings.mockResolvedValueOnce([
+      { position: "1", Driver: { driverId: "hamilton", givenName: "Lewis", familyName: "Hamilton" } },
+    ]);
+    mockGetConstructorStandings.mockResolvedValueOnce([
+      { position: "1", Constructor: { constructorId: "ferrari", name: "Ferrari" } },
+    ]);
+
+    const res = await GET(makeApiRequest("/api/standings", { season: "current" }));
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(mockReadSnapshotOrFetch).not.toHaveBeenCalled();
+    expect(mockGetDriverStandings).toHaveBeenCalledWith("current");
+    expect(mockGetConstructorStandings).toHaveBeenCalledWith("current");
+    expect(body.source).toBe("live");
+    expect(body.drivers[0].Driver.driverId).toBe("hamilton");
   });
 
   it("returns 400 for an invalid season", async () => {
