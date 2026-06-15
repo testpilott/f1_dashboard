@@ -27,8 +27,8 @@
     {
       "position": "2",
       "positionText": "2",
-      "points": "90",
-      "wins": "0",
+      "points": "115",
+      "wins": "1",
       "Driver": {
         "driverId": "hamilton",
         "permanentNumber": "44",
@@ -51,7 +51,7 @@
     {
       "position": "3",
       "positionText": "3",
-      "points": "88",
+      "points": "106",
       "wins": "1",
       "Driver": {
         "driverId": "russell",
@@ -99,31 +99,7 @@
     {
       "position": "5",
       "positionText": "5",
-      "points": "58",
-      "wins": "0",
-      "Driver": {
-        "driverId": "piastri",
-        "permanentNumber": "81",
-        "code": "PIA",
-        "url": "http://en.wikipedia.org/wiki/Oscar_Piastri",
-        "givenName": "Oscar",
-        "familyName": "Piastri",
-        "dateOfBirth": "2001-04-06",
-        "nationality": "Australian"
-      },
-      "Constructors": [
-        {
-          "constructorId": "mclaren",
-          "url": "https://en.wikipedia.org/wiki/McLaren",
-          "name": "McLaren",
-          "nationality": "British"
-        }
-      ]
-    },
-    {
-      "position": "6",
-      "positionText": "6",
-      "points": "58",
+      "points": "73",
       "wins": "0",
       "Driver": {
         "driverId": "norris",
@@ -145,9 +121,33 @@
       ]
     },
     {
+      "position": "6",
+      "positionText": "6",
+      "points": "68",
+      "wins": "0",
+      "Driver": {
+        "driverId": "piastri",
+        "permanentNumber": "81",
+        "code": "PIA",
+        "url": "http://en.wikipedia.org/wiki/Oscar_Piastri",
+        "givenName": "Oscar",
+        "familyName": "Piastri",
+        "dateOfBirth": "2001-04-06",
+        "nationality": "Australian"
+      },
+      "Constructors": [
+        {
+          "constructorId": "mclaren",
+          "url": "https://en.wikipedia.org/wiki/McLaren",
+          "name": "McLaren",
+          "nationality": "British"
+        }
+      ]
+    },
+    {
       "position": "7",
       "positionText": "7",
-      "points": "43",
+      "points": "55",
       "wins": "0",
       "Driver": {
         "driverId": "max_verstappen",
@@ -171,7 +171,7 @@
     {
       "position": "8",
       "positionText": "8",
-      "points": "35",
+      "points": "41",
       "wins": "0",
       "Driver": {
         "driverId": "gasly",
@@ -195,7 +195,7 @@
     {
       "position": "9",
       "positionText": "9",
-      "points": "26",
+      "points": "34",
       "wins": "0",
       "Driver": {
         "driverId": "hadjar",
@@ -219,7 +219,7 @@
     {
       "position": "10",
       "positionText": "10",
-      "points": "24",
+      "points": "28",
       "wins": "0",
       "Driver": {
         "driverId": "lawson",
@@ -267,7 +267,7 @@
     {
       "position": "12",
       "positionText": "12",
-      "points": "15",
+      "points": "16",
       "wins": "0",
       "Driver": {
         "driverId": "colapinto",
@@ -291,7 +291,7 @@
     {
       "position": "13",
       "positionText": "13",
-      "points": "11",
+      "points": "13",
       "wins": "0",
       "Driver": {
         "driverId": "arvid_lindblad",
@@ -533,7 +533,7 @@
     {
       "position": "1",
       "positionText": "1",
-      "points": "244",
+      "points": "262",
       "wins": "6",
       "Constructor": {
         "constructorId": "mercedes",
@@ -545,8 +545,8 @@
     {
       "position": "2",
       "positionText": "2",
-      "points": "165",
-      "wins": "0",
+      "points": "190",
+      "wins": "1",
       "Constructor": {
         "constructorId": "ferrari",
         "url": "https://en.wikipedia.org/wiki/Scuderia_Ferrari",
@@ -557,7 +557,7 @@
     {
       "position": "3",
       "positionText": "3",
-      "points": "116",
+      "points": "141",
       "wins": "0",
       "Constructor": {
         "constructorId": "mclaren",
@@ -569,7 +569,7 @@
     {
       "position": "4",
       "positionText": "4",
-      "points": "69",
+      "points": "89",
       "wins": "0",
       "Constructor": {
         "constructorId": "red_bull",
@@ -581,7 +581,7 @@
     {
       "position": "5",
       "positionText": "5",
-      "points": "50",
+      "points": "57",
       "wins": "0",
       "Constructor": {
         "constructorId": "alpine",
@@ -593,7 +593,7 @@
     {
       "position": "6",
       "positionText": "6",
-      "points": "35",
+      "points": "41",
       "wins": "0",
       "Constructor": {
         "constructorId": "rb",
@@ -663,6 +663,6 @@
       }
     }
   ],
-  "snapshotAt": "2026-06-14T06:31:39.758Z",
+  "snapshotAt": "2026-06-15T01:41:59.270Z",
   "source": "jolpica"
 }

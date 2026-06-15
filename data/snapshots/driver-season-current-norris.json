@@ -1,0 +1,31 @@
+{
+  "season": "current",
+  "driverId": "norris",
+  "summary": {
+    "driverId": "norris",
+    "season": "2026",
+    "rows": [
+      {
+        "round": 1,
+        "raceName": "Australian Grand Prix",
+        "grid": 6,
+        "finish": 5,
+        "points": 10,
+        "status": "Finished",
+        "fastestLap": false
+      }
+    ],
+    "aggregates": {
+      "races": 1,
+      "wins": 0,
+      "podiums": 0,
+      "points": 10,
+      "dnfs": 0,
+      "fastestLaps": 0,
+      "avgFinish": 5,
+      "avgGrid": 6
+    }
+  },
+  "snapshotAt": "2026-06-15T01:41:59.989Z",
+  "source": "jolpica"
+}

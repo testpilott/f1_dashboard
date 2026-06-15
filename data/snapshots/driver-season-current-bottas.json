@@ -1,0 +1,31 @@
+{
+  "season": "current",
+  "driverId": "bottas",
+  "summary": {
+    "driverId": "bottas",
+    "season": "2026",
+    "rows": [
+      {
+        "round": 1,
+        "raceName": "Australian Grand Prix",
+        "grid": 19,
+        "finish": 19,
+        "points": 0,
+        "status": "Retired",
+        "fastestLap": false
+      }
+    ],
+    "aggregates": {
+      "races": 1,
+      "wins": 0,
+      "podiums": 0,
+      "points": 0,
+      "dnfs": 1,
+      "fastestLaps": 0,
+      "avgFinish": 19,
+      "avgGrid": 19
+    }
+  },
+  "snapshotAt": "2026-06-15T01:41:59.994Z",
+  "source": "jolpica"
+}

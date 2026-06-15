@@ -1,0 +1,31 @@
+{
+  "season": "current",
+  "driverId": "arvid_lindblad",
+  "summary": {
+    "driverId": "arvid_lindblad",
+    "season": "2026",
+    "rows": [
+      {
+        "round": 1,
+        "raceName": "Australian Grand Prix",
+        "grid": 9,
+        "finish": 8,
+        "points": 4,
+        "status": "Lapped",
+        "fastestLap": false
+      }
+    ],
+    "aggregates": {
+      "races": 1,
+      "wins": 0,
+      "podiums": 0,
+      "points": 4,
+      "dnfs": 1,
+      "fastestLaps": 0,
+      "avgFinish": 8,
+      "avgGrid": 9
+    }
+  },
+  "snapshotAt": "2026-06-15T01:41:59.992Z",
+  "source": "jolpica"
+}

@@ -1,0 +1,31 @@
+{
+  "season": "current",
+  "driverId": "ocon",
+  "summary": {
+    "driverId": "ocon",
+    "season": "2026",
+    "rows": [
+      {
+        "round": 1,
+        "raceName": "Australian Grand Prix",
+        "grid": 13,
+        "finish": 11,
+        "points": 0,
+        "status": "Lapped",
+        "fastestLap": false
+      }
+    ],
+    "aggregates": {
+      "races": 1,
+      "wins": 0,
+      "podiums": 0,
+      "points": 0,
+      "dnfs": 1,
+      "fastestLaps": 0,
+      "avgFinish": 11,
+      "avgGrid": 13
+    }
+  },
+  "snapshotAt": "2026-06-15T01:41:59.993Z",
+  "source": "jolpica"
+}

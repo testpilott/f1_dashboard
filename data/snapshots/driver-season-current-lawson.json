@@ -1,0 +1,40 @@
+{
+  "season": "current",
+  "driverId": "lawson",
+  "summary": {
+    "driverId": "lawson",
+    "season": "2026",
+    "rows": [
+      {
+        "round": 1,
+        "raceName": "Australian Grand Prix",
+        "grid": 8,
+        "finish": 13,
+        "points": 0,
+        "status": "Lapped",
+        "fastestLap": false
+      },
+      {
+        "round": 2,
+        "raceName": "Chinese Grand Prix",
+        "grid": 14,
+        "finish": 7,
+        "points": 6,
+        "status": "Finished",
+        "fastestLap": false
+      }
+    ],
+    "aggregates": {
+      "races": 2,
+      "wins": 0,
+      "podiums": 0,
+      "points": 6,
+      "dnfs": 1,
+      "fastestLaps": 0,
+      "avgFinish": 10,
+      "avgGrid": 11
+    }
+  },
+  "snapshotAt": "2026-06-15T01:41:59.991Z",
+  "source": "jolpica"
+}

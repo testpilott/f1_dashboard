@@ -1,0 +1,40 @@
+{
+  "season": "current",
+  "driverId": "russell",
+  "summary": {
+    "driverId": "russell",
+    "season": "2026",
+    "rows": [
+      {
+        "round": 1,
+        "raceName": "Australian Grand Prix",
+        "grid": 1,
+        "finish": 1,
+        "points": 25,
+        "status": "Finished",
+        "fastestLap": false
+      },
+      {
+        "round": 2,
+        "raceName": "Chinese Grand Prix",
+        "grid": 2,
+        "finish": 2,
+        "points": 18,
+        "status": "Finished",
+        "fastestLap": false
+      }
+    ],
+    "aggregates": {
+      "races": 2,
+      "wins": 1,
+      "podiums": 2,
+      "points": 43,
+      "dnfs": 0,
+      "fastestLaps": 0,
+      "avgFinish": 1.5,
+      "avgGrid": 1.5
+    }
+  },
+  "snapshotAt": "2026-06-15T01:41:59.988Z",
+  "source": "jolpica"
+}

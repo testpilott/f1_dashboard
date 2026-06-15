@@ -1,0 +1,31 @@
+{
+  "season": "current",
+  "driverId": "perez",
+  "summary": {
+    "driverId": "perez",
+    "season": "2026",
+    "rows": [
+      {
+        "round": 1,
+        "raceName": "Australian Grand Prix",
+        "grid": 18,
+        "finish": 16,
+        "points": 0,
+        "status": "Lapped",
+        "fastestLap": false
+      }
+    ],
+    "aggregates": {
+      "races": 1,
+      "wins": 0,
+      "podiums": 0,
+      "points": 0,
+      "dnfs": 1,
+      "fastestLaps": 0,
+      "avgFinish": 16,
+      "avgGrid": 18
+    }
+  },
+  "snapshotAt": "2026-06-15T01:41:59.994Z",
+  "source": "jolpica"
+}

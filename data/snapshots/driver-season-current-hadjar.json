@@ -1,0 +1,40 @@
+{
+  "season": "current",
+  "driverId": "hadjar",
+  "summary": {
+    "driverId": "hadjar",
+    "season": "2026",
+    "rows": [
+      {
+        "round": 1,
+        "raceName": "Australian Grand Prix",
+        "grid": 3,
+        "finish": 20,
+        "points": 0,
+        "status": "Retired",
+        "fastestLap": false
+      },
+      {
+        "round": 2,
+        "raceName": "Chinese Grand Prix",
+        "grid": 9,
+        "finish": 8,
+        "points": 4,
+        "status": "Finished",
+        "fastestLap": false
+      }
+    ],
+    "aggregates": {
+      "races": 2,
+      "wins": 0,
+      "podiums": 0,
+      "points": 4,
+      "dnfs": 1,
+      "fastestLaps": 0,
+      "avgFinish": 14,
+      "avgGrid": 6
+    }
+  },
+  "snapshotAt": "2026-06-15T01:41:59.991Z",
+  "source": "jolpica"
+}
