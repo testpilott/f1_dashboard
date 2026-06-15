@@ -1,0 +1,24 @@
+{
+  "circuitId": "silverstone",
+  "records": {
+    "mostWins": {
+      "driverId": "hamilton",
+      "name": "Lewis Hamilton",
+      "count": 9
+    },
+    "mostPoles": {
+      "driverId": "hamilton",
+      "name": "Lewis Hamilton",
+      "count": 7
+    },
+    "fastestLap": {
+      "driverId": "michael_schumacher",
+      "name": "Michael Schumacher",
+      "time": "1:18.739",
+      "year": 2004
+    }
+  },
+  "raceCount": 60,
+  "snapshotAt": "2026-06-15T07:17:06.276Z",
+  "source": "jolpica"
+}

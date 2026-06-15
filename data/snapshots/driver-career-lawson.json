@@ -1,0 +1,18 @@
+{
+  "driverId": "lawson",
+  "career": {
+    "wins": 0,
+    "podiums": 0,
+    "starts": 42,
+    "fastestLaps": 0,
+    "championships": 0
+  },
+  "seasons": [
+    2023,
+    2024,
+    2025,
+    2026
+  ],
+  "snapshotAt": "2026-06-15T07:15:47.855Z",
+  "source": "jolpica"
+}

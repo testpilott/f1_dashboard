@@ -1,0 +1,24 @@
+{
+  "circuitId": "villeneuve",
+  "records": {
+    "mostWins": {
+      "driverId": "hamilton|michael_schumacher",
+      "name": "Lewis Hamilton / Michael Schumacher",
+      "count": 7
+    },
+    "mostPoles": {
+      "driverId": "hamilton|michael_schumacher",
+      "name": "Lewis Hamilton / Michael Schumacher",
+      "count": 6
+    },
+    "fastestLap": {
+      "driverId": "bottas",
+      "name": "Valtteri Bottas",
+      "time": "1:13.078",
+      "year": 2019
+    }
+  },
+  "raceCount": 45,
+  "snapshotAt": "2026-06-15T07:16:43.536Z",
+  "source": "jolpica"
+}

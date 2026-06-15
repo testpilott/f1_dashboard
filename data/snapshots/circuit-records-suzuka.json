@@ -1,0 +1,24 @@
+{
+  "circuitId": "suzuka",
+  "records": {
+    "mostWins": {
+      "driverId": "michael_schumacher",
+      "name": "Michael Schumacher",
+      "count": 6
+    },
+    "mostPoles": {
+      "driverId": "michael_schumacher",
+      "name": "Michael Schumacher",
+      "count": 8
+    },
+    "fastestLap": {
+      "driverId": "antonelli",
+      "name": "Andrea Kimi Antonelli",
+      "time": "1:30.965",
+      "year": 2025
+    }
+  },
+  "raceCount": 36,
+  "snapshotAt": "2026-06-15T07:16:37.863Z",
+  "source": "jolpica"
+}

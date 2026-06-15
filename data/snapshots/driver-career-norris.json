@@ -1,11 +1,11 @@
 {
-  "driverId": "russell",
+  "driverId": "norris",
   "career": {
-    "wins": 6,
-    "podiums": 27,
+    "wins": 11,
+    "podiums": 46,
     "starts": 159,
-    "fastestLaps": 11,
-    "championships": 0
+    "fastestLaps": 19,
+    "championships": 1
   },
   "seasons": [
     2019,
@@ -17,6 +17,6 @@
     2025,
     2026
   ],
-  "snapshotAt": "2026-06-15T07:15:42.439Z",
+  "snapshotAt": "2026-06-15T07:15:44.819Z",
   "source": "jolpica"
 }

@@ -1,24 +1,24 @@
 {
-  "circuitId": "miami",
+  "circuitId": "red_bull_ring",
   "records": {
     "mostWins": {
       "driverId": "max_verstappen",
       "name": "Max Verstappen",
-      "count": 2
+      "count": 5
     },
     "mostPoles": {
       "driverId": "max_verstappen",
       "name": "Max Verstappen",
-      "count": 2
+      "count": 5
     },
     "fastestLap": {
-      "driverId": "max_verstappen",
-      "name": "Max Verstappen",
-      "time": "1:29.708",
-      "year": 2023
+      "driverId": "sainz",
+      "name": "Carlos Sainz",
+      "time": "1:05.619",
+      "year": 2020
     }
   },
-  "raceCount": 5,
-  "snapshotAt": "2026-06-15T07:16:38.568Z",
+  "raceCount": 39,
+  "snapshotAt": "2026-06-15T07:16:58.997Z",
   "source": "jolpica"
 }

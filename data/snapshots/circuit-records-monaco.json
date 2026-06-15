@@ -1,0 +1,24 @@
+{
+  "circuitId": "monaco",
+  "records": {
+    "mostWins": {
+      "driverId": "senna",
+      "name": "Ayrton Senna",
+      "count": 6
+    },
+    "mostPoles": {
+      "driverId": "senna",
+      "name": "Ayrton Senna",
+      "count": 5
+    },
+    "fastestLap": {
+      "driverId": "hamilton",
+      "name": "Lewis Hamilton",
+      "time": "1:12.909",
+      "year": 2021
+    }
+  },
+  "raceCount": 72,
+  "snapshotAt": "2026-06-15T07:16:51.280Z",
+  "source": "jolpica"
+}

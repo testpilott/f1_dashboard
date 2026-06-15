@@ -1,0 +1,24 @@
+{
+  "circuitId": "shanghai",
+  "records": {
+    "mostWins": {
+      "driverId": "hamilton",
+      "name": "Lewis Hamilton",
+      "count": 6
+    },
+    "mostPoles": {
+      "driverId": "hamilton",
+      "name": "Lewis Hamilton",
+      "count": 6
+    },
+    "fastestLap": {
+      "driverId": "michael_schumacher",
+      "name": "Michael Schumacher",
+      "time": "1:32.238",
+      "year": 2004
+    }
+  },
+  "raceCount": 19,
+  "snapshotAt": "2026-06-15T07:16:33.764Z",
+  "source": "jolpica"
+}

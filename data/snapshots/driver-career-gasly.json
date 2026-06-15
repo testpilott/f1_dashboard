@@ -1,13 +1,15 @@
 {
-  "driverId": "russell",
+  "driverId": "gasly",
   "career": {
-    "wins": 6,
-    "podiums": 27,
-    "starts": 159,
-    "fastestLaps": 11,
+    "wins": 1,
+    "podiums": 6,
+    "starts": 185,
+    "fastestLaps": 3,
     "championships": 0
   },
   "seasons": [
+    2017,
+    2018,
     2019,
     2020,
     2021,
@@ -17,6 +19,6 @@
     2025,
     2026
   ],
-  "snapshotAt": "2026-06-15T07:15:42.439Z",
+  "snapshotAt": "2026-06-15T07:15:46.315Z",
   "source": "jolpica"
 }

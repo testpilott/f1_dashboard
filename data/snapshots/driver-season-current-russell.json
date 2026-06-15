@@ -22,19 +22,37 @@
         "points": 18,
         "status": "Finished",
         "fastestLap": false
+      },
+      {
+        "round": 3,
+        "raceName": "Japanese Grand Prix",
+        "grid": 2,
+        "finish": 4,
+        "points": 12,
+        "status": "Finished",
+        "fastestLap": false
+      },
+      {
+        "round": 4,
+        "raceName": "Miami Grand Prix",
+        "grid": 5,
+        "finish": 4,
+        "points": 12,
+        "status": "Finished",
+        "fastestLap": false
       }
     ],
     "aggregates": {
-      "races": 2,
+      "races": 4,
       "wins": 1,
       "podiums": 2,
-      "points": 43,
+      "points": 67,
       "dnfs": 0,
       "fastestLaps": 0,
-      "avgFinish": 1.5,
-      "avgGrid": 1.5
+      "avgFinish": 2.8,
+      "avgGrid": 2.5
     }
   },
-  "snapshotAt": "2026-06-15T06:46:49.872Z",
+  "snapshotAt": "2026-06-15T07:15:42.439Z",
   "source": "jolpica"
 }

@@ -1,0 +1,17 @@
+{
+  "driverId": "bearman",
+  "career": {
+    "wins": 0,
+    "podiums": 0,
+    "starts": 34,
+    "fastestLaps": 0,
+    "championships": 0
+  },
+  "seasons": [
+    2024,
+    2025,
+    2026
+  ],
+  "snapshotAt": "2026-06-15T07:15:48.761Z",
+  "source": "jolpica"
+}

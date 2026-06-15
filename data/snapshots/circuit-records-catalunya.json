@@ -1,0 +1,24 @@
+{
+  "circuitId": "catalunya",
+  "records": {
+    "mostWins": {
+      "driverId": "hamilton",
+      "name": "Lewis Hamilton",
+      "count": 7
+    },
+    "mostPoles": {
+      "driverId": "michael_schumacher",
+      "name": "Michael Schumacher",
+      "count": 7
+    },
+    "fastestLap": {
+      "driverId": "fisichella",
+      "name": "Giancarlo Fisichella",
+      "time": "1:15.641",
+      "year": 2005
+    }
+  },
+  "raceCount": 36,
+  "snapshotAt": "2026-06-15T07:16:54.717Z",
+  "source": "jolpica"
+}
