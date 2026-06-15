@@ -153,7 +153,7 @@ describe("snapshot-weekly writer", () => {
     });
     expect(careerPayload.seasons).toEqual([2021, 2022, 2023, 2024, 2025]);
 
-    const writtenPaths = mockAtomicWriteJson.mock.calls.map(([fp]: [string]) => fp);
+    const writtenPaths = mockAtomicWriteJson.mock.calls.map((call) => String(call[0]));
     expect(writtenPaths.some((p) => p.includes("driver-career-hamilton"))).toBe(true);
     expect(writtenPaths.some((p) => p.includes("driver-career-max_verstappen"))).toBe(true);
   });
@@ -166,7 +166,7 @@ describe("snapshot-weekly writer", () => {
     expect(result.driverErrors).toHaveLength(1);
     expect(result.driverErrors[0]).toBeTruthy();
     // Other drivers still processed
-    const writtenPaths = mockAtomicWriteJson.mock.calls.map(([fp]: [string]) => fp);
+    const writtenPaths = mockAtomicWriteJson.mock.calls.map((call) => String(call[0]));
     expect(writtenPaths.some((p) => p.includes("driver-career-norris"))).toBe(true);
     expect(writtenPaths.some((p) => p.includes("driver-career-piastri"))).toBe(true);
     // Circuits still processed

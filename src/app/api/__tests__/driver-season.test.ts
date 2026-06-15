@@ -17,12 +17,20 @@ vi.mock("@/lib/snapshots/readSnapshotOrFetch", () => ({
 import { GET } from "@/app/api/driver-season/route";
 import { getSeasonRaceResults, getSchedule } from "@/lib/api/jolpica";
 import { readSnapshotOrFetch } from "@/lib/snapshots/readSnapshotOrFetch";
+import { rateLimited } from "@/lib/api/withRateLimit";
 import { edgeCacheControl } from "@/lib/api/edgeHeaders";
 import { makeApiRequest } from "@/test/api";
 
 const mockGetRaces = getSeasonRaceResults as ReturnType<typeof vi.fn>;
 const mockGetSchedule = getSchedule as ReturnType<typeof vi.fn>;
 const mockReadSnapshotOrFetch = readSnapshotOrFetch as ReturnType<typeof vi.fn>;
+const mockRateLimited = rateLimited as ReturnType<typeof vi.fn>;
+
+const PENDING_RACE = {
+  season: "2026", round: "4", url: "", raceName: "Monaco Grand Prix",
+  Circuit: { circuitId: "monaco", url: "", circuitName: "Circuit de Monaco", Location: { lat: "0", long: "0", locality: "Monte Carlo", country: "Monaco" } },
+  date: "2026-03-09", time: "09:00:00Z",
+};
 
 const BASE_DRIVER = {
   driverId: "max_verstappen",
@@ -123,6 +131,75 @@ describe("GET /api/driver-season", () => {
     expect(data.resultsFeedLag.pendingRaceNames).toContain("Monaco Grand Prix");
     expect(data.resultsFeedLag.checkAgainAfterMs).toBe(15 * 60 * 1000);
     vi.useRealTimers();
+  });
+
+  it("uses the 10-minute recheck window during a race weekend", async () => {
+    vi.useFakeTimers();
+    // 2026-03-14 is a Saturday in every timezone at noon UTC.
+    vi.setSystemTime(new Date("2026-03-14T12:00:00.000Z"));
+    mockGetRaces.mockResolvedValueOnce(MOCK_RACES);
+    mockGetSchedule.mockResolvedValueOnce([...MOCK_RACES, PENDING_RACE]);
+
+    const res = await GET(makeApiRequest("/api/driver-season", { season: "current", driverId: "max_verstappen" }));
+    const data = await res.json();
+
+    expect(data.resultsFeedLag.checkAgainAfterMs).toBe(10 * 60 * 1000);
+    vi.useRealTimers();
+  });
+
+  it("uses the 60-minute off-week window when the pending race is stale", async () => {
+    vi.useFakeTimers();
+    // Monday, well over 12h after the pending race date.
+    vi.setSystemTime(new Date("2026-03-30T12:00:00.000Z"));
+    mockGetRaces.mockResolvedValueOnce(MOCK_RACES);
+    mockGetSchedule.mockResolvedValueOnce([
+      ...MOCK_RACES,
+      { ...PENDING_RACE, date: "2026-03-09", time: "09:00:00Z" },
+    ]);
+
+    const res = await GET(makeApiRequest("/api/driver-season", { season: "current", driverId: "max_verstappen" }));
+    const data = await res.json();
+
+    expect(data.resultsFeedLag.checkAgainAfterMs).toBe(60 * 60 * 1000);
+    vi.useRealTimers();
+  });
+
+  it("reports no results-feed lag when every scheduled race is published", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-03-20T12:00:00.000Z"));
+    mockGetRaces.mockResolvedValueOnce(MOCK_RACES);
+    mockGetSchedule.mockResolvedValueOnce(MOCK_RACES);
+
+    const res = await GET(makeApiRequest("/api/driver-season", { season: "current", driverId: "max_verstappen" }));
+    const data = await res.json();
+
+    expect(data.resultsFeedLag).toBeNull();
+    vi.useRealTimers();
+  });
+
+  it("reads a snapshot (careerStats tier) for a historical season", async () => {
+    mockGetRaces.mockResolvedValueOnce(MOCK_RACES);
+
+    const res = await GET(makeApiRequest("/api/driver-season", { season: "2024", driverId: "max_verstappen" }));
+    const data = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(mockReadSnapshotOrFetch).toHaveBeenCalledWith(
+      expect.objectContaining({ key: "driver-season-2024-max_verstappen", dataClass: "careerStats" }),
+    );
+    expect(res.headers.get("cache-control")).toBe(edgeCacheControl("careerStats"));
+    expect(data.source).toBe("live");
+  });
+
+  it("short-circuits with the rate-limit response when throttled", async () => {
+    mockRateLimited.mockReturnValueOnce(
+      new Response(JSON.stringify({ error: "Too many requests" }), { status: 429 }),
+    );
+
+    const res = await GET(makeApiRequest("/api/driver-season", { season: "current", driverId: "max_verstappen" }));
+
+    expect(res.status).toBe(429);
+    expect(mockGetRaces).not.toHaveBeenCalled();
   });
 
   it("handles empty Races array gracefully", async () => {

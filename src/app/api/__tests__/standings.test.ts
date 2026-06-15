@@ -19,14 +19,83 @@ vi.mock("@/lib/api/jolpica", async () => {
 
 import { GET } from "@/app/api/standings/route";
 import { getDriverStandings, getConstructorStandings } from "@/lib/api/jolpica";
+import { rateLimited } from "@/lib/api/withRateLimit";
+import { edgeCacheControl } from "@/lib/api/edgeHeaders";
 import { makeApiRequest } from "@/test/api";
 
 const mockGetDriverStandings = getDriverStandings as ReturnType<typeof vi.fn>;
 const mockGetConstructorStandings = getConstructorStandings as ReturnType<typeof vi.fn>;
+const mockRateLimited = rateLimited as ReturnType<typeof vi.fn>;
 
 describe("GET /api/standings", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  it("short-circuits with the rate-limit response when throttled", async () => {
+    mockRateLimited.mockReturnValueOnce(
+      new Response(JSON.stringify({ error: "Too many requests" }), { status: 429 }),
+    );
+
+    const res = await GET(makeApiRequest("/api/standings", { season: "current" }));
+
+    expect(res.status).toBe(429);
+    expect(mockGetDriverStandings).not.toHaveBeenCalled();
+    expect(mockReadSnapshotOrFetch).not.toHaveBeenCalled();
+  });
+
+  it("sets the liveStandings edge cache-control header on current season", async () => {
+    mockGetDriverStandings.mockResolvedValueOnce([]);
+    mockGetConstructorStandings.mockResolvedValueOnce([]);
+
+    const res = await GET(makeApiRequest("/api/standings", { season: "current" }));
+
+    expect(res.headers.get("cache-control")).toBe(edgeCacheControl("liveStandings"));
+  });
+
+  it("degrades gracefully when the live current-season fetch throws", async () => {
+    mockGetDriverStandings.mockRejectedValueOnce(new Error("jolpica down"));
+
+    const res = await GET(makeApiRequest("/api/standings", { season: "current" }));
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(body.available).toBe(false);
+    expect(body.reason).toMatch(/upstream unavailable/i);
+    expect(Array.isArray(body.drivers)).toBe(true);
+    expect(Array.isArray(body.constructors)).toBe(true);
+  });
+
+  it("defaults to the current season when no season param is provided", async () => {
+    mockGetDriverStandings.mockResolvedValueOnce([]);
+    mockGetConstructorStandings.mockResolvedValueOnce([]);
+
+    const res = await GET(makeApiRequest("/api/standings"));
+
+    expect(res.status).toBe(200);
+    expect(mockGetDriverStandings).toHaveBeenCalledWith("current");
+    expect(mockReadSnapshotOrFetch).not.toHaveBeenCalled();
+  });
+
+  it("falls through the snapshot liveFn to live fetchers on a historical miss", async () => {
+    mockReadSnapshotOrFetch.mockImplementationOnce(
+      async (opts: { liveFn: () => Promise<unknown> }) => opts.liveFn(),
+    );
+    mockGetDriverStandings.mockResolvedValueOnce([
+      { position: "1", Driver: { driverId: "alonso" } },
+    ]);
+    mockGetConstructorStandings.mockResolvedValueOnce([
+      { position: "1", Constructor: { constructorId: "aston_martin" } },
+    ]);
+
+    const res = await GET(makeApiRequest("/api/standings", { season: "2021" }));
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(mockGetDriverStandings).toHaveBeenCalledWith("2021");
+    expect(mockGetConstructorStandings).toHaveBeenCalledWith("2021");
+    expect(body.source).toBe("live");
+    expect(body.drivers[0].Driver.driverId).toBe("alonso");
   });
 
   it("bypasses snapshots and returns live data for current season", async () => {

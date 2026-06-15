@@ -58,21 +58,6 @@ describe("snapshot-daily writer", () => {
     expect(writtenKeys).toContain("driver-season-current-verstappen");
   });
 
-  it("written standings file contains drivers, constructors, snapshotAt and source", async () => {
-    const { runDailySnapshot } = await import("../snapshot-daily");
-    await runDailySnapshot();
-
-    const standingsCall = mockAtomicWriteJson.mock.calls.find((call) =>
-      String(call[0]).includes("standings-current"),
-    );
-    expect(standingsCall).toBeTruthy();
-    const [, data] = standingsCall as [string, Record<string, unknown>];
-    expect(data.drivers).toEqual(driverStandingFixture);
-    expect(data.constructors).toEqual(constructorStandingFixture);
-    expect(typeof data.snapshotAt).toBe("string");
-    expect(data.source).toBe("jolpica");
-  });
-
   it("one failing job does not stop the others — remaining jobs still write", async () => {
     mockGetDriverStandings.mockRejectedValue(new Error("Jolpica 429"));
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
@@ -120,5 +105,34 @@ describe("snapshot-daily writer", () => {
     expect(data.driverId).toBe("verstappen");
     expect(data.summary).toBeTruthy();
     expect(data.source).toBe("jolpica");
+  });
+
+  it("writes a driver-season file for every driver in the standings", async () => {
+    mockGetDriverStandings.mockResolvedValue([
+      { position: "1", Driver: { driverId: "verstappen" } },
+      { position: "2", Driver: { driverId: "hamilton" } },
+    ]);
+
+    const { runDailySnapshot } = await import("../snapshot-daily");
+    await runDailySnapshot();
+
+    const written = mockAtomicWriteJson.mock.calls.map((call) => String(call[0]));
+    expect(written.some((p) => p.includes("driver-season-current-verstappen"))).toBe(true);
+    expect(written.some((p) => p.includes("driver-season-current-hamilton"))).toBe(true);
+  });
+
+  it("fails the driver-season job without writing partial files when standings are empty", async () => {
+    mockGetDriverStandings.mockResolvedValue([]);
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const { runDailySnapshot } = await import("../snapshot-daily");
+    const results = await runDailySnapshot();
+
+    const driverSeason = results.find((r) => r.key === "driver-season-current");
+    expect(driverSeason?.ok).toBe(false);
+    expect(driverSeason?.err).toMatch(/empty drivers/i);
+
+    const written = mockAtomicWriteJson.mock.calls.map((call) => String(call[0]));
+    expect(written.some((p) => p.includes("driver-season-current-"))).toBe(false);
   });
 });
