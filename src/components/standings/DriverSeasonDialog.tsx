@@ -32,7 +32,15 @@ type DriverSeasonData = {
 
 const CURRENT_SEASON_STALE_MS = 5 * 60 * 1000;
 const HISTORICAL_SEASON_STALE_MS = 60 * 60 * 1000;
-const RESULTS_FEED_RECHECK_MS = 24 * 60 * 60 * 1000;
+const RESULTS_FEED_RECHECK_FALLBACK_MS = 60 * 60 * 1000;
+
+function formatLagInterval(ms: number): string {
+  if (!Number.isFinite(ms) || ms <= 0) return "about an hour";
+  const minutes = Math.round(ms / 60000);
+  if (minutes < 60) return `${minutes} minute${minutes === 1 ? "" : "s"}`;
+  const hours = Math.round(minutes / 60);
+  return `${hours} hour${hours === 1 ? "" : "s"}`;
+}
 
 async function fetchDriverSeason(season: string, driverId: string): Promise<DriverSeasonData> {
   const params = new URLSearchParams({
@@ -71,7 +79,9 @@ export default function DriverSeasonDialog({
     refetchInterval: (query) => {
       const payload = query.state.data as DriverSeasonData | undefined;
       if (season !== "current") return false;
-      return payload?.resultsFeedLag ? RESULTS_FEED_RECHECK_MS : false;
+      if (!payload?.resultsFeedLag) return false;
+      const ms = payload.resultsFeedLag.checkAgainAfterMs;
+      return Number.isFinite(ms) && ms > 0 ? ms : RESULTS_FEED_RECHECK_FALLBACK_MS;
     },
   });
 
@@ -117,7 +127,7 @@ export default function DriverSeasonDialog({
             )}
             {data?.resultsFeedLag && (
               <p className="mb-3 text-xs text-amber-500/90">
-                Results feed update pending for: {data.resultsFeedLag.pendingRaceNames.join(", ")}. Auto-checking every 24 hours.
+                Results feed update pending for: {data.resultsFeedLag.pendingRaceNames.join(", ")}. Auto-checking every {formatLagInterval(data.resultsFeedLag.checkAgainAfterMs)}.
               </p>
             )}
             {data && <DriverSeasonStats summary={data.summary} />}

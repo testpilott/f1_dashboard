@@ -15,6 +15,14 @@ export type DriverSeasonData = {
   } | null;
 };
 
+function formatLagInterval(ms: number): string {
+  if (!Number.isFinite(ms) || ms <= 0) return "about an hour";
+  const minutes = Math.round(ms / 60000);
+  if (minutes < 60) return `${minutes} minute${minutes === 1 ? "" : "s"}`;
+  const hours = Math.round(minutes / 60);
+  return `${hours} hour${hours === 1 ? "" : "s"}`;
+}
+
 export default function DriverSeasonSection({
   seasonLoading,
   seasonStats,
@@ -39,7 +47,7 @@ export default function DriverSeasonSection({
       )}
       {seasonStats?.resultsFeedLag && (
         <p className="mb-3 text-xs text-amber-500/90">
-          Results feed update pending for: {seasonStats.resultsFeedLag.pendingRaceNames.join(", ")}. Auto-checking every 24 hours.
+          Results feed update pending for: {seasonStats.resultsFeedLag.pendingRaceNames.join(", ")}. Auto-checking every {formatLagInterval(seasonStats.resultsFeedLag.checkAgainAfterMs)}.
         </p>
       )}
       {seasonStats?.summary && (

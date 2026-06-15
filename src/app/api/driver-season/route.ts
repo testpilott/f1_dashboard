@@ -11,6 +11,10 @@ export const revalidate = 604800;
 export const preferredRegion = "iad1";
 
 const RESULTS_FEED_RECHECK_MS = 24 * 60 * 60 * 1000;
+const RESULTS_FEED_RECHECK_RACE_WEEKEND_MS = 10 * 60 * 1000;
+const RESULTS_FEED_RECHECK_POST_RACE_MS = 15 * 60 * 1000;
+const RESULTS_FEED_RECHECK_OFF_WEEK_MS = 60 * 60 * 1000;
+const RESULTS_FEED_POST_RACE_WINDOW_MS = 12 * 60 * 60 * 1000;
 
 function raceTimestampMs(race: Race): number {
   // Jolpica dates are UTC dates; include time when present to avoid
@@ -18,6 +22,29 @@ function raceTimestampMs(race: Race): number {
   const iso = race.time ? `${race.date}T${race.time}` : `${race.date}T00:00:00Z`;
   const ts = Date.parse(iso);
   return Number.isNaN(ts) ? Number.POSITIVE_INFINITY : ts;
+}
+
+function isRaceWeekend(now: Date): boolean {
+  const day = now.getDay();
+  return day === 0 || day === 5 || day === 6;
+}
+
+function resolveResultsLagRecheckMs(nowMs: number, pendingRaces: Race[]): number {
+  if (pendingRaces.length === 0) return RESULTS_FEED_RECHECK_MS;
+
+  if (isRaceWeekend(new Date(nowMs))) {
+    return RESULTS_FEED_RECHECK_RACE_WEEKEND_MS;
+  }
+
+  const latestPendingRaceMs = Math.max(...pendingRaces.map(raceTimestampMs));
+  if (
+    Number.isFinite(latestPendingRaceMs)
+    && nowMs - latestPendingRaceMs <= RESULTS_FEED_POST_RACE_WINDOW_MS
+  ) {
+    return RESULTS_FEED_RECHECK_POST_RACE_MS;
+  }
+
+  return RESULTS_FEED_RECHECK_OFF_WEEK_MS;
 }
 
 export async function GET(req: Request) {
@@ -64,7 +91,7 @@ export async function GET(req: Request) {
             pendingRounds: pendingScheduleRaces
               .map((r) => parseInt(r.round, 10))
               .filter((round) => Number.isFinite(round)),
-            checkAgainAfterMs: RESULTS_FEED_RECHECK_MS,
+            checkAgainAfterMs: resolveResultsLagRecheckMs(now, pendingScheduleRaces),
             asOf: new Date().toISOString(),
           }
         : null;

@@ -3,10 +3,6 @@ vi.mock("next/cache", () => ({
   unstable_cache: (fn: unknown) => fn,
 }));
 
-vi.mock("@/lib/snapshots/readSnapshotOrFetch", () => ({
-  readSnapshotOrFetch: async <T,>(opts: { liveFn: () => Promise<T> }) => opts.liveFn(),
-}));
-
 vi.mock("@/lib/api/jolpica", async () => {
   const { createJolpicaMocks } = await import("@/test/mockJolpica");
   return createJolpicaMocks();
@@ -107,13 +103,15 @@ describe("GET /api/driver-season", () => {
   });
 
   it("bypasses snapshot reads for current season freshness", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-03-09T12:00:00.000Z"));
     mockGetRaces.mockResolvedValueOnce(MOCK_RACES);
     mockGetSchedule.mockResolvedValueOnce([
       ...MOCK_RACES,
       {
         season: "2026", round: "4", url: "", raceName: "Monaco Grand Prix",
         Circuit: { circuitId: "monaco", url: "", circuitName: "Circuit de Monaco", Location: { lat: "0", long: "0", locality: "Monte Carlo", country: "Monaco" } },
-        date: "2020-05-24", time: "13:00:00Z",
+        date: "2026-03-09", time: "09:00:00Z",
       },
     ]);
     const res = await GET(makeApiRequest("/api/driver-season", { season: "current", driverId: "max_verstappen" }));
@@ -123,6 +121,8 @@ describe("GET /api/driver-season", () => {
     const data = await res.json();
     expect(data.resultsFeedLag).toBeTruthy();
     expect(data.resultsFeedLag.pendingRaceNames).toContain("Monaco Grand Prix");
+    expect(data.resultsFeedLag.checkAgainAfterMs).toBe(15 * 60 * 1000);
+    vi.useRealTimers();
   });
 
   it("handles empty Races array gracefully", async () => {

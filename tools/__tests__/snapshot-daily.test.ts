@@ -42,27 +42,28 @@ describe("snapshot-daily writer", () => {
     mockGetSeasonResults.mockResolvedValue(resultsFixture);
   });
 
-  it("writes standings, schedule, and season-results files on success", async () => {
+  it("writes standings, schedule, season-results, and driver-season files on success", async () => {
     const { runDailySnapshot } = await import("../snapshot-daily");
     const results = await runDailySnapshot();
 
-    expect(results).toHaveLength(3);
+    expect(results).toHaveLength(4);
     expect(results.every((r) => r.ok)).toBe(true);
 
-    const writtenKeys = mockAtomicWriteJson.mock.calls.map(([filePath]: [string]) =>
-      path.basename(filePath, ".json"),
+    const writtenKeys = mockAtomicWriteJson.mock.calls.map((call) =>
+      path.basename(String(call[0]), ".json"),
     );
     expect(writtenKeys).toContain("standings-current");
     expect(writtenKeys).toContain("schedule-current");
     expect(writtenKeys).toContain("season-results-current");
+    expect(writtenKeys).toContain("driver-season-current-verstappen");
   });
 
   it("written standings file contains drivers, constructors, snapshotAt and source", async () => {
     const { runDailySnapshot } = await import("../snapshot-daily");
     await runDailySnapshot();
 
-    const standingsCall = mockAtomicWriteJson.mock.calls.find(([fp]: [string]) =>
-      fp.includes("standings-current"),
+    const standingsCall = mockAtomicWriteJson.mock.calls.find((call) =>
+      String(call[0]).includes("standings-current"),
     );
     expect(standingsCall).toBeTruthy();
     const [, data] = standingsCall as [string, Record<string, unknown>];
@@ -81,12 +82,12 @@ describe("snapshot-daily writer", () => {
 
     const failed = results.filter((r) => !r.ok);
     const passed = results.filter((r) => r.ok);
-    expect(failed.length).toBe(1);
+    expect(failed.length).toBe(2);
     expect(passed.length).toBe(2);
 
     // schedule and season-results should still have been written
-    const writtenKeys = mockAtomicWriteJson.mock.calls.map(([fp]: [string]) =>
-      path.basename(fp, ".json"),
+    const writtenKeys = mockAtomicWriteJson.mock.calls.map((call) =>
+      path.basename(String(call[0]), ".json"),
     );
     expect(writtenKeys).toContain("schedule-current");
     expect(writtenKeys).toContain("season-results-current");
@@ -104,5 +105,20 @@ describe("snapshot-daily writer", () => {
 
     expect(results.every((r) => !r.ok)).toBe(true);
     expect(mockAtomicWriteJson).not.toHaveBeenCalled();
+  });
+
+  it("writes a per-driver current season summary snapshot payload", async () => {
+    const { runDailySnapshot } = await import("../snapshot-daily");
+    await runDailySnapshot();
+
+    const driverSeasonCall = mockAtomicWriteJson.mock.calls.find((call) =>
+      String(call[0]).includes("driver-season-current-verstappen"),
+    );
+    expect(driverSeasonCall).toBeTruthy();
+    const [, data] = driverSeasonCall as [string, Record<string, unknown>];
+    expect(data.season).toBe("current");
+    expect(data.driverId).toBe("verstappen");
+    expect(data.summary).toBeTruthy();
+    expect(data.source).toBe("jolpica");
   });
 });

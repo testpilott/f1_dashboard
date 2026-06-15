@@ -7,7 +7,9 @@ import {
   getSeasonResults,
 } from "@/lib/api/jolpica";
 import { atomicWriteJson } from "@/lib/snapshots/atomicWriteJson";
+import { driverSeasonSummary } from "@/lib/stats/driverSeason";
 import type {
+  DriverSeasonSnapshot,
   ScheduleSnapshot,
   SeasonResultsSnapshot,
   StandingsSnapshot,
@@ -83,6 +85,35 @@ export async function runDailySnapshot(): Promise<{ key: string; ok: boolean; er
           source: "jolpica",
         };
         return payload;
+      },
+    });
+    jobs.push({
+      key: `driver-season-${season}`,
+      fetch: async () => {
+        const [drivers, races] = await Promise.all([
+          getDriverStandings(season),
+          getSeasonResults(season),
+        ]);
+        if (drivers.length === 0) throw new Error("empty drivers standings");
+
+        for (const driver of drivers) {
+          const driverId = driver.Driver.driverId;
+          const payload: DriverSeasonSnapshot = {
+            season,
+            driverId,
+            summary: driverSeasonSummary(races, driverId),
+            snapshotAt: new Date().toISOString(),
+            source: "jolpica",
+          };
+          await atomicWriteJson(path.join(OUT_DIR, `driver-season-${season}-${driverId}.json`), payload);
+        }
+
+        return {
+          season,
+          writtenDrivers: drivers.length,
+          snapshotAt: new Date().toISOString(),
+          source: "jolpica" as const,
+        };
       },
     });
   }
