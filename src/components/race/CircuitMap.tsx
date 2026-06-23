@@ -102,26 +102,26 @@ export default function CircuitMap({ year, round }: { year: string; round: strin
     const hotspots = data?.details?.notableHotspots ?? [];
     const corners = data?.corners ?? [];
     if (hotspots.length === 0 || corners.length === 0) return [];
-    return hotspots
-      .map((h) => {
-        const corner = corners.find((c) => c.number === h.corner);
-        if (!corner) return null;
-        return {
-          x: corner.x,
-          y: corner.y,
-          meta: {
-            lap_number: null,
-            driver_number: null,
-            flag: null,
-            category: "Hotspot",
-            message: h.description,
-            type: "hotspot" as const,
-            name: h.name,
-            description: h.description,
-          },
-        } satisfies IncidentMarker;
-      })
-      .filter((m): m is IncidentMarker => m !== null);
+    const out: IncidentMarker[] = [];
+    for (const h of hotspots) {
+      const corner = corners.find((c) => c.number === h.corner);
+      if (!corner) continue;
+      out.push({
+        x: corner.x,
+        y: corner.y,
+        meta: {
+          lap_number: null,
+          driver_number: null,
+          flag: null,
+          category: "Hotspot",
+          message: h.description,
+          type: "hotspot",
+          name: h.name,
+          description: h.description,
+        },
+      });
+    }
+    return out;
   }, [data?.details?.notableHotspots, data?.corners]);
 
   const markers = useMemo<IncidentMarker[]>(
