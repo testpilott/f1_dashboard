@@ -31,6 +31,7 @@ import { makeApiRequest } from "@/test/api";
 const MOCK_RACE = {
   round: "5",
   Circuit: {
+    circuitId: "marina_bay",
     circuitName: "Marina Bay Street Circuit",
     Location: { country: "Singapore", locality: "Marina Bay" },
   },
@@ -151,5 +152,30 @@ describe("/api/circuit-info", () => {
     expect(body.available).toBe(true);
     expect(body.trackX).toEqual([]);
     expect(body.trackY).toEqual([]);
+  });
+
+  it("includes circuitId and curated details on success for a known circuit", async () => {
+    const res = await GET(makeApiRequest("/api/circuit-info", { year: "2026", round: "5" }));
+    const body = await res.json();
+    expect(body.available).toBe(true);
+    expect(body.circuitId).toBe("marina_bay");
+    expect(body.details).toBeDefined();
+    expect(body.details.lengthMeters).toBeGreaterThan(0);
+    expect(body.details.wikipediaSlug).toBe("Marina_Bay_Street_Circuit");
+    expect(Array.isArray(body.details.notableHotspots)).toBe(true);
+  });
+
+  it("omits details for an unknown / unseeded circuit but keeps circuitId", async () => {
+    vi.mocked(getSchedule).mockResolvedValue(
+      [{
+        ...MOCK_RACE,
+        Circuit: { ...MOCK_RACE.Circuit, circuitId: "estoril" },
+      }] as unknown as Awaited<ReturnType<typeof getSchedule>>,
+    );
+    const res = await GET(makeApiRequest("/api/circuit-info", { year: "2026", round: "5" }));
+    const body = await res.json();
+    expect(body.available).toBe(true);
+    expect(body.circuitId).toBe("estoril");
+    expect(body.details).toBeUndefined();
   });
 });

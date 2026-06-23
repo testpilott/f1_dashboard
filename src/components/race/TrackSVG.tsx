@@ -1,5 +1,6 @@
 import { nearestPolylinePoint } from "@/lib/stats/incidents";
 import { rotatePoint, splitBySectors } from "@/lib/geometry/track";
+import type { CircuitDetails } from "@/lib/constants/circuitDetails";
 
 export type SectorId = 1 | 2 | 3;
 
@@ -13,6 +14,8 @@ export interface CircuitCorner {
 export interface CircuitInfoPayload {
   available: boolean;
   reason?: string;
+  /** Jolpica/Ergast circuit identifier (e.g. "spa", "monaco"). */
+  circuitId?: string;
   circuitName?: string;
   country?: string;
   locality?: string;
@@ -21,6 +24,8 @@ export interface CircuitInfoPayload {
   trackY?: number[];
   trackPositionTime?: number[];
   rotation?: number;
+  /** Curated reference data — see src/lib/constants/circuitDetails.ts. */
+  details?: CircuitDetails;
 }
 
 export interface IncidentMeta {
@@ -29,6 +34,16 @@ export interface IncidentMeta {
   flag: string | null;
   category: string;
   message: string;
+  /**
+   * Marker variant. `"incident"` (default when absent) is a live-race
+   * race-control incident; `"hotspot"` is a curated notable corner from
+   * `circuitDetails.notableHotspots`.
+   */
+  type?: "incident" | "hotspot";
+  /** Hotspot display name (e.g. "Eau Rouge–Raidillon"). Only set when type = "hotspot". */
+  name?: string;
+  /** Hotspot description. Only set when type = "hotspot". */
+  description?: string;
 }
 
 export interface IncidentMarker {

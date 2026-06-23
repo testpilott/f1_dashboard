@@ -6,6 +6,7 @@ import { getSessions } from "@/lib/api/openf1";
 import { pickRaceSession } from "@/lib/stats/session-match";
 import { getCircuitInfo } from "@/lib/api/multiviewer";
 import { ensureArray } from "@/lib/utils";
+import { getCircuitDetails } from "@/lib/constants/circuitDetails";
 
 // Circuit layout is static within a season — cache for 24 hours.
 export const revalidate = 86400;
@@ -62,8 +63,12 @@ export async function GET(req: Request) {
       length: typeof c.length === "number" ? c.length : 0,
     }));
 
+    const circuitId = race.Circuit.circuitId;
+    const details = getCircuitDetails(circuitId) ?? undefined;
+
     return cachedJson({
       available: true,
+      circuitId,
       circuitName: race.Circuit.circuitName,
       country: race.Circuit.Location.country,
       locality: race.Circuit.Location.locality,
@@ -72,6 +77,7 @@ export async function GET(req: Request) {
       trackY: ensureArray<number>(info.y),
       trackPositionTime: ensureArray<number>(info.trackPositionTime),
       rotation: typeof info.rotation === "number" ? info.rotation : 0,
+      details,
     }, "circuitMeta");
   } catch (err) {
     return gracefulDegradation(
