@@ -234,6 +234,33 @@ try {
 The page treats `available: false` as a known state and renders a fallback.
 Don't surface this as a 500 — the route succeeded, the data didn't.
 
+## Add a new circuit to the curated details table
+
+When a new circuit joins the F1 calendar (or you want to backfill an existing
+unseeded one):
+
+1. Look up the Jolpica `circuitId` in `data/snapshots/schedule-current.json`
+   (`jq '.races[].Circuit.circuitId' data/snapshots/schedule-current.json | sort -u`).
+2. Open the circuit's Wikipedia article and capture **length (m)**, **turn
+   count**, **direction** (clockwise / anticlockwise), and the **slug** (the
+   underscored part after `/wiki/`). Store the slug as raw UTF-8 — the helper
+   percent-encodes it via `encodeURI`.
+3. From the article body or FIA homologation PDF, capture **elevation gain
+   (m)** (peak-to-low) and **max banking (°)**. Use `0` for flat circuits.
+4. Pick 3–6 well-known corners; write a ≤140-character description per
+   hotspot (the test enforces the limit).
+5. **Verify each hotspot's `corner` number** against Multiviewer's geometry
+   by running `npm run dev`, opening `/race/<year>/<round>` for that circuit's
+   race, and clicking the corresponding corner button — the highlighted turn
+   should match the name you wrote. Multiviewer's numbering occasionally
+   diverges from fan convention on chicane-heavy layouts.
+6. Add the entry to `CIRCUIT_DETAILS` in
+   `src/lib/constants/circuitDetails.ts`.
+7. Run `npm test`. The data-driven sanity checks in
+   `circuitDetails.test.ts` catch typos (corner number > 1.5× turn count,
+   description too long, spaces in slug, missing fields).
+8. Commit: `feat(constants): seed circuit-details for <circuitId>`.
+
 ## Common pitfalls
 
 | Pitfall | Fix |
@@ -245,6 +272,8 @@ Don't surface this as a 500 — the route succeeded, the data didn't.
 | Missing `validateX` on a query param | Add it; add a rejection test |
 | Hardcoded TTL number in a route | Use `adaptiveRevalidate(dataClass)` |
 | Forgetting `rateLimited` | Add it as the first line of the handler |
+| Storing a Wikipedia slug already percent-encoded | Store raw UTF-8; let `encodeURI` do the encoding |
+| Hotspot `corner` not matching Multiviewer | Click the corner in the dev-server Circuit tab to verify before merging |
 
 ## Where to ask for help
 

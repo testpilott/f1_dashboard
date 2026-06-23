@@ -52,6 +52,14 @@ Race detail. Server component fetches:
 All via `Promise.allSettled()`. The client component renders the circuit map,
 lap chart, incident timeline, telemetry panel, and weather summary.
 
+The **Circuit tab** also renders a `CircuitDetailsPanel` under the SVG when the
+race's `circuitId` is seeded in `src/lib/constants/circuitDetails.ts` — length,
+turn count, elevation gain, max banking, an outbound Wikipedia link, and a list
+of curated notable corners. Those same corners are drawn on the SVG as cyan
+★-glyph "hotspot" markers (token: `--hotspot-marker`); clicking one opens the
+existing incident dialog with the corner's name and description. Unseeded
+circuits hide the panel and skip the markers — same render as today's flow.
+
 ### `/drivers` and `/drivers/[id]`
 
 [src/app/drivers/](../src/app/drivers/). Grid + profile. The grid uses

@@ -84,6 +84,8 @@ src/lib/
   incidents/        Race-control event parser
   charts/           Nivo theme bound to CSS variables
   constants/        Teams, circuits, scoring, feeds, nationality
+                    circuitDetails.ts — curated length/turns/elevation/banking,
+                    Wikipedia slug + notable corners per circuit
   types/            TypeScript interfaces (jolpica, openf1, domain, …)
   time/             Race-weekend detection, weekly cache bucket
     format.ts                 Schedule/time formatting helpers
