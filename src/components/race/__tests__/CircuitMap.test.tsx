@@ -210,4 +210,116 @@ describe("<CircuitMap />", () => {
 
     expect(await screen.findByRole("dialog")).toBeInTheDocument();
   });
+
+  // ── Curated hotspots (Phase 5) ────────────────────────────────────────────
+
+  it("renders hotspot markers from circuit details + corner geometry join", async () => {
+    mockFetch(
+      {
+        ...CIRCUIT_INFO,
+        circuitId: "spa",
+        corners: [
+          { number: 3, x: 30, y: 30, length: 100 },
+          { number: 8, x: 60, y: 60, length: 500 },
+        ],
+        details: {
+          lengthMeters: 7004,
+          turnCount: 19,
+          elevationGainMeters: 102,
+          maxBankingDegrees: 0,
+          direction: "clockwise",
+          wikipediaSlug: "Circuit_de_Spa-Francorchamps",
+          notableHotspots: [
+            { corner: 3, name: "Eau Rouge–Raidillon", description: "Iconic uphill." },
+            { corner: 8, name: "Les Combes", description: "Heavy braking zone." },
+            // Hotspot for a corner not present in the route corners[] — silently skipped
+            { corner: 99, name: "Phantom", description: "Should not render." },
+          ],
+        },
+      },
+      INCIDENTS_EMPTY,
+    );
+    render(withQuery(<CircuitMap year="2024" round="5" />));
+
+    const eauRouge = await screen.findByRole("button", {
+      name: /Notable corner: Eau Rouge–Raidillon/i,
+    });
+    expect(eauRouge).toHaveAttribute("data-marker-type", "hotspot");
+
+    expect(
+      screen.getByRole("button", { name: /Notable corner: Les Combes/i }),
+    ).toBeInTheDocument();
+
+    expect(
+      screen.queryByRole("button", { name: /Notable corner: Phantom/i }),
+    ).toBeNull();
+  });
+
+  it("shows the hotspot's name + description in the dialog when clicked", async () => {
+    mockFetch(
+      {
+        ...CIRCUIT_INFO,
+        circuitId: "spa",
+        corners: [{ number: 3, x: 30, y: 30, length: 100 }],
+        details: {
+          lengthMeters: 7004,
+          turnCount: 19,
+          elevationGainMeters: 102,
+          maxBankingDegrees: 0,
+          direction: "clockwise",
+          wikipediaSlug: "Circuit_de_Spa-Francorchamps",
+          notableHotspots: [
+            {
+              corner: 3,
+              name: "Eau Rouge–Raidillon",
+              description: "Iconic uphill — taken near-flat.",
+            },
+          ],
+        },
+      },
+      INCIDENTS_EMPTY,
+    );
+
+    const user = userEvent.setup();
+    render(withQuery(<CircuitMap year="2024" round="5" />));
+
+    const marker = await screen.findByRole("button", {
+      name: /Notable corner: Eau Rouge–Raidillon/i,
+    });
+    await user.click(marker);
+
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
+    // Name appears in the dialog title + the panel list — two hits is expected.
+    expect(screen.getAllByText(/Eau Rouge–Raidillon/).length).toBeGreaterThanOrEqual(2);
+    // Description also appears in both the panel and the dialog body.
+    expect(
+      screen.getAllByText("Iconic uphill — taken near-flat.").length,
+    ).toBeGreaterThanOrEqual(2);
+  });
+
+  it("renders the combined count text when both incidents and hotspots are present", async () => {
+    mockFetch(
+      {
+        ...CIRCUIT_INFO,
+        circuitId: "spa",
+        corners: [{ number: 3, x: 30, y: 30, length: 100 }],
+        details: {
+          lengthMeters: 7004,
+          turnCount: 19,
+          elevationGainMeters: 102,
+          maxBankingDegrees: 0,
+          direction: "clockwise",
+          wikipediaSlug: "Circuit_de_Spa-Francorchamps",
+          notableHotspots: [
+            { corner: 3, name: "Eau Rouge", description: "Iconic." },
+          ],
+        },
+      },
+      INCIDENTS_WITH_DATA,
+    );
+    render(withQuery(<CircuitMap year="2024" round="5" />));
+    expect(
+      await screen.findByText(/2 incidents · 1 notable corner — click to view detail/i),
+    ).toBeInTheDocument();
+  });
 });

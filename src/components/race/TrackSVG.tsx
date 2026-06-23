@@ -202,53 +202,70 @@ export default function TrackSVG({
           ),
       )}
 
-      {markers.map((marker, idx) => {
-        const snapped = nearestPolylinePoint(xs, rawYs, marker.x, marker.y);
-        const pt = rotatePoint(snapped.x, -snapped.y, cx, cy, rotationDeg);
-        const flagColor =
-          marker.meta.flag === "RED"
-            ? "var(--incident-red)"
-            : marker.meta.flag === "YELLOW" || marker.meta.flag === "DOUBLE YELLOW"
-              ? "var(--incident-yellow)"
-              : "var(--incident-default)";
+      {/*
+       * Markers are drawn in two passes so curated hotspots sit BELOW any
+       * live-race incidents at the same corner — incidents are about the
+       * race the user is currently looking at and should always win the
+       * click on overlap.
+       */}
+      {([true, false] as const).flatMap((isHotspotPass) =>
+        markers
+          .filter((m) => (m.meta.type === "hotspot") === isHotspotPass)
+          .map((marker, idx) => {
+            const snapped = nearestPolylinePoint(xs, rawYs, marker.x, marker.y);
+            const pt = rotatePoint(snapped.x, -snapped.y, cx, cy, rotationDeg);
+            const isHotspot = marker.meta.type === "hotspot";
+            const fillColor = isHotspot
+              ? "var(--hotspot-marker)"
+              : marker.meta.flag === "RED"
+                ? "var(--incident-red)"
+                : marker.meta.flag === "YELLOW" || marker.meta.flag === "DOUBLE YELLOW"
+                  ? "var(--incident-yellow)"
+                  : "var(--incident-default)";
+            const glyph = isHotspot ? "★" : "!";
+            const ariaLabel = isHotspot
+              ? `Notable corner: ${marker.meta.name ?? marker.meta.message}`
+              : `Incident: ${marker.meta.message}`;
 
-        return (
-          <g
-            key={idx}
-            transform={`translate(${pt.x}, ${pt.y})`}
-            style={{ cursor: "pointer" }}
-            role="button"
-            aria-label={`Incident: ${marker.meta.message}`}
-            onClick={() => onMarkerClick?.(marker.meta)}
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                onMarkerClick?.(marker.meta);
-              }
-            }}
-          >
-            <circle r={dotR * 2.6} fill={flagColor} opacity={0.22} />
-            <circle
-              r={dotR * 1.4}
-              fill={flagColor}
-              stroke="white"
-              strokeWidth={dotR * 0.25}
-              opacity={0.92}
-            />
-            <text
-              textAnchor="middle"
-              dominantBaseline="central"
-              fontSize={fontSize * 0.9}
-              fontFamily="var(--font-mono, monospace)"
-              fontWeight="700"
-              fill="white"
-            >
-              !
-            </text>
-          </g>
-        );
-      })}
+            return (
+              <g
+                key={`${isHotspotPass ? "h" : "i"}-${idx}`}
+                transform={`translate(${pt.x}, ${pt.y})`}
+                style={{ cursor: "pointer" }}
+                role="button"
+                aria-label={ariaLabel}
+                data-marker-type={isHotspot ? "hotspot" : "incident"}
+                onClick={() => onMarkerClick?.(marker.meta)}
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    onMarkerClick?.(marker.meta);
+                  }
+                }}
+              >
+                <circle r={dotR * 2.6} fill={fillColor} opacity={0.22} />
+                <circle
+                  r={dotR * 1.4}
+                  fill={fillColor}
+                  stroke="white"
+                  strokeWidth={dotR * 0.25}
+                  opacity={0.92}
+                />
+                <text
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  fontSize={fontSize * 0.9}
+                  fontFamily="var(--font-mono, monospace)"
+                  fontWeight="700"
+                  fill="white"
+                >
+                  {glyph}
+                </text>
+              </g>
+            );
+          }),
+      )}
     </svg>
   );
 }

@@ -129,6 +129,8 @@
   --incident-red: oklch(0.63 0.21 25);
   --incident-yellow: oklch(0.79 0.16 82);
   --incident-default: var(--f1-red);
+  /* Curated historical hotspot — desaturated cyan, distinct from incident colours. */
+  --hotspot-marker: oklch(0.7 0.13 195);
 
   --rain-badge-bg: oklch(0.71 0.08 240 / 22%);
   --rain-badge-border: oklch(0.62 0.08 240 / 45%);
@@ -215,6 +217,8 @@
   --incident-red: oklch(0.71 0.19 25);
   --incident-yellow: oklch(0.86 0.16 82);
   --incident-default: var(--f1-red);
+  /* Curated historical hotspot — slightly darker cyan in light mode for contrast. */
+  --hotspot-marker: oklch(0.55 0.13 195);
 
   --rain-badge-bg: oklch(0.74 0.08 240 / 24%);
   --rain-badge-border: oklch(0.74 0.08 240 / 44%);

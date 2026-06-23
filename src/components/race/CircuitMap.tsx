@@ -73,7 +73,7 @@ export default function CircuitMap({ year, round }: { year: string; round: strin
 
   const { data, incidentsData, isLoading, isError } = useCircuitData(year, round);
 
-  const markers = useMemo<IncidentMarker[]>(() => {
+  const incidentMarkers = useMemo<IncidentMarker[]>(() => {
     if (!incidentsData?.available || !incidentsData.incidents) return [];
     return incidentsData.incidents
       .filter((inc) => inc.x != null && inc.y != null)
@@ -86,9 +86,48 @@ export default function CircuitMap({ year, round }: { year: string; round: strin
           flag: inc.flag,
           category: inc.category,
           message: inc.message,
+          type: "incident" as const,
         },
       }));
   }, [incidentsData]);
+
+  /**
+   * Curated hotspots from circuitDetails — join the hotspot's corner number
+   * to the live Multiviewer corners[] geometry so the marker lands on the
+   * actual track location. Hotspots whose `corner` doesn't match any of the
+   * route-returned corners are silently dropped (the corner-number-drift
+   * gotcha called out in CIRCUIT_DETAILS_HANDOFF.md Phase 1).
+   */
+  const hotspotMarkers = useMemo<IncidentMarker[]>(() => {
+    const hotspots = data?.details?.notableHotspots ?? [];
+    const corners = data?.corners ?? [];
+    if (hotspots.length === 0 || corners.length === 0) return [];
+    return hotspots
+      .map((h) => {
+        const corner = corners.find((c) => c.number === h.corner);
+        if (!corner) return null;
+        return {
+          x: corner.x,
+          y: corner.y,
+          meta: {
+            lap_number: null,
+            driver_number: null,
+            flag: null,
+            category: "Hotspot",
+            message: h.description,
+            type: "hotspot" as const,
+            name: h.name,
+            description: h.description,
+          },
+        } satisfies IncidentMarker;
+      })
+      .filter((m): m is IncidentMarker => m !== null);
+  }, [data?.details?.notableHotspots, data?.corners]);
+
+  const markers = useMemo<IncidentMarker[]>(
+    () => [...hotspotMarkers, ...incidentMarkers],
+    [hotspotMarkers, incidentMarkers],
+  );
 
   const sectorMap = useMemo<Map<number, SectorId>>(() => {
     const corners = data?.corners ?? [];
@@ -160,7 +199,29 @@ export default function CircuitMap({ year, round }: { year: string; round: strin
         />
         {markers.length > 0 && (
           <p className="text-[10px] text-muted-foreground mt-2 text-center">
-            {markers.length} incident marker{markers.length !== 1 ? "s" : ""} — click to view detail
+            {/*
+             * Preserve the legacy phrasing when only incidents are shown so
+             * the surface text stays stable for visitors who have only ever
+             * seen race-day data; only switch to the combined form when
+             * curated hotspots are also present.
+             */}
+            {hotspotMarkers.length === 0 ? (
+              <>
+                {incidentMarkers.length} incident marker
+                {incidentMarkers.length !== 1 ? "s" : ""} — click to view detail
+              </>
+            ) : incidentMarkers.length === 0 ? (
+              <>
+                {hotspotMarkers.length} notable corner
+                {hotspotMarkers.length !== 1 ? "s" : ""} — click to view detail
+              </>
+            ) : (
+              <>
+                {incidentMarkers.length} incident
+                {incidentMarkers.length !== 1 ? "s" : ""} · {hotspotMarkers.length} notable corner
+                {hotspotMarkers.length !== 1 ? "s" : ""} — click to view detail
+              </>
+            )}
           </p>
         )}
       </div>
@@ -179,18 +240,24 @@ export default function CircuitMap({ year, round }: { year: string; round: strin
           <DialogPopup>
             <div className="flex items-center justify-between mb-3">
               <DialogTitle className="text-base font-bold">
-                {selectedIncident?.category === "CarEvent"
-                  ? "Incident"
-                  : selectedIncident?.flag
-                    ? `${selectedIncident.flag} Flag`
-                    : "Race Control"}
+                {selectedIncident?.type === "hotspot"
+                  ? (selectedIncident.name ?? "Notable corner")
+                  : selectedIncident?.category === "CarEvent"
+                    ? "Incident"
+                    : selectedIncident?.flag
+                      ? `${selectedIncident.flag} Flag`
+                      : "Race Control"}
               </DialogTitle>
               <DialogClose aria-label="Close" className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors">
                 <X size={16} />
               </DialogClose>
             </div>
 
-            {selectedIncident && (
+            {selectedIncident?.type === "hotspot" ? (
+              <div className="text-sm text-foreground/90 leading-relaxed">
+                {selectedIncident.description ?? selectedIncident.message}
+              </div>
+            ) : selectedIncident ? (
               <div className="space-y-2 text-sm">
                 {selectedIncident.lap_number != null && (
                   <div className="flex gap-2">
@@ -215,7 +282,7 @@ export default function CircuitMap({ year, round }: { year: string; round: strin
                   <span className="text-foreground/90 leading-relaxed">{selectedIncident.message}</span>
                 </div>
               </div>
-            )}
+            ) : null}
 
             <DialogDescription className="sr-only">
               Race control incident detail
