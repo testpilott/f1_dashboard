@@ -41,8 +41,48 @@ not interchangeable because they intentionally render different UI.
 Fetch-owning composition hooks live in `src/hooks/` when a page/component needs
 to orchestrate multiple related queries. Example:
 `src/hooks/useDriverDetails.ts` is consumed by `src/app/drivers/page.tsx`.
-`src/hooks/useDriverComparison.ts` and `src/hooks/useCircuitData.ts` follow the
+`src/hooks/useDriverComparison.ts`, `src/hooks/useTeamsComparison.ts`,
+`src/hooks/useWeekendSessions.ts`, and `src/hooks/useCircuitData.ts` follow the
 same pattern.
+
+## The god-object decomposition pattern
+
+When a component grows beyond ~150L it's often a "god object" — it fetches data,
+transforms it, and renders multiple visually distinct sections. The fix is always
+the same three-layer split:
+
+```
+data layer     → src/lib/<feature>/helpers.ts   (pure, testable, no React)
+hook layer     → src/hooks/use<Feature>.ts      (queries + derivations)
+UI layer       → src/components/<feature>/
+                   <Feature>.tsx                (orchestrator, <150L)
+                   <SubSection>.tsx             (named sections, plain props)
+```
+
+**Canonical example — CircuitMap (was 352L, now 105L):**
+
+```
+src/lib/race/
+  trackGeometry.ts   computeTrackTransform, viewBoxAttr, markerFillColor, …
+  markers.ts         buildIncidentMarkers, buildHotspotMarkers
+  sectors.ts         buildSectorMap, buildSectorGroups, toggleSectorSelection
+
+src/hooks/
+  useCircuitData.ts  circuit layout + corners + incidents queries
+
+src/components/race/
+  CircuitMap.tsx      orchestrator: hooks + useMemo + early returns + layout
+  TrackSVG.tsx        SVG renderer: geometry → screen coordinates
+  IncidentDialog.tsx  dialog body (hotspot vs incident branch)
+  MarkerTally.tsx     count-text with 3 display variants
+  CornerSelector.tsx  sector chips + corner buttons + clear action
+```
+
+Rules for applying the pattern:
+- Pure transformations (no React, no fetch) → `src/lib/`.
+- Multiple related queries → one hook in `src/hooks/`.
+- Visual sections with clear names → own component files; props only, no hooks.
+- Hooks (`useState`, `useMemo`) stay in the orchestrator.
 
 ## The design system
 
