@@ -39,6 +39,9 @@ describe("fetchJson", () => {
       ),
     );
 
-    await expect(fetchJson("/api/bad-json")).rejects.toBeTruthy();
+    // Bad JSON should bubble the parser's SyntaxError; that's a stronger
+    // signal than `.toBeTruthy()` (which would have accepted *any* rejection
+    // — including network failures unrelated to the parse).
+    await expect(fetchJson("/api/bad-json")).rejects.toThrow(SyntaxError);
   });
 });

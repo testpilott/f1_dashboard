@@ -94,7 +94,8 @@ describe("GET /api/driver-season", () => {
     const res = await GET(makeApiRequest("/api/driver-season", { season: "2026", driverId: "max_verstappen" }));
     expect(res.status).toBe(200);
     const data = await res.json();
-    expect(data.summary).toBeDefined();
+    // (Dropped a redundant `expect(data.summary).toBeDefined()` here —
+    // every assertion that follows would throw on undefined anyway.)
     expect(data.summary.aggregates.races).toBe(3);
     expect(data.summary.aggregates.wins).toBe(1);
     expect(data.summary.aggregates.podiums).toBe(2);
