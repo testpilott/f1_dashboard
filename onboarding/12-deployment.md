@@ -46,6 +46,28 @@ All run daily at 06:00–06:30 UTC. Vercel sends them with
 `Authorization: Bearer ${CRON_SECRET}`. Routes that mutate cache must check the
 header (see [07-api-routes.md](07-api-routes.md) — Cron-protected routes).
 
+In addition, two **GitHub Actions** populate the snapshot tier
+(`data/snapshots/*.json`) and commit changes directly to `main`:
+
+| Workflow | Schedule | What it writes |
+|---|---|---|
+| [snapshot-daily.yml](../.github/workflows/snapshot-daily.yml) | `0 5 * * *` UTC (00:00 ET) + every push to `main` | `standings-current.json`, `schedule-current.json`, `season-results-current.json` |
+| [snapshot-weekly.yml](../.github/workflows/snapshot-weekly.yml) | `30 5 * * 1` UTC (Mon 00:30 ET) | `driver-career-*.json`, `circuit-records-*.json`, `driver-seasons-*.json` |
+
+The runbook (manual refresh, rollback, diagnosing 429 storms) lives at
+[docs/RUNBOOK_SNAPSHOTS.md](../docs/RUNBOOK_SNAPSHOTS.md).
+
+## CI workflows
+
+| Workflow | When it runs | What it does |
+|---|---|---|
+| [test.yml](../.github/workflows/test.yml) | every PR + push to main | `npm test`, lint, build |
+| [smoke-production.yml](../.github/workflows/smoke-production.yml) | hourly + manual | `tools/smoke-api.mjs` against production |
+| [snapshot-daily.yml](../.github/workflows/snapshot-daily.yml) | see above | daily Jolpica snapshot writer |
+| [snapshot-weekly.yml](../.github/workflows/snapshot-weekly.yml) | see above | weekly career/circuit writer |
+| Dependabot | weekly | dependency PRs (npm + GitHub Actions) |
+
+
 To add a cron:
 
 1. Add an entry to `vercel.json`.

@@ -20,20 +20,30 @@ The complete inventory:
 | `/api/results` | [results/](../src/app/api/results/) | Jolpica | `liveResults` | Race results |
 | `/api/race-laps` | [race-laps/](../src/app/api/race-laps/) | Jolpica + OpenF1 | `liveResults` | Per-driver lap data |
 | `/api/race-incidents` | [race-incidents/](../src/app/api/race-incidents/) | MultiViewer / OpenF1 | `liveIncidents` | Race-control events |
-| `/api/sessions` | [sessions/](../src/app/api/sessions/) | OpenF1 | `liveResults` | Sessions for a meeting |
+| `/api/sessions` | [sessions/route.ts](../src/app/api/sessions/route.ts) | n/a | n/a | 308 redirect shim for legacy `?endpoint=…` callers |
+| `/api/sessions/info` | [sessions/info/](../src/app/api/sessions/info/) | OpenF1 | `seasonSchedule` | Session metadata |
+| `/api/sessions/drivers` | [sessions/drivers/](../src/app/api/sessions/drivers/) | OpenF1 | `teams` | Per-session driver roster (accepts `latest`) |
+| `/api/sessions/result` | [sessions/result/](../src/app/api/sessions/result/) | OpenF1 | `liveResults` | Classified result (accepts `latest`) |
+| `/api/sessions/laps` | [sessions/laps/](../src/app/api/sessions/laps/) | OpenF1 | `liveTelemetry` | Per-driver lap data |
+| `/api/sessions/stints` | [sessions/stints/](../src/app/api/sessions/stints/) | OpenF1 | `liveTelemetry` | Tyre stints |
+| `/api/sessions/pit` | [sessions/pit/](../src/app/api/sessions/pit/) | OpenF1 | `liveTelemetry` | Pit-stop events |
+| `/api/sessions/weather` | [sessions/weather/](../src/app/api/sessions/weather/) | OpenF1 | `weather` | Trackside weather samples |
+| `/api/sessions/race-control` | [sessions/race-control/](../src/app/api/sessions/race-control/) | OpenF1 | `liveIncidents` | Race-control events |
 | `/api/telemetry` | [telemetry/](../src/app/api/telemetry/) | OpenF1 | `liveTelemetry` | Live position deltas |
 | `/api/team-radio` | [team-radio/](../src/app/api/team-radio/) | OpenF1 | `liveResults` | Radio clips per session |
 | `/api/driver-career` | [driver-career/](../src/app/api/driver-career/) | Jolpica | `careerStats` | Career totals |
 | `/api/driver-season` | [driver-season/](../src/app/api/driver-season/) | Jolpica | `careerStats` | Per-season splits |
 | `/api/driver-photos` | [driver-photos/](../src/app/api/driver-photos/) | OpenF1 + cache | `driverProfile` | Module-scoped `lastKnownGood` fallback |
 | `/api/form` | [form/](../src/app/api/form/) | Jolpica | `recentForm` + `historicalResults` + `raceSchedule` | Last-N form chip data |
-| `/api/circuit-info` | [circuit-info/](../src/app/api/circuit-info/) | MultiViewer + Jolpica | `circuitMeta` | Layout + meta |
+| `/api/circuit-info` | [circuit-info/](../src/app/api/circuit-info/) | MultiViewer + Jolpica | `circuitMeta` | Layout + meta + curated `details` (length / banking / elevation / wiki slug / notable corners — see `src/lib/constants/circuitDetails.ts`) |
 | `/api/circuit-records` | [circuit-records/](../src/app/api/circuit-records/) | Jolpica | `circuitRecords` | Pole/lap records |
 | `/api/weather` | [weather/](../src/app/api/weather/) | Open-Meteo | `weather` | Forecast for race weekend |
 | `/api/wikidata` | [wikidata/](../src/app/api/wikidata/) | Wikidata | `socialBio` | 30-day cache |
 | `/api/news` | [news/](../src/app/api/news/) | RSS | `newsFeed` | Aggregated feed |
 | `/api/compare` | [compare/](../src/app/api/compare/) | Jolpica | `careerStats`, `historicalResults`, `liveStandings` | Head-to-head driver compare |
 | `/api/projections` | [projections/](../src/app/api/projections/) | precomputed snapshot | `projectionSnapshot` | Returns `available: false` on cold cache; populated by cron |
+| `/api/projections/snapshot` | [projections/snapshot/](../src/app/api/projections/snapshot/) | Jolpica + Monte Carlo | `projectionCompute` | Cron-warmer; auth-gated via `CRON_SECRET` |
+| `/api/schedule/export` | [schedule/export/](../src/app/api/schedule/export/) | Jolpica | `schedule` | `.ics` calendar export |
 | `/api/search` | [search/](../src/app/api/search/) | local | static | Driver/team/race lookup |
 | `/api/logo` | [logo/](../src/app/api/logo/) | static SVG | static | Team logo passthrough with cache headers |
 

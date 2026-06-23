@@ -121,6 +121,41 @@ wire contract consistent and log a stable `routeKey` so Vercel logs are grep-abl
 `routeKey` examples: `compare-season`, `driver-photos`, `projections-snapshot`.
 Do **not** include query strings.
 
+## Snapshot tier (cold cache)
+
+A second, persistent cache layer lives **below** `unstable_cache` and **above**
+the live Jolpica fetcher. Source:
+[src/lib/snapshots/readSnapshotOrFetch.ts](../src/lib/snapshots/readSnapshotOrFetch.ts).
+
+```ts
+import { readSnapshotOrFetch } from "@/lib/snapshots/readSnapshotOrFetch";
+
+const payload = await readSnapshotOrFetch({
+  key: `standings-${season}`,        // matches a file in data/snapshots/
+  dataClass: "liveStandings",         // drives the unstable_cache TTL
+  liveFn: async () => ({ /* live Jolpica result + meta */ }),
+});
+```
+
+Read order on every request:
+
+1. **Hot tier** — `unstable_cache` (Vercel Data Cache, per-edge, TTL-driven).
+2. **Cold tier** — `data/snapshots/<key>.json` (committed in the repo, survives
+   deploys, available on cold start with zero network IO). See the file shapes
+   in [src/lib/snapshots/types.ts](../src/lib/snapshots/types.ts).
+3. **Live tier** — `liveFn()` (calls the Jolpica fetcher above). If `liveFn`
+   throws (429, timeout), the cold tier is re-checked as a last resort so the
+   user gets *something*.
+
+Writers live in `tools/snapshot-{daily,weekly}.ts` and run via GitHub Actions.
+See [06-caching.md](06-caching.md) for the cadence and
+[docs/RUNBOOK_SNAPSHOTS.md](../docs/RUNBOOK_SNAPSHOTS.md) for operations.
+
+**When to wrap a route in `readSnapshotOrFetch`:** any read-heavy Jolpica-backed
+endpoint whose data changes once a day or slower (standings, schedule,
+season-results, driver-career, circuit-records). OpenF1-backed live routes do
+not benefit — they need real-time data.
+
 ## Rate limiting
 
 [src/lib/api/withRateLimit.ts](../src/lib/api/withRateLimit.ts) exposes

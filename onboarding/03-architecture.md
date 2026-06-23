@@ -20,6 +20,14 @@ flowchart LR
 
 Diagram: [Mermaid (renders on GitHub)](diagrams/mermaid/system-context.md) · [PlantUML source](diagrams/puml/system-context.puml).
 
+A **persistent snapshot tier** sits between the Vercel Data Cache and the
+upstream APIs: read-heavy Jolpica-backed routes read from
+`data/snapshots/*.json` (committed in the repo, refreshed nightly by a GitHub
+Action) before ever hitting Jolpica. This is what keeps cold lambdas and
+freshly-deployed regions out of Jolpica's 4 req/s burst limit. See
+[05-data-fetching.md](05-data-fetching.md) "Snapshot tier" and
+[06-caching.md](06-caching.md) "Snapshot cold tier".
+
 ## Hard invariants
 
 These are non-negotiable. Anything that breaks one will be caught by tests,

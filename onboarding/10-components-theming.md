@@ -60,8 +60,18 @@ A typical token:
   --color-team-redbull: #1e41ff;
   --color-team-mercedes: #00d2be;
   /* ...20+ team colors, sector colors, tyre colors */
+
+  /* Incident-marker tokens on the Circuit map */
+  --incident-red: …;       /* red-flag race-control incidents */
+  --incident-yellow: …;    /* yellow / double-yellow flags */
+  --incident-default: …;   /* fallback (CarEvent, SafetyCar) */
+  --hotspot-marker: …;     /* curated historical notable corners */
 }
 ```
+
+Both `--incident-*` and `--hotspot-marker` are defined in `:root` (dark) and
+`.light` blocks so the two marker variants stay distinguishable in either
+theme.
 
 Usage in components:
 

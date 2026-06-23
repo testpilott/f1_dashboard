@@ -8,7 +8,16 @@ src/
   components/      React components (server + client)
   lib/             Shared business logic (fetchers, caching, stats, types)
   hooks/           Cross-cutting React hooks
-  test/            Test helpers (e.g. makeApiRequest)
+  test/            Test helpers (e.g. makeApiRequest, mockJolpica)
+```
+
+Repo-level companions:
+
+```
+data/snapshots/    Committed JSON snapshots — cold-tier read cache, see 05/06
+tools/             snapshot-daily.ts, snapshot-weekly.ts, smoke-api.mjs
+.github/workflows/ test.yml, smoke-production.yml, snapshot-daily.yml,
+                   snapshot-weekly.yml, dependabot maintenance
 ```
 
 ## `src/app/` — pages and API routes
@@ -17,20 +26,26 @@ Each folder is a route segment.
 
 ```
 src/app/
-  layout.tsx       Root shell: fonts, Providers, Navbar
-  error.tsx        Route-level error boundary (resets React Query)
-  loading.tsx      Streaming skeleton fallback
-  page.tsx         Home (driver + constructor standings)
-  globals.css      Design tokens (CSS variables)
-  api/             API routes — see 07-api-routes.md
-  standings/       Championship table
-  schedule/        Race calendar
-  race/[year]/[round]/   Race detail
-  drivers/         Driver grid + profiles
-  weekend/         Parked route (returns notFound by product decision)
-  projections/     Monte Carlo championship forecast
-  compare/         Head-to-head
-  news/            RSS-aggregated feed
+  layout.tsx          Root shell: fonts, Providers, Navbar, skip-to-content
+  error.tsx           Route-level error boundary (resets React Query)
+  global-error.tsx    Root-layout crash fallback (last-resort error UI)
+  not-found.tsx       404 page with recovery links
+  loading.tsx         Streaming skeleton fallback
+  page.tsx            Home (driver + constructor standings)
+  globals.css         Design tokens (CSS variables)
+  manifest.ts         PWA-lite web app manifest
+  sitemap.ts          XML sitemap (per-race URLs incl.)
+  robots.ts           robots.txt
+  opengraph-image.tsx Default OG image (per-route overrides allowed)
+  api/                API routes — see 07-api-routes.md
+  standings/          Championship table
+  schedule/           Race calendar
+  race/[year]/[round]/   Race detail (incl. opengraph-image override)
+  drivers/            Driver grid + profiles
+  weekend/            Parked route (returns notFound by product decision)
+  projections/        Monte Carlo championship forecast
+  compare/            Head-to-head
+  news/               RSS-aggregated feed
 ```
 
 Walk-through per page is in [08-pages.md](08-pages.md).
@@ -44,7 +59,7 @@ Organised by feature, not by primitive vs composite.
 | `layout/` | Navbar, sidebar, mobile nav |
 | `ui/` | shadcn primitives (Button, Card, Skeleton, Tooltip, SeasonPicker) |
 | `standings/` | StandingsTables, FormChip, MedalPositionBadge |
-| `race/` | RaceDetailClient, CircuitMap, TelemetryPanel |
+| `race/` | RaceDetailClient, CircuitMap, TrackSVG, CircuitDetailsPanel, CircuitRecords, RaceStartTimes, TelemetryPanel, TeamRadioPanel, LapChart, LapTimeFallbackChart, TireStrategy |
 | `drivers/` | DriverHeadshot, DriverDetailPanel, FavoriteStar |
 | `schedule/` | CalendarGrid, ScheduleClient, CircuitThumb |
 | `weekend/` | Live session UI (WeekendClient) |
