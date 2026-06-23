@@ -1,5 +1,12 @@
 import { nearestPolylinePoint } from "@/lib/stats/incidents";
 import { rotatePoint, splitBySectors } from "@/lib/geometry/track";
+import {
+  computeTrackTransform,
+  markerAriaLabel,
+  markerFillColor,
+  markerGlyph,
+  viewBoxAttr,
+} from "@/lib/race/trackGeometry";
 import type { CircuitDetails } from "@/lib/constants/circuitDetails";
 
 export type SectorId = 1 | 2 | 3;
@@ -75,36 +82,10 @@ export default function TrackSVG({
 }) {
   const xs = data.trackX ?? [];
   const rawYs = data.trackY ?? [];
-  if (xs.length < 2 || rawYs.length !== xs.length) return null;
 
-  // Flip y: Multiviewer uses math coords (y up), SVG uses screen coords (y down)
-  const svgYs = rawYs.map((y) => -y);
-
-  const baseMinX = Math.min(...xs);
-  const baseMaxX = Math.max(...xs);
-  const baseMinY = Math.min(...svgYs);
-  const baseMaxY = Math.max(...svgYs);
-  const cx = (baseMinX + baseMaxX) / 2;
-  const cy = (baseMinY + baseMaxY) / 2;
-
-  // Rotation from API is in math-coordinate space; after y-flip, invert sign for SVG space.
-  const rotationDeg =
-    typeof data.rotation === "number" && Number.isFinite(data.rotation) ? -data.rotation : 0;
-
-  const rotatedTrack = xs.map((x, i) => rotatePoint(x, svgYs[i], cx, cy, rotationDeg));
-  const trackXs = rotatedTrack.map((p) => p.x);
-  const trackYs = rotatedTrack.map((p) => p.y);
-
-  const minX = Math.min(...trackXs);
-  const maxX = Math.max(...trackXs);
-  const minY = Math.min(...trackYs);
-  const maxY = Math.max(...trackYs);
-  const span = Math.max(maxX - minX, maxY - minY);
-  const pad = span * 0.07;
-
-  const dotR = span * 0.014;
-  const trackW = dotR * 1.0;
-  const fontSize = dotR * 1.3;
+  const t = computeTrackTransform(xs, rawYs, data.rotation);
+  if (t.empty) return null;
+  const { trackXs, trackYs, viewBox, cx, cy, rotationDeg, dotR, trackW, fontSize } = t;
 
   const [seg1, seg2, seg3] = splitBySectors(trackXs, trackYs, data.trackPositionTime ?? []);
   const corners = data.corners ?? [];
@@ -160,7 +141,7 @@ export default function TrackSVG({
 
   return (
     <svg
-      viewBox={`${minX - pad} ${minY - pad} ${maxX - minX + pad * 2} ${maxY - minY + pad * 2}`}
+      viewBox={viewBoxAttr(viewBox)}
       className="w-full h-auto"
       style={{ maxHeight: "560px" }}
       aria-label={`${data.circuitName ?? "Circuit"} track map`}
@@ -215,17 +196,9 @@ export default function TrackSVG({
             const snapped = nearestPolylinePoint(xs, rawYs, marker.x, marker.y);
             const pt = rotatePoint(snapped.x, -snapped.y, cx, cy, rotationDeg);
             const isHotspot = marker.meta.type === "hotspot";
-            const fillColor = isHotspot
-              ? "var(--hotspot-marker)"
-              : marker.meta.flag === "RED"
-                ? "var(--incident-red)"
-                : marker.meta.flag === "YELLOW" || marker.meta.flag === "DOUBLE YELLOW"
-                  ? "var(--incident-yellow)"
-                  : "var(--incident-default)";
-            const glyph = isHotspot ? "★" : "!";
-            const ariaLabel = isHotspot
-              ? `Notable corner: ${marker.meta.name ?? marker.meta.message}`
-              : `Incident: ${marker.meta.message}`;
+            const fillColor = markerFillColor(marker.meta);
+            const glyph = markerGlyph(marker.meta);
+            const ariaLabel = markerAriaLabel(marker.meta);
 
             return (
               <g
