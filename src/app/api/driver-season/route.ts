@@ -1,7 +1,7 @@
 import { badRequest, serverError, cachedJson } from "@/lib/api/routeHelpers";
 import { rateLimited } from "@/lib/api/withRateLimit";
 import { VALID_SEASON, VALID_ID } from "@/lib/validators";
-import { getSeasonRaceResults, getSchedule } from "@/lib/api/jolpica";
+import { getSeasonResultsAllPages, getSchedule } from "@/lib/api/jolpica";
 import { driverSeasonSummary } from "@/lib/stats/driverSeason";
 import { readSnapshotOrFetch } from "@/lib/snapshots/readSnapshotOrFetch";
 import type { Race } from "@/lib/types";
@@ -65,7 +65,7 @@ export async function GET(req: Request) {
   try {
     if (season === "current") {
       const [races, schedule] = await Promise.all([
-        getSeasonRaceResults(season),
+        getSeasonResultsAllPages(season),
         getSchedule(season),
       ]);
       const summary = driverSeasonSummary(races, driverId);
@@ -113,7 +113,7 @@ export async function GET(req: Request) {
       key: `driver-season-${season}-${driverId}`,
       dataClass: "careerStats",
       liveFn: async () => {
-        const races = await getSeasonRaceResults(season);
+        const races = await getSeasonResultsAllPages(season);
         const summary = driverSeasonSummary(races, driverId);
         return {
           season,

@@ -19,7 +19,7 @@ const jolpica = vi.hoisted(() => ({
   getDriverCareerFastestLaps: vi.fn(),
   getDriverCareerChampionships: vi.fn(),
   getDriverSeasons: vi.fn(),
-  getSeasonRaceResults: vi.fn(),
+  getSeasonResultsAllPages: vi.fn(),
   getAllRaceResultsAtCircuit: vi.fn(),
 }));
 const mockGetDriverCareerWins = jolpica.getDriverCareerWins;
@@ -29,7 +29,7 @@ const mockGetDriverCareerStarts = jolpica.getDriverCareerStarts;
 const mockGetDriverCareerFastestLaps = jolpica.getDriverCareerFastestLaps;
 const mockGetDriverCareerChampionships = jolpica.getDriverCareerChampionships;
 const mockGetDriverSeasons = jolpica.getDriverSeasons;
-const mockGetSeasonRaceResults = jolpica.getSeasonRaceResults;
+const mockGetSeasonResultsAllPages = jolpica.getSeasonResultsAllPages;
 const mockGetAllRaceResultsAtCircuit = jolpica.getAllRaceResultsAtCircuit;
 
 vi.mock("@/lib/api/jolpica", async () => {
@@ -100,7 +100,7 @@ describe("snapshot-weekly writer", () => {
     mockGetDriverCareerFastestLaps.mockResolvedValue("5");
     mockGetDriverCareerChampionships.mockResolvedValue("4");
     mockGetDriverSeasons.mockResolvedValue([2021, 2022, 2023, 2024, 2025]);
-    mockGetSeasonRaceResults.mockResolvedValue([]);
+    mockGetSeasonResultsAllPages.mockResolvedValue([]);
     mockGetAllRaceResultsAtCircuit.mockResolvedValue([]);
     mockComputeCircuitRecords.mockReturnValue({});
     vi.spyOn(console, "log").mockImplementation(() => {});

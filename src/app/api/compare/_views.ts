@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { cachedJson, serverError } from "@/lib/api/routeHelpers";
 import {
-  getSeasonRaceResults,
+  getSeasonResultsAllPages,
   getConstructorStandings,
 } from "@/lib/api/jolpica";
 import { seasonHeadToHead } from "@/lib/stats/headToHead";
@@ -24,7 +24,7 @@ export async function handleSeasonView({
   driverB: string;
 }) {
   try {
-    const races = await getSeasonRaceResults(season);
+    const races = await getSeasonResultsAllPages(season);
     const stats = seasonHeadToHead(races, driverA, driverB);
     return NextResponse.json({ view: "season", season, driverA, driverB, stats });
   } catch (err) {
@@ -57,7 +57,7 @@ export async function handleTeamsView({
         key: `season-results-${season}`,
           dataClass: "historicalResults",
         liveFn: async () => ({
-          races: await getSeasonRaceResults(season),
+          races: await getSeasonResultsAllPages(season),
           snapshotAt: new Date().toISOString(),
           source: "live",
         }),

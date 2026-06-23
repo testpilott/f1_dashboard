@@ -14,12 +14,12 @@ const jolpica = vi.hoisted(() => ({
   getDriverStandings: vi.fn(),
   getConstructorStandings: vi.fn(),
   getSchedule: vi.fn(),
-  getSeasonResults: vi.fn(),
+  getSeasonResultsFirstPage: vi.fn(),
 }));
 const mockGetDriverStandings = jolpica.getDriverStandings;
 const mockGetConstructorStandings = jolpica.getConstructorStandings;
 const mockGetSchedule = jolpica.getSchedule;
-const mockGetSeasonResults = jolpica.getSeasonResults;
+const mockGetSeasonResults = jolpica.getSeasonResultsFirstPage;
 
 vi.mock("@/lib/api/jolpica", async () => {
   const { createJolpicaMocks } = await import("@/test/mockJolpica");

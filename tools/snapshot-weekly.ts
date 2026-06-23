@@ -11,7 +11,7 @@ import {
   getDriverCareerFastestLaps,
   getDriverCareerChampionships,
   getDriverSeasons,
-  getSeasonRaceResults,
+  getSeasonResultsAllPages,
   getAllRaceResultsAtCircuit,
 } from "@/lib/api/jolpica";
 import { computeCircuitRecords } from "@/lib/stats/circuitRecords";
@@ -130,7 +130,7 @@ export async function runWeeklySnapshot(outDir = OUT_DIR): Promise<WeeklySnapsho
   // a good snapshot with empty data.
   let seasonRaces: Race[] | null = null;
   try {
-    seasonRaces = await withLimit(() => getSeasonRaceResults("current"));
+    seasonRaces = await withLimit(() => getSeasonResultsAllPages("current"));
   } catch (err) {
     console.error(
       "✘ season race results:",

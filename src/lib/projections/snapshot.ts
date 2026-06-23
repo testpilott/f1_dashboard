@@ -1,5 +1,5 @@
 import { unstable_cache, revalidateTag } from "next/cache";
-import { getDriverStandings, getSchedule, getSeasonResults } from "@/lib/api/jolpica";
+import { getDriverStandings, getSchedule, getSeasonResultsFirstPage } from "@/lib/api/jolpica";
 import { runProjections } from "@/lib/projections/montecarlo";
 import type { ChampionshipProjection } from "@/lib/types";
 
@@ -37,7 +37,7 @@ export async function computeProjections(season: string): Promise<ChampionshipPr
   const [standings, schedule, seasonRaces] = await Promise.all([
     getDriverStandings(season),
     getSchedule(season),
-    getSeasonResults(season),
+    getSeasonResultsFirstPage(season),
   ]);
 
   if (!standings.length || !schedule.length) {
