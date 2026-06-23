@@ -30,6 +30,7 @@ Tests are **co-located** with the code they exercise:
 | Code | Tests |
 |---|---|
 | `src/lib/stats/form.ts` | `src/lib/stats/__tests__/form.test.ts` |
+| `src/lib/race/markers.ts` | `src/lib/race/__tests__/markers.test.ts` |
 | `src/lib/api/createApiFetcher.ts` | `src/lib/api/__tests__/createApiFetcher.test.ts` |
 | `src/app/api/standings/route.ts` | `src/app/api/__tests__/standings.test.ts` |
 | `src/components/drivers/DriverDetailPanel.tsx` | `src/components/drivers/__tests__/DriverDetailPanel.test.tsx` |
@@ -57,6 +58,22 @@ describe("calculateDriverForm", () => {
 ```
 
 No fetch, no mocks. Cover happy path + one edge + one malformed input.
+
+The `src/lib/race/__tests__/` files are canonical examples of this pattern applied
+to extracted component helpers (geometry maths, marker builders, sector helpers):
+
+```ts
+// src/lib/race/__tests__/markers.test.ts
+import { buildIncidentMarkers } from "@/lib/race/markers";
+
+it("drops incidents missing a track coordinate", () => {
+  const markers = buildIncidentMarkers({
+    available: true,
+    incidents: [{ x: null, y: 5, ... }, { x: 50, y: 50, ... }],
+  });
+  expect(markers).toHaveLength(1); // the row with no x is dropped
+});
+```
 
 ### 2) Route test
 

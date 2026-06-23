@@ -59,10 +59,11 @@ Organised by feature, not by primitive vs composite.
 | `layout/` | Navbar, sidebar, mobile nav |
 | `ui/` | shadcn primitives (Button, Card, Skeleton, Tooltip, SeasonPicker) |
 | `standings/` | StandingsTables, FormChip, MedalPositionBadge |
-| `race/` | RaceDetailClient, CircuitMap, TrackSVG, CircuitDetailsPanel, CircuitRecords, RaceStartTimes, TelemetryPanel, TeamRadioPanel, LapChart, LapTimeFallbackChart, TireStrategy |
+| `race/` | RaceDetailClient, CircuitMap, TrackSVG, CircuitDetailsPanel, CircuitRecords, RaceStartTimes, TelemetryPanel, TeamRadioPanel, LapChart, LapTimeFallbackChart, TireStrategy, IncidentDialog, MarkerTally, CornerSelector |
 | `drivers/` | DriverHeadshot, DriverDetailPanel, FavoriteStar |
 | `schedule/` | CalendarGrid, ScheduleClient, CircuitThumb |
-| `weekend/` | Live session UI (WeekendClient) |
+| `weekend/` | WeekendClient (orchestrator), SessionResults (table + per-session queries) |
+| `compare/` | DriversCompareTab, TeamsCompareTab, CircuitHistory, StatBar, PositionBadge |
 | `search/` | Top-of-page search bar + results |
 | `stats/` | Stat boxes, charts |
 | `next-race/` | Upcoming race card |
@@ -95,6 +96,11 @@ src/lib/
     rss.ts                     News feed aggregator
     multiviewer.ts             Circuit layout + race control
   stats/            Pure-function computations (form, pace, career, h2h, …)
+  race/             Pure helpers for the Circuit-map feature (extracted from components)
+    trackGeometry.ts            SVG transform, viewBox, marker fill/glyph/aria helpers
+    markers.ts                  buildIncidentMarkers, buildHotspotMarkers (O(1) corner join)
+    sectors.ts                  buildSectorMap, buildSectorGroups, toggleSectorSelection
+    __tests__/                  Node tests for all of the above (23 + 8 + 9 tests)
   projections/      Monte Carlo simulator + snapshot builder
   incidents/        Race-control event parser
   charts/           Nivo theme bound to CSS variables
@@ -116,6 +122,18 @@ src/lib/
   season.ts         "current" → 2026 normalization
   utils.ts          Misc helpers
 ```
+
+## `src/hooks/`
+
+Cross-cutting data-fetching hooks live here.
+
+| Hook | What it owns |
+|---|---|
+| `useDriverComparison.ts` | Standings + schedule + circuit compare + season compare queries |
+| `useTeamsComparison.ts` | Constructor standings + teams compare queries + color derivation |
+| `useWeekendSessions.ts` | Sessions-for-meeting query + SESSION_ORDER sort |
+| `useCircuitData.ts` | Circuit layout + corners + incidents queries |
+| `useDriverDetails.ts` | Driver bio + career queries |
 
 ## `src/lib/__tests__/` and `src/app/api/__tests__/`
 
