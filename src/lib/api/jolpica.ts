@@ -88,7 +88,7 @@ export async function getSprintResults(season: string, round: string): Promise<S
  * Partial season race results for projections. Intentionally limited to the
  * current full-grid page size to preserve existing projections behavior.
  */
-export async function getSeasonResults(season: string): Promise<Race[]> {
+export async function getSeasonResultsFirstPage(season: string): Promise<Race[]> {
   const data = await jolpicaFetch<{
     MRData: { RaceTable: { Races: Race[] } };
   }>(`/${season}/results.json?limit=${LIMIT_FULL_GRID}`, "historicalResults");
@@ -97,10 +97,10 @@ export async function getSeasonResults(season: string): Promise<Race[]> {
 
 /**
  * Full-season race results (all rounds). Uses Ergast's max page size so the
- * whole season is returned — unlike getSeasonResults (LIMIT_FULL_GRID) which is left
+ * whole season is returned — unlike getSeasonResultsFirstPage (LIMIT_FULL_GRID) which is left
  * unchanged to avoid altering projections' behaviour.
  */
-export async function getSeasonRaceResults(season: string): Promise<Race[]> {
+export async function getSeasonResultsAllPages(season: string): Promise<Race[]> {
   const data = await jolpicaFetch<{
     MRData: { RaceTable: { Races: Race[] } };
   }>(`/${season}/results.json?limit=${LIMIT_MAX}`, "historicalResults");

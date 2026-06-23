@@ -15,13 +15,13 @@ vi.mock("@/lib/snapshots/readSnapshotOrFetch", () => ({
 }));
 
 import { GET } from "@/app/api/driver-season/route";
-import { getSeasonRaceResults, getSchedule } from "@/lib/api/jolpica";
+import { getSeasonResultsAllPages, getSchedule } from "@/lib/api/jolpica";
 import { readSnapshotOrFetch } from "@/lib/snapshots/readSnapshotOrFetch";
 import { rateLimited } from "@/lib/api/withRateLimit";
 import { edgeCacheControl } from "@/lib/api/edgeHeaders";
 import { makeApiRequest } from "@/test/api";
 
-const mockGetRaces = getSeasonRaceResults as ReturnType<typeof vi.fn>;
+const mockGetRaces = getSeasonResultsAllPages as ReturnType<typeof vi.fn>;
 const mockGetSchedule = getSchedule as ReturnType<typeof vi.fn>;
 const mockReadSnapshotOrFetch = readSnapshotOrFetch as ReturnType<typeof vi.fn>;
 const mockRateLimited = rateLimited as ReturnType<typeof vi.fn>;

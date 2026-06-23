@@ -33,6 +33,18 @@ export interface DriverSeasonSummary {
 export function driverSeasonSummary(races: Race[], driverId: string): DriverSeasonSummary {
   const rows: DriverSeasonRaceRow[] = [];
 
+  // Aggregator state. Computed in a single pass over `rows` below so we don't
+  // re-walk the list once per aggregate field (previous version did seven).
+  let wins = 0;
+  let podiums = 0;
+  let pointsTotal = 0;
+  let dnfs = 0;
+  let fastestLaps = 0;
+  let finishSum = 0;
+  let finishCount = 0; // races with classified finish (1–20) — denominator for avgFinish
+  let gridSum = 0;
+  let gridCount = 0;   // races with a real grid slot (>0) — denominator for avgGrid
+
   for (const race of races) {
     const result = (race.Results ?? []).find(
       (r) => r.Driver?.driverId === driverId
@@ -43,6 +55,7 @@ export function driverSeasonSummary(races: Race[], driverId: string): DriverSeas
     const grid = parseGrid(result.grid);
     const points = parsePoints(result.points);
     const fastestLap = result.FastestLap?.rank === "1";
+    const status = result.status ?? "";
 
     rows.push({
       round: parseInt(race.round, 10),
@@ -50,29 +63,36 @@ export function driverSeasonSummary(races: Race[], driverId: string): DriverSeas
       grid,
       finish,
       points,
-      status: result.status ?? "",
+      status,
       fastestLap,
     });
+
+    if (finish === 1) wins += 1;
+    if (finish > 0 && finish <= 3) podiums += 1;
+    pointsTotal += points;
+    if (isDnf(status)) dnfs += 1;
+    if (fastestLap) fastestLaps += 1;
+    if (finish > 0 && finish <= 20) {
+      finishSum += finish;
+      finishCount += 1;
+    }
+    if (grid > 0) {
+      gridSum += grid;
+      gridCount += 1;
+    }
   }
 
-  const finishCounts = rows.filter((r) => r.finish <= 20).length;
-  const gridCounts = rows.filter((r) => r.grid > 0).length;
+  const roundTo1dp = (n: number) => Math.round(n * 10) / 10;
 
   const aggregates: DriverSeasonAggregates = {
     races: rows.length,
-    wins: rows.filter((r) => r.finish === 1).length,
-    podiums: rows.filter((r) => r.finish <= 3).length,
-    points: rows.reduce((s, r) => s + r.points, 0),
-    dnfs: rows.filter((r) => isDnf(r.status)).length,
-    fastestLaps: rows.filter((r) => r.fastestLap).length,
-    avgFinish:
-      finishCounts > 0
-        ? Math.round((rows.filter((r) => r.finish <= 20).reduce((s, r) => s + r.finish, 0) / finishCounts) * 10) / 10
-        : 0,
-    avgGrid:
-      gridCounts > 0
-        ? Math.round((rows.filter((r) => r.grid > 0).reduce((s, r) => s + r.grid, 0) / gridCounts) * 10) / 10
-        : 0,
+    wins,
+    podiums,
+    points: pointsTotal,
+    dnfs,
+    fastestLaps,
+    avgFinish: finishCount > 0 ? roundTo1dp(finishSum / finishCount) : 0,
+    avgGrid: gridCount > 0 ? roundTo1dp(gridSum / gridCount) : 0,
   };
 
   // season/driverId filled by caller since races may be from any season
