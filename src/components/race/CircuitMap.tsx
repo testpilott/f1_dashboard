@@ -20,6 +20,7 @@ import TrackSVG, {
   type IncidentMeta,
   type SectorId,
 } from "@/components/race/TrackSVG";
+import CircuitDetailsPanel from "@/components/race/CircuitDetailsPanel";
 import { useCircuitData } from "@/hooks/useCircuitData";
 
 const SECTORS = [
@@ -163,6 +164,8 @@ export default function CircuitMap({ year, round }: { year: string; round: strin
           </p>
         )}
       </div>
+
+      <CircuitDetailsPanel circuitId={data?.circuitId ?? ""} details={data?.details} />
 
       <Dialog
         open={dialogOpen}
