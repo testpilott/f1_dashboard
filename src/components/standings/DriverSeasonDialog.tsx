@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { X } from "lucide-react";
 import { fetchJson } from "@/lib/api/clientFetch";
+import { clampPollIntervalMs } from "@/lib/time/pollInterval";
 import TeamLogo from "@/components/ui/TeamLogo";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -80,8 +81,10 @@ export default function DriverSeasonDialog({
       const payload = query.state.data as DriverSeasonData | undefined;
       if (season !== "current") return false;
       if (!payload?.resultsFeedLag) return false;
-      const ms = payload.resultsFeedLag.checkAgainAfterMs;
-      return Number.isFinite(ms) && ms > 0 ? ms : RESULTS_FEED_RECHECK_FALLBACK_MS;
+      return clampPollIntervalMs(
+        payload.resultsFeedLag.checkAgainAfterMs,
+        RESULTS_FEED_RECHECK_FALLBACK_MS,
+      );
     },
   });
 

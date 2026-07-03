@@ -12,12 +12,18 @@ const DEFAULT_MAX_CONCURRENT = 2;
 /**
  * Build a typed fetch wrapper for one external API.
  *
- * Adds two layers of protection so a single upstream blip (or our own burst
+ * Adds three layers of protection so a single upstream blip (or our own burst
  * pattern) doesn't surface as a null/error to downstream consumers:
  *
- *  1. A per-service concurrency limiter caps in-flight requests, so a route
+ *  1. Single-flight coalescing: concurrent requests for the same (path,
+ *     revalidate) share one in-flight promise. Without this, a cache-miss
+ *     stampede (hot cache row expiring, or a cold instance booting under
+ *     load) multiplies every fan-out — N concurrent driver-career requests
+ *     would fire N×7 identical Jolpica calls. All requests here are
+ *     idempotent GETs, so sharing the response is always safe.
+ *  2. A per-service concurrency limiter caps in-flight requests, so a route
  *     that fans out 10 parallel calls won't hit the upstream's rate limit.
- *  2. Bounded retry-with-backoff for transient failures (timeouts, 429, 5xx)
+ *  3. Bounded retry-with-backoff for transient failures (timeouts, 429, 5xx)
  *     via the shared `withRetry` helper.
  */
 export function createApiFetcher(
@@ -31,9 +37,17 @@ export function createApiFetcher(
   timeoutMs?: number,
 ) {
   const limiter = createConcurrencyLimiter(maxConcurrent);
+  // In-flight GETs keyed by path+revalidate. Entries are removed as soon as
+  // the promise settles, so failures are never cached — only genuinely
+  // concurrent callers share a result (and share a failure).
+  const inFlight = new Map<string, Promise<unknown>>();
 
   return async function apiFetch<T>(path: string, revalidate: number): Promise<T> {
-    return withRetry(async () => {
+    const coalesceKey = `${path}|${revalidate}`;
+    const existing = inFlight.get(coalesceKey);
+    if (existing) return existing as Promise<T>;
+
+    const request = withRetry(async () => {
       await limiter.acquire();
       try {
         const url = `${baseUrl}${path}`;
@@ -52,6 +66,11 @@ export function createApiFetcher(
       } finally {
         limiter.release();
       }
+    }).finally(() => {
+      inFlight.delete(coalesceKey);
     });
+
+    inFlight.set(coalesceKey, request);
+    return request;
   };
 }

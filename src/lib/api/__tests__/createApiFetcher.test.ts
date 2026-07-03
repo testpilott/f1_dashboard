@@ -91,4 +91,81 @@ describe("createApiFetcher", () => {
     await expect(apiFetch("/flaky", 60)).rejects.toThrow(/500/);
     expect(fetchWithTimeout).toHaveBeenCalledTimes(3);
   });
+
+  describe("single-flight coalescing", () => {
+    it("collapses concurrent identical requests into one upstream fetch", async () => {
+      let resolveFetch!: (r: Response) => void;
+      vi.mocked(fetchWithTimeout).mockReturnValueOnce(
+        new Promise<Response>((resolve) => {
+          resolveFetch = resolve;
+        }),
+      );
+
+      const apiFetch = createApiFetcher("https://example.test", "Example");
+      const first = apiFetch<{ n: number }>("/same", 60);
+      const second = apiFetch<{ n: number }>("/same", 60);
+
+      resolveFetch(new Response(JSON.stringify({ n: 1 }), { status: 200 }));
+
+      await expect(first).resolves.toEqual({ n: 1 });
+      await expect(second).resolves.toEqual({ n: 1 });
+      expect(fetchWithTimeout).toHaveBeenCalledTimes(1);
+    });
+
+    it("does not coalesce requests to different paths", async () => {
+      vi.mocked(fetchWithTimeout)
+        .mockResolvedValueOnce(new Response(JSON.stringify({ p: "a" }), { status: 200 }))
+        .mockResolvedValueOnce(new Response(JSON.stringify({ p: "b" }), { status: 200 }));
+
+      const apiFetch = createApiFetcher("https://example.test", "Example");
+      const [a, b] = await Promise.all([
+        apiFetch<{ p: string }>("/a", 60),
+        apiFetch<{ p: string }>("/b", 60),
+      ]);
+
+      expect(a).toEqual({ p: "a" });
+      expect(b).toEqual({ p: "b" });
+      expect(fetchWithTimeout).toHaveBeenCalledTimes(2);
+    });
+
+    it("does not coalesce sequential requests (fetches again after settle)", async () => {
+      vi.mocked(fetchWithTimeout)
+        .mockResolvedValueOnce(new Response(JSON.stringify({ n: 1 }), { status: 200 }))
+        .mockResolvedValueOnce(new Response(JSON.stringify({ n: 2 }), { status: 200 }));
+
+      const apiFetch = createApiFetcher("https://example.test", "Example");
+      await expect(apiFetch<{ n: number }>("/seq", 60)).resolves.toEqual({ n: 1 });
+      await expect(apiFetch<{ n: number }>("/seq", 60)).resolves.toEqual({ n: 2 });
+      expect(fetchWithTimeout).toHaveBeenCalledTimes(2);
+    });
+
+    it("propagates one failure to all coalesced callers, then allows a fresh attempt", async () => {
+      // First round: a permanent 404 shared by both concurrent callers.
+      vi.mocked(fetchWithTimeout).mockResolvedValueOnce(new Response("nope", { status: 404 }));
+
+      const apiFetch = createApiFetcher("https://example.test", "Example");
+      const first = apiFetch("/gone", 60);
+      const second = apiFetch("/gone", 60);
+      await expect(first).rejects.toThrow(/404/);
+      await expect(second).rejects.toThrow(/404/);
+      expect(fetchWithTimeout).toHaveBeenCalledTimes(1);
+
+      // The failed entry must not be cached: a later call fetches again.
+      vi.mocked(fetchWithTimeout).mockResolvedValueOnce(
+        new Response(JSON.stringify({ ok: true }), { status: 200 }),
+      );
+      await expect(apiFetch("/gone", 60)).resolves.toEqual({ ok: true });
+      expect(fetchWithTimeout).toHaveBeenCalledTimes(2);
+    });
+
+    it("keys coalescing on revalidate as well as path", async () => {
+      vi.mocked(fetchWithTimeout)
+        .mockResolvedValueOnce(new Response(JSON.stringify({ n: 1 }), { status: 200 }))
+        .mockResolvedValueOnce(new Response(JSON.stringify({ n: 2 }), { status: 200 }));
+
+      const apiFetch = createApiFetcher("https://example.test", "Example");
+      await Promise.all([apiFetch("/x", 60), apiFetch("/x", 300)]);
+      expect(fetchWithTimeout).toHaveBeenCalledTimes(2);
+    });
+  });
 });
