@@ -663,6 +663,17 @@
       }
     }
   ],
-  "snapshotAt": "2026-07-05T06:18:02.789Z",
+  "sprintWins": {
+    "drivers": {
+      "russell": 2,
+      "norris": 1,
+      "antonelli": 1
+    },
+    "constructors": {
+      "mercedes": 3,
+      "mclaren": 1
+    }
+  },
+  "snapshotAt": "2026-07-05T12:42:43.788Z",
   "source": "jolpica"
 }
