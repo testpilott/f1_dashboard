@@ -82,6 +82,18 @@ export async function getSprintResults(season: string, round: string): Promise<S
   return firstRaceField<"SprintResults", SprintResult>(data, "SprintResults");
 }
 
+/**
+ * Every sprint result in a season, as Race rows carrying `SprintResults`.
+ * A season has at most ~6 sprint weekends (~120 result rows), so one
+ * max-limit page always covers it — no pagination loop needed.
+ */
+export async function getSeasonSprintResults(season: string): Promise<Race[]> {
+  const data = await jolpicaFetch<{
+    MRData: { RaceTable: { Races: Race[] } };
+  }>(`/${season}/sprint.json?limit=${LIMIT_MAX}`, "historicalResults");
+  return data.MRData.RaceTable.Races ?? [];
+}
+
 // ─── Historical lookup ────────────────────────────────────────────────────────
 
 /**

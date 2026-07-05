@@ -9,6 +9,7 @@ export function createJolpicaMocks() {
     getRaceResults: vi.fn(),
     getQualifyingResults: vi.fn(),
     getSprintResults: vi.fn(),
+    getSeasonSprintResults: vi.fn(),
     getSeasonResultsFirstPage: vi.fn(),
     getSeasonResultsAllPages: vi.fn(),
     getRaceResultsAtCircuit: vi.fn(),

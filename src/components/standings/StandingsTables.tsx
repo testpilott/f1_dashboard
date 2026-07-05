@@ -20,12 +20,16 @@ import FormChip from "@/components/standings/FormChip";
 import MedalPositionBadge from "@/components/standings/MedalPositionBadge";
 import StandingsSkeleton from "@/components/standings/StandingsSkeleton";
 import DriverSeasonDialog from "@/components/standings/DriverSeasonDialog";
+import SprintWinsChip from "@/components/standings/SprintWinsChip";
+import type { SprintWinTallies } from "@/lib/stats/sprintWins";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type StandingsData = {
   drivers: DriverStanding[];
   constructors: ConstructorStanding[];
+  /** Optional enrichment; absent/null when sprint results are unavailable. */
+  sprintWins?: SprintWinTallies | null;
 };
 
 // ─── Fetchers ─────────────────────────────────────────────────────────────────
@@ -141,7 +145,12 @@ export default function StandingsTables({
                         <TableCell className="py-2.5">
                           <FormChip form={form[d.Driver.driverId]} />
                         </TableCell>
-                        <TableCell className="py-2.5 text-right text-muted-foreground text-sm font-mono tabular-nums">{d.wins}</TableCell>
+                        <TableCell className="py-2.5 text-right text-muted-foreground text-sm font-mono tabular-nums">
+                          <span className="inline-flex items-center justify-end gap-1.5">
+                            <SprintWinsChip count={data.sprintWins?.drivers[d.Driver.driverId]} />
+                            <span>{d.wins}</span>
+                          </span>
+                        </TableCell>
                         <TableCell className="py-2.5 text-right font-bold font-mono tabular-nums">{d.points}</TableCell>
                       </TableRow>
                     );
@@ -189,7 +198,12 @@ export default function StandingsTables({
                             <span className="text-sm font-medium">{c.Constructor.name}</span>
                           </div>
                         </TableCell>
-                        <TableCell className="py-2.5 text-right text-muted-foreground text-sm font-mono tabular-nums">{c.wins}</TableCell>
+                        <TableCell className="py-2.5 text-right text-muted-foreground text-sm font-mono tabular-nums">
+                          <span className="inline-flex items-center justify-end gap-1.5">
+                            <SprintWinsChip count={data.sprintWins?.constructors[c.Constructor.constructorId]} />
+                            <span>{c.wins}</span>
+                          </span>
+                        </TableCell>
                         <TableCell className="py-2.5 text-right font-bold font-mono tabular-nums">{c.points}</TableCell>
                       </TableRow>
                     );

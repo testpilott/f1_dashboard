@@ -18,13 +18,14 @@ vi.mock("@/lib/api/jolpica", async () => {
 });
 
 import { GET } from "@/app/api/standings/route";
-import { getDriverStandings, getConstructorStandings } from "@/lib/api/jolpica";
+import { getDriverStandings, getConstructorStandings, getSeasonSprintResults } from "@/lib/api/jolpica";
 import { rateLimited } from "@/lib/api/withRateLimit";
 import { edgeCacheControl } from "@/lib/api/edgeHeaders";
 import { makeApiRequest } from "@/test/api";
 
 const mockGetDriverStandings = getDriverStandings as ReturnType<typeof vi.fn>;
 const mockGetConstructorStandings = getConstructorStandings as ReturnType<typeof vi.fn>;
+const mockGetSeasonSprintResults = getSeasonSprintResults as ReturnType<typeof vi.fn>;
 const mockRateLimited = rateLimited as ReturnType<typeof vi.fn>;
 
 describe("GET /api/standings", () => {
@@ -144,6 +145,54 @@ describe("GET /api/standings", () => {
     expect(body.constructors).toHaveLength(1);
     expect(body.drivers[0].Driver.driverId).toBe("verstappen");
     expect(body.constructors[0].Constructor.constructorId).toBe("red_bull");
+  });
+
+  it("includes sprint-win tallies alongside (not combined with) standings wins", async () => {
+    mockGetDriverStandings.mockResolvedValueOnce([
+      { position: "1", wins: "4", Driver: { driverId: "verstappen" }, Constructors: [] },
+    ]);
+    mockGetConstructorStandings.mockResolvedValueOnce([
+      { position: "1", wins: "5", Constructor: { constructorId: "red_bull" } },
+    ]);
+    mockGetSeasonSprintResults.mockResolvedValueOnce([
+      {
+        season: "2026",
+        round: "5",
+        SprintResults: [
+          {
+            position: "1",
+            Driver: { driverId: "verstappen" },
+            Constructor: { constructorId: "red_bull" },
+          },
+        ],
+      },
+    ]);
+
+    const res = await GET(makeApiRequest("/api/standings", { season: "current" }));
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(body.sprintWins).toEqual({
+      drivers: { verstappen: 1 },
+      constructors: { red_bull: 1 },
+    });
+    // The official wins field must remain the untouched Jolpica value.
+    expect(body.drivers[0].wins).toBe("4");
+  });
+
+  it("serves standings with sprintWins null when the sprint fetch fails (optional enrichment)", async () => {
+    mockGetDriverStandings.mockResolvedValueOnce([
+      { position: "1", Driver: { driverId: "verstappen" } },
+    ]);
+    mockGetConstructorStandings.mockResolvedValueOnce([]);
+    mockGetSeasonSprintResults.mockRejectedValueOnce(new Error("jolpica sprint down"));
+
+    const res = await GET(makeApiRequest("/api/standings", { season: "current" }));
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(body.sprintWins).toBeNull();
+    expect(body.drivers).toHaveLength(1);
   });
 
   it("degrades gracefully when snapshot and live both fail", async () => {

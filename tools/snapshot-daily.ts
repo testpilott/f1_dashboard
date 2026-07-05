@@ -5,9 +5,11 @@ import {
   getConstructorStandings,
   getSchedule,
   getSeasonResultsFirstPage,
+  getSeasonSprintResults,
 } from "@/lib/api/jolpica";
 import { atomicWriteJson } from "@/lib/snapshots/atomicWriteJson";
 import { driverSeasonSummary } from "@/lib/stats/driverSeason";
+import { tallySprintWins } from "@/lib/stats/sprintWins";
 import type {
   DriverSeasonSnapshot,
   ScheduleSnapshot,
@@ -48,14 +50,25 @@ export async function runDailySnapshot(): Promise<{ key: string; ok: boolean; er
     jobs.push({
       key: `standings-${season}`,
       fetch: async () => {
-        const [drivers, constructors] = await Promise.all([
+        // Sprint tallies are optional enrichment — a sprint fetch failure
+        // must not sink the whole standings snapshot.
+        const fetchSprintWins = async () => {
+          try {
+            return tallySprintWins(await getSeasonSprintResults(season));
+          } catch {
+            return null;
+          }
+        };
+        const [drivers, constructors, sprintWins] = await Promise.all([
           getDriverStandings(season),
           getConstructorStandings(season),
+          fetchSprintWins(),
         ]);
         if (drivers.length === 0) throw new Error("empty drivers standings");
         const payload: StandingsSnapshot = {
           drivers,
           constructors,
+          sprintWins,
           snapshotAt: new Date().toISOString(),
           source: "jolpica",
         };

@@ -2,6 +2,7 @@ import type { DriverStanding, ConstructorStanding, Race } from "@/lib/types";
 import type { DriverCareerStats } from "@/lib/stats/driverCareer";
 import type { DriverSeasonSummary } from "@/lib/stats/driverSeason";
 import type { CircuitRecords } from "@/lib/stats/circuitRecords";
+import type { SprintWinTallies } from "@/lib/stats/sprintWins";
 
 export type SnapshotSource = "jolpica" | "live";
 
@@ -13,6 +14,12 @@ export interface SnapshotMeta {
 export interface StandingsSnapshot extends SnapshotMeta {
   drivers: DriverStanding[];
   constructors: ConstructorStanding[];
+  /**
+   * Optional enrichment — sprint-win tallies for the season. Absent in
+   * snapshots written before this field existed; null when the sprint
+   * fetch failed at snapshot time. UI hides the element in both cases.
+   */
+  sprintWins?: SprintWinTallies | null;
 }
 
 export interface ScheduleSnapshot extends SnapshotMeta {

@@ -15,11 +15,13 @@ const jolpica = vi.hoisted(() => ({
   getConstructorStandings: vi.fn(),
   getSchedule: vi.fn(),
   getSeasonResultsFirstPage: vi.fn(),
+  getSeasonSprintResults: vi.fn(),
 }));
 const mockGetDriverStandings = jolpica.getDriverStandings;
 const mockGetConstructorStandings = jolpica.getConstructorStandings;
 const mockGetSchedule = jolpica.getSchedule;
 const mockGetSeasonResults = jolpica.getSeasonResultsFirstPage;
+const mockGetSeasonSprintResults = jolpica.getSeasonSprintResults;
 
 vi.mock("@/lib/api/jolpica", async () => {
   const { createJolpicaMocks } = await import("@/test/mockJolpica");
@@ -31,6 +33,14 @@ const driverStandingFixture = [{ position: "1", Driver: { driverId: "verstappen"
 const constructorStandingFixture = [{ position: "1", Constructor: { constructorId: "red_bull" } }];
 const scheduleFixture = [{ round: "1", raceName: "Bahrain Grand Prix" }];
 const resultsFixture = [{ round: "1", Results: [{ position: "1" }] }];
+const sprintFixture = [
+  {
+    round: "5",
+    SprintResults: [
+      { position: "1", Driver: { driverId: "verstappen" }, Constructor: { constructorId: "red_bull" } },
+    ],
+  },
+];
 
 describe("snapshot-daily writer", () => {
   beforeEach(() => {
@@ -40,6 +50,7 @@ describe("snapshot-daily writer", () => {
     mockGetConstructorStandings.mockResolvedValue(constructorStandingFixture);
     mockGetSchedule.mockResolvedValue(scheduleFixture);
     mockGetSeasonResults.mockResolvedValue(resultsFixture);
+    mockGetSeasonSprintResults.mockResolvedValue(sprintFixture);
   });
 
   it("writes standings, schedule, season-results, and driver-season files on success", async () => {
@@ -56,6 +67,35 @@ describe("snapshot-daily writer", () => {
     expect(writtenKeys).toContain("schedule-current");
     expect(writtenKeys).toContain("season-results-current");
     expect(writtenKeys).toContain("driver-season-current-verstappen");
+  });
+
+  it("includes sprint-win tallies in the standings snapshot payload", async () => {
+    const { runDailySnapshot } = await import("../snapshot-daily");
+    await runDailySnapshot();
+
+    const standingsCall = mockAtomicWriteJson.mock.calls.find((call) =>
+      String(call[0]).includes("standings-current"),
+    );
+    expect(standingsCall).toBeTruthy();
+    const [, data] = standingsCall as [string, Record<string, unknown>];
+    expect(data.sprintWins).toEqual({
+      drivers: { verstappen: 1 },
+      constructors: { red_bull: 1 },
+    });
+  });
+
+  it("still writes the standings snapshot (sprintWins null) when the sprint fetch fails", async () => {
+    mockGetSeasonSprintResults.mockRejectedValue(new Error("sprint endpoint down"));
+
+    const { runDailySnapshot } = await import("../snapshot-daily");
+    const results = await runDailySnapshot();
+
+    expect(results.find((r) => r.key === "standings-current")?.ok).toBe(true);
+    const standingsCall = mockAtomicWriteJson.mock.calls.find((call) =>
+      String(call[0]).includes("standings-current"),
+    );
+    const [, data] = standingsCall as [string, Record<string, unknown>];
+    expect(data.sprintWins).toBeNull();
   });
 
   it("one failing job does not stop the others — remaining jobs still write", async () => {

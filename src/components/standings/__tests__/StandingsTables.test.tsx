@@ -108,4 +108,39 @@ describe("<StandingsTables />", () => {
     render(withQuery(<StandingsTables initialData={{ drivers: [], constructors: [] }} />));
     expect(await screen.findByText(/no standings available/i)).toBeInTheDocument();
   });
+
+  it("renders a sprint-wins chip beside race wins without changing the wins value", async () => {
+    const withSprints = {
+      ...mockData,
+      sprintWins: { drivers: { verstappen: 2 }, constructors: { red_bull: 2 } },
+    };
+    mockFetch(formPayload, withSprints);
+    render(withQuery(<StandingsTables initialData={withSprints} />));
+
+    expect(await screen.findByText(/verstappen/i)).toBeInTheDocument();
+    // Secondary chip present with accessible label…
+    expect(screen.getByLabelText("2 sprint wins")).toHaveTextContent("2S");
+    // …while the official race-win count stays the untouched standings value.
+    expect(screen.getByText("3")).toBeInTheDocument();
+  });
+
+  it("shows the sprint chip on the Constructors tab too", async () => {
+    const withSprints = {
+      ...mockData,
+      sprintWins: { drivers: { verstappen: 2 }, constructors: { red_bull: 1 } },
+    };
+    mockFetch(formPayload, withSprints);
+    render(withQuery(<StandingsTables initialData={withSprints} />));
+
+    await userEvent.click(screen.getByRole("tab", { name: /constructors/i }));
+    const panel = screen.getByRole("tabpanel");
+    expect(within(panel).getByLabelText("1 sprint win")).toHaveTextContent("1S");
+    expect(within(panel).getByText("5")).toBeInTheDocument();
+  });
+
+  it("renders no sprint chip when tallies are absent (pre-sprint data or fetch failure)", async () => {
+    render(withQuery(<StandingsTables initialData={mockData} />));
+    expect(await screen.findByText(/verstappen/i)).toBeInTheDocument();
+    expect(screen.queryByLabelText(/sprint win/i)).not.toBeInTheDocument();
+  });
 });

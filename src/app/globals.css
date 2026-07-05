@@ -50,6 +50,7 @@
   --color-medal-foreground: var(--medal-foreground);
   --color-accent-2: var(--accent-2);
   --color-accent-2-foreground: var(--accent-2-foreground);
+  --color-accent-2-muted: var(--accent-2-muted);
   --speed-fast: 100ms;
   --speed-normal: 200ms;
   --speed-slow: 300ms;
@@ -110,6 +111,7 @@
   /* Secondary accent (violet) — fastest lap, sprint, telemetry highlights */
   --accent-2: oklch(0.55 0.20 300);
   --accent-2-foreground: oklch(0.99 0 0);
+  --accent-2-muted: oklch(0.55 0.20 300 / 14%);
 
   --sector-1: oklch(0.72 0.16 160);
   --sector-1-foreground: oklch(0.52 0.12 160);
@@ -198,6 +200,7 @@
   /* Secondary accent (violet) — lifted for dark broadcast contrast */
   --accent-2: oklch(0.66 0.20 300);
   --accent-2-foreground: oklch(0.99 0 0);
+  --accent-2-muted: oklch(0.66 0.20 300 / 16%);
 
   --sector-1: oklch(0.79 0.16 160);
   --sector-1-foreground: oklch(0.84 0.14 160);
