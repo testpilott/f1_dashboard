@@ -41,6 +41,7 @@ describe("useDriverDetails", () => {
                 Constructors: [{ constructorId: "red_bull", name: "Red Bull", nationality: "Austrian", url: "" }],
               },
             ],
+            sprintWins: { drivers: { max_verstappen: 2 }, constructors: { red_bull: 2 } },
           }),
           { status: 200 },
         );
@@ -76,10 +77,38 @@ describe("useDriverDetails", () => {
     });
 
     expect(result.current.career?.wins).toBe(60);
+    // Sprint tallies from the standings payload are exposed for the chip UI.
+    expect(result.current.sprintWins).toEqual({
+      drivers: { max_verstappen: 2 },
+      constructors: { red_bull: 2 },
+    });
     expect(fetchMock).toHaveBeenCalledWith(
       expect.stringContaining("/api/driver-career?driverId=max_verstappen"),
       expect.any(Object),
     );
+  });
+
+  it("exposes sprintWins as null when the standings payload omits it", async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/api/standings")) {
+        return new Response(JSON.stringify({ drivers: [] }), { status: 200 });
+      }
+      if (url.includes("/api/driver-photos")) {
+        return new Response(JSON.stringify({ photos: [] }), { status: 200 });
+      }
+      return new Response(JSON.stringify({}), { status: 404 });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { result } = renderHook(() => useDriverDetails(null, "2026"), {
+      wrapper: createWrapper(),
+    });
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+    expect(result.current.sprintWins).toBeNull();
   });
 
   it("does not fire selected-driver enrichment queries when no driver is selected", async () => {

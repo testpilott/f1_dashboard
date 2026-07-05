@@ -20,7 +20,7 @@ import FormChip from "@/components/standings/FormChip";
 import MedalPositionBadge from "@/components/standings/MedalPositionBadge";
 import StandingsSkeleton from "@/components/standings/StandingsSkeleton";
 import DriverSeasonDialog from "@/components/standings/DriverSeasonDialog";
-import SprintWinsChip from "@/components/standings/SprintWinsChip";
+import SprintWinsChip from "@/components/ui/SprintWinsChip";
 import type { SprintWinTallies } from "@/lib/stats/sprintWins";
 
 // ─── Types ────────────────────────────────────────────────────────────────────

@@ -9,6 +9,7 @@ import { getDriverStatic } from "@/lib/drivers-static";
 import { resolveBirthplace } from "@/lib/stats/driverEnrichment";
 import TeamLogo from "@/components/ui/TeamLogo";
 import StatBox from "@/components/drivers/StatBox";
+import SprintWinsChip from "@/components/ui/SprintWinsChip";
 import { ageFromDateOfBirth } from "@/lib/stats/age";
 import DriverBioSection from "@/components/drivers/sections/DriverBioSection";
 import DriverQuotesSection from "@/components/drivers/sections/DriverQuotesSection";
@@ -30,6 +31,7 @@ export default function DriverDetailPanel({
   careerLoading,
   wikidataProfile,
   wikidataLoading,
+  sprintWins,
   onClose,
 }: {
   driver: DriverStanding;
@@ -41,6 +43,8 @@ export default function DriverDetailPanel({
   careerLoading: boolean;
   wikidataProfile?: WikidataDriverProfile | null;
   wikidataLoading?: boolean;
+  /** Season sprint-win count — shown as a secondary chip beside the Wins stat. */
+  sprintWins?: number;
   onClose: () => void;
 }) {
   const team = driver.Constructors[0]?.name ?? "Unknown";
@@ -86,7 +90,12 @@ export default function DriverDetailPanel({
         <div className="grid grid-cols-3 gap-2">
           <StatBox label="Position" value={`P${pos}`} />
           <StatBox label="Points" value={driver.points} />
-          <StatBox label="Wins" value={driver.wins} highlight={driver.wins !== "0"} />
+          <StatBox
+            label="Wins"
+            value={driver.wins}
+            highlight={driver.wins !== "0"}
+            badge={<SprintWinsChip count={sprintWins} />}
+          />
         </div>
       </div>
 

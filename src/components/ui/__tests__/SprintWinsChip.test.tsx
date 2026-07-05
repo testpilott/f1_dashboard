@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import SprintWinsChip from "@/components/standings/SprintWinsChip";
+import SprintWinsChip from "@/components/ui/SprintWinsChip";
 
 describe("SprintWinsChip", () => {
   it("renders the count with an S marker", () => {

@@ -58,4 +58,47 @@ describe("<DriverDetailPanel />", () => {
     expect(screen.getByText("Career")).toBeInTheDocument();
     expect(screen.getByText("210")).toBeInTheDocument();
   });
+
+  it("shows a sprint-wins chip beside the Wins stat when sprintWins is provided", () => {
+    const driver = makeDriverStanding({
+      Driver: makeDriver({ driverId: "verstappen" }),
+      Constructors: [makeConstructor({ constructorId: "red_bull", name: "Red Bull Racing" })],
+      wins: "3",
+    });
+
+    render(
+      <DriverDetailPanel
+        driver={driver}
+        newsLoading={false}
+        seasonLoading={false}
+        careerLoading={false}
+        sprintWins={2}
+        onClose={() => undefined}
+      />,
+    );
+
+    expect(screen.getByLabelText("2 sprint wins")).toHaveTextContent("2S");
+    // The Wins stat itself stays the untouched standings value.
+    expect(screen.getByText("3")).toBeInTheDocument();
+  });
+
+  it("shows no sprint chip when sprintWins is absent", () => {
+    const driver = makeDriverStanding({
+      Driver: makeDriver({ driverId: "verstappen" }),
+      Constructors: [makeConstructor({ constructorId: "red_bull", name: "Red Bull Racing" })],
+      wins: "3",
+    });
+
+    render(
+      <DriverDetailPanel
+        driver={driver}
+        newsLoading={false}
+        seasonLoading={false}
+        careerLoading={false}
+        onClose={() => undefined}
+      />,
+    );
+
+    expect(screen.queryByLabelText(/sprint win/i)).not.toBeInTheDocument();
+  });
 });

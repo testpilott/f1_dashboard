@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import SeasonPicker from "@/components/ui/SeasonPicker";
 import DriverHeadshot from "@/components/drivers/DriverHeadshot";
 import DriverDetailPanel from "@/components/drivers/DriverDetailPanel";
+import SprintWinsChip from "@/components/ui/SprintWinsChip";
 import FavoriteStar from "@/components/drivers/FavoriteStar";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useDriverDetails } from "@/hooks/useDriverDetails";
@@ -22,6 +23,7 @@ function DriversPageInner() {
 
   const {
     standings: displayDrivers,
+    sprintWins,
     photos,
     isLoading,
     isError,
@@ -98,6 +100,7 @@ function DriversPageInner() {
                             {d.wins}W
                           </Badge>
                         )}
+                        <SprintWinsChip count={sprintWins?.drivers[d.Driver.driverId]} />
                       </div>
                       <p className="text-sm font-medium leading-tight truncate pr-6">
                         {d.Driver.givenName} {d.Driver.familyName}
@@ -130,6 +133,7 @@ function DriversPageInner() {
                       careerLoading={careerLoading}
                       wikidataProfile={wikidata}
                       wikidataLoading={wikidataLoading}
+                      sprintWins={sprintWins?.drivers[d.Driver.driverId]}
                       onClose={() => setSelected(null)}
                     />
                   </div>
@@ -151,6 +155,7 @@ function DriversPageInner() {
               careerLoading={careerLoading}
               wikidataProfile={wikidata}
               wikidataLoading={wikidataLoading}
+              sprintWins={sprintWins?.drivers[selected.Driver.driverId]}
               onClose={() => setSelected(null)}
             />
           </div>

@@ -5,6 +5,7 @@ import type { DriverStanding, NewsItem } from "@/lib/types";
 import type { WikidataDriverProfile } from "@/lib/types/wikidata";
 import { fetchJson } from "@/lib/api/clientFetch";
 import { clampPollIntervalMs } from "@/lib/time/pollInterval";
+import type { SprintWinTallies } from "@/lib/stats/sprintWins";
 import type { DriverPhotoEntry } from "@/components/drivers/DriverHeadshot";
 import type { DriverSeasonData } from "@/components/drivers/DriverDetailPanel";
 
@@ -14,8 +15,13 @@ const CURRENT_SEASON_STALE_MS = 5 * 60 * 1000;
 const RESULTS_FEED_RECHECK_FALLBACK_MS = 60 * 60 * 1000;
 
 async function fetchStandings(season: string) {
-  const d = await fetchJson<{ drivers?: DriverStanding[] }>(`/api/standings?season=${encodeURIComponent(season)}`);
-  return (Array.isArray(d.drivers) ? d.drivers : []) as DriverStanding[];
+  const d = await fetchJson<{ drivers?: DriverStanding[]; sprintWins?: SprintWinTallies | null }>(
+    `/api/standings?season=${encodeURIComponent(season)}`,
+  );
+  return {
+    drivers: (Array.isArray(d.drivers) ? d.drivers : []) as DriverStanding[],
+    sprintWins: d.sprintWins ?? null,
+  };
 }
 
 async function fetchDriverNews(lastName: string): Promise<NewsItem[]> {
@@ -54,11 +60,12 @@ type DriverCareerResponse = {
 };
 
 export function useDriverDetails(selectedDriverId: string | null, season: string) {
-  const { data: standings, isLoading, isError, refetch } = useQuery({
+  const { data: standingsData, isLoading, isError, refetch } = useQuery({
     queryKey: ["driver-standings", season],
     queryFn: () => fetchStandings(season),
     staleTime: 5 * 60 * 1000,
   });
+  const standings = standingsData?.drivers;
 
   const { data: photos } = useQuery({
     queryKey: ["driver-photos"],
@@ -108,6 +115,7 @@ export function useDriverDetails(selectedDriverId: string | null, season: string
 
   return {
     standings: standings ?? [],
+    sprintWins: standingsData?.sprintWins ?? null,
     photos: photos ?? [],
     selectedDriver,
     isLoading,
