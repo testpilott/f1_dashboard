@@ -13,19 +13,55 @@
         "points": 8,
         "status": "Finished",
         "fastestLap": true
+      },
+      {
+        "round": 2,
+        "raceName": "Chinese Grand Prix",
+        "grid": 8,
+        "finish": 16,
+        "points": 0,
+        "status": "Retired",
+        "fastestLap": false
+      },
+      {
+        "round": 3,
+        "raceName": "Japanese Grand Prix",
+        "grid": 11,
+        "finish": 8,
+        "points": 4,
+        "status": "Finished",
+        "fastestLap": false
+      },
+      {
+        "round": 4,
+        "raceName": "Miami Grand Prix",
+        "grid": 2,
+        "finish": 5,
+        "points": 10,
+        "status": "Finished",
+        "fastestLap": false
+      },
+      {
+        "round": 5,
+        "raceName": "Canadian Grand Prix",
+        "grid": 6,
+        "finish": 3,
+        "points": 15,
+        "status": "Finished",
+        "fastestLap": false
       }
     ],
     "aggregates": {
-      "races": 1,
+      "races": 5,
       "wins": 0,
-      "podiums": 0,
-      "points": 8,
-      "dnfs": 0,
+      "podiums": 1,
+      "points": 37,
+      "dnfs": 1,
       "fastestLaps": 1,
-      "avgFinish": 6,
-      "avgGrid": 20
+      "avgFinish": 7.6,
+      "avgGrid": 9.4
     }
   },
-  "snapshotAt": "2026-07-06T06:30:46.542Z",
+  "snapshotAt": "2026-07-06T06:54:41.628Z",
   "source": "jolpica"
 }

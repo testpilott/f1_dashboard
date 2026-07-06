@@ -2,8 +2,8 @@
   "driverId": "hamilton",
   "career": {
     "wins": 106,
-    "podiums": 206,
-    "starts": 388,
+    "podiums": 207,
+    "starts": 389,
     "fastestLaps": 69,
     "championships": 7
   },
@@ -29,6 +29,6 @@
     2025,
     2026
   ],
-  "snapshotAt": "2026-06-29T07:05:52.876Z",
+  "snapshotAt": "2026-07-06T06:54:33.396Z",
   "source": "jolpica"
 }
