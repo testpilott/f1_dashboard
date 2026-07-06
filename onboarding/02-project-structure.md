@@ -61,7 +61,7 @@ Organised by feature, not by primitive vs composite.
 | `standings/` | StandingsTables, FormChip, MedalPositionBadge |
 | `race/` | RaceDetailClient, CircuitMap, TrackSVG, CircuitDetailsPanel, CircuitRecords, RaceStartTimes, TelemetryPanel, TeamRadioPanel, LapChart, LapTimeFallbackChart, TireStrategy, IncidentDialog, MarkerTally, CornerSelector |
 | `drivers/` | DriverHeadshot, DriverDetailPanel, FavoriteStar |
-| `schedule/` | CalendarGrid, ScheduleClient, CircuitThumb |
+| `schedule/` | ScheduleClient, ScheduleRow, SessionRow, RaceResultPanel (classification for finished races), CircuitThumb, Countdown |
 | `weekend/` | WeekendClient (orchestrator), SessionResults (table + per-session queries) |
 | `compare/` | DriversCompareTab, TeamsCompareTab, CircuitHistory, StatBar, PositionBadge |
 | `search/` | Top-of-page search bar + results |
@@ -110,6 +110,10 @@ src/lib/
   types/            TypeScript interfaces (jolpica, openf1, domain, …)
   time/             Race-weekend detection, weekly cache bucket
     format.ts                 Schedule/time formatting helpers
+    raceFinished.ts           hasRaceFinished — gates the schedule row's
+                              timings-vs-classification swap
+    pollInterval.ts           clampPollIntervalMs — floor for server-driven
+                              client poll intervals
   geometry/         Track coordinate helpers
   hooks/            useIsClient, useNow (SSR-safe state)
   cacheStrategy.ts  5-tier DataClass model + adaptiveRevalidate

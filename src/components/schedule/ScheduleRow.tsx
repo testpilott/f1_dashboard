@@ -7,7 +7,9 @@ import { ChevronDown, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import CircuitThumb from "@/components/schedule/CircuitThumb";
 import SessionRow, { type SessionEntry } from "@/components/schedule/SessionRow";
+import RaceResultPanel from "@/components/schedule/RaceResultPanel";
 import { getFlag, getCircuitImageUrl, CIRCUIT_COORDS } from "@/lib/constants";
+import { hasRaceFinished } from "@/lib/time/raceFinished";
 import type { Race } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -35,6 +37,9 @@ export default function ScheduleRow({ race }: { race: Race }) {
 
   const raceDate = parseISO(race.date);
   const past = isPast(raceDate);
+  // Stricter than `past` (which flips at midnight on race day): only swap
+  // the timings for the classification once the race has actually run.
+  const finished = hasRaceFinished(race.date, race.time ?? null, Date.now());
   const isSprint = Boolean(race.Sprint);
   const circuitImgUrl = getCircuitImageUrl(race.Circuit.circuitId);
   const circuitTz = CIRCUIT_COORDS[race.Circuit.Location.country]?.timezone ?? "UTC";
@@ -95,20 +100,24 @@ export default function ScheduleRow({ race }: { race: Race }) {
       {isExpanded && (
         <div className="px-4 pb-4">
           <div className="border-t border-border/40 pt-1">
-            {sessions.map((s) => (
-              <SessionRow
-                key={s.label}
-                session={s}
-                circuitTz={circuitTz}
-                userTz={userTz}
-              />
-            ))}
+            {finished ? (
+              <RaceResultPanel season={race.season} round={race.round} />
+            ) : (
+              sessions.map((s) => (
+                <SessionRow
+                  key={s.label}
+                  session={s}
+                  circuitTz={circuitTz}
+                  userTz={userTz}
+                />
+              ))
+            )}
             <div className="mt-4">
               <Link
                 href={`/race/${race.season}/${race.round}`}
                 className="inline-flex items-center gap-1 text-sm text-primary hover:underline underline-offset-4"
               >
-                {past ? "View results" : "Race detail"} →
+                {finished ? "Full race detail" : past ? "View results" : "Race detail"} →
               </Link>
             </div>
           </div>

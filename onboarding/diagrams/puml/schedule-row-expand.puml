@@ -1,0 +1,28 @@
+@startuml schedule-row-expand
+title Schedule Row Expand — Timings vs Race Classification
+
+start
+
+:User expands a schedule row;
+
+if (hasRaceFinished?\nstart + 4h buffer,\nor UTC day end w/o time) then (no)
+  :SessionRow list\nFP1 / Quali / Sprint / Race\ncircuit + local timezones;
+  :Link: Race detail / View results;
+  stop
+else (yes)
+  :RaceResultPanel mounts\n(lazy — collapsed rows fetch nothing);
+  :useQuery GET /api/results?season&round\nstaleTime 1h;
+  if (Response?) then (loading)
+    :Skeleton rows;
+  elseif (error) then
+    :"Could not load race results.";
+  elseif (empty) then
+    :"Results not yet available" — feed lag message;
+  else (results)
+    :ResultTable type=race\nPos / Driver / Constructor /\nTime-Status incl. DNF badges / Pts;
+  endif
+  :Link: Full race detail;
+  stop
+endif
+
+@enduml

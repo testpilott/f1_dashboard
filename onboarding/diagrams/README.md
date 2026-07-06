@@ -11,6 +11,7 @@ Each diagram exists in two formats. **Keep them in sync** when editing — updat
 | Caching decision | [mermaid/caching-decision.md](mermaid/caching-decision.md) | [puml/caching-decision.puml](puml/caching-decision.puml) |
 | Driver photos fallback | [mermaid/driver-photos-fallback.md](mermaid/driver-photos-fallback.md) | [puml/driver-photos-fallback.puml](puml/driver-photos-fallback.puml) |
 | Projections cron | [mermaid/projections-cron.md](mermaid/projections-cron.md) | [puml/projections-cron.puml](puml/projections-cron.puml) |
+| Schedule row expand | [mermaid/schedule-row-expand.md](mermaid/schedule-row-expand.md) | [puml/schedule-row-expand.puml](puml/schedule-row-expand.puml) |
 
 ## Why two formats
 

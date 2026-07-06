@@ -38,6 +38,20 @@ Reads `/api/schedule`. The client component
 [ScheduleClient](../src/components/schedule/) handles the season picker and
 displays `CalendarGrid` items with `CircuitThumb` images.
 
+Expanding a row branches on `hasRaceFinished()`
+([src/lib/time/raceFinished.ts](../src/lib/time/raceFinished.ts) — race start
++ 4 h buffer, stricter than the date-only "Done" badge so race-day mornings
+keep their timings):
+
+- **Upcoming / in-progress race** → `SessionRow` list of session timings in
+  circuit and local timezones.
+- **Finished race** → `RaceResultPanel`, which lazily fetches
+  `/api/results?season&round` on expand (collapsed rows fetch nothing) and
+  renders the classification — position, driver, constructor, time or DNF
+  status badge, points — via the shared `ResultTable`.
+
+Flow diagram: [diagrams/mermaid/schedule-row-expand.md](diagrams/mermaid/schedule-row-expand.md).
+
 ### `/race/[year]/[round]`
 
 [src/app/race/[year]/[round]/page.tsx](../src/app/race/%5Byear%5D/%5Bround%5D/page.tsx).
