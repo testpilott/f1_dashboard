@@ -1,8 +1,12 @@
 #!/usr/bin/env node
 
+import { pathToFileURL } from "node:url";
+
 const baseUrl = (process.env.SMOKE_BASE_URL ?? "http://127.0.0.1:3000").replace(/\/$/, "");
 const maxAttempts = Number(process.env.SMOKE_RETRIES ?? 3);
 const retryDelayMs = Number(process.env.SMOKE_RETRY_DELAY_MS ?? 1000);
+const DAILY_SNAPSHOT_MAX_AGE_HOURS = Number(process.env.SMOKE_DAILY_SNAPSHOT_MAX_AGE_HOURS ?? 48);
+const WEEKLY_SNAPSHOT_MAX_AGE_HOURS = Number(process.env.SMOKE_WEEKLY_SNAPSHOT_MAX_AGE_HOURS ?? 8 * 24);
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -25,17 +29,34 @@ function readSource(payload) {
   return typeof payload.source === "string" ? payload.source : null;
 }
 
-// Snapshot freshness: when a payload claims source="jolpica" (i.e. it came from
-// the committed data/snapshots/*.json files), the snapshotAt must be recent.
-// A stuck snapshot-daily workflow would silently serve >48h-old data; this
-// check turns the smoke red so GitHub notifies.
-const SNAPSHOT_MAX_AGE_HOURS = Number(process.env.SMOKE_SNAPSHOT_MAX_AGE_HOURS ?? 48);
-
 function readSnapshotAgeHours(payload) {
   if (!isObject(payload) || typeof payload.snapshotAt !== "string") return null;
   const ts = Date.parse(payload.snapshotAt);
   if (!Number.isFinite(ts)) return null;
   return (Date.now() - ts) / 3.6e6;
+}
+
+export function assertSnapshotFreshness(check, payload) {
+  const source = readSource(payload);
+  if (source === null) {
+    throw new Error("response missing required string source field");
+  }
+
+  const allowedSources = new Set(["live", "jolpica", "snapshot", "degraded-live"]);
+  if (!allowedSources.has(source)) {
+    throw new Error(`response source has unexpected value: ${source}`);
+  }
+
+  if (source === "jolpica") {
+    const ageHours = readSnapshotAgeHours(payload);
+    if (ageHours !== null && ageHours > check.snapshotMaxAgeHours) {
+      throw new Error(
+        `snapshot is ${ageHours.toFixed(1)}h stale (max ${check.snapshotMaxAgeHours}h) — ${check.snapshotWorkflow} workflow may be stuck`,
+      );
+    }
+  }
+
+  return source;
 }
 
 async function fetchJson(path) {
@@ -89,7 +110,7 @@ function validateCareerPayload(driverId, payload) {
   }
 }
 
-async function run() {
+export async function run() {
   const defaultSoftLatencyMs = Number(process.env.SMOKE_MAX_LATENCY_MS ?? 1500);
   const hardLatencyMs = Number(process.env.SMOKE_HARD_MAX_LATENCY_MS ?? 8000);
 
@@ -98,6 +119,8 @@ async function run() {
       name: "driver-career hamilton",
       maxLatencyMs: defaultSoftLatencyMs,
       expectSnapshot: true,
+      snapshotMaxAgeHours: WEEKLY_SNAPSHOT_MAX_AGE_HOURS,
+      snapshotWorkflow: "snapshot-weekly",
       run: async () => {
         const payload = await fetchJson("/api/driver-career?driverId=hamilton");
         validateCareerPayload("hamilton", payload);
@@ -108,6 +131,8 @@ async function run() {
       name: "driver-career piastri",
       maxLatencyMs: defaultSoftLatencyMs,
       expectSnapshot: true,
+      snapshotMaxAgeHours: WEEKLY_SNAPSHOT_MAX_AGE_HOURS,
+      snapshotWorkflow: "snapshot-weekly",
       run: async () => {
         const payload = await fetchJson("/api/driver-career?driverId=piastri");
         validateCareerPayload("piastri", payload);
@@ -118,6 +143,8 @@ async function run() {
       name: "driver-career max_verstappen",
       maxLatencyMs: defaultSoftLatencyMs,
       expectSnapshot: true,
+      snapshotMaxAgeHours: WEEKLY_SNAPSHOT_MAX_AGE_HOURS,
+      snapshotWorkflow: "snapshot-weekly",
       run: async () => {
         const payload = await fetchJson("/api/driver-career?driverId=max_verstappen");
         validateCareerPayload("max_verstappen", payload);
@@ -128,6 +155,8 @@ async function run() {
       name: "standings current",
       maxLatencyMs: defaultSoftLatencyMs,
       expectSnapshot: true,
+      snapshotMaxAgeHours: DAILY_SNAPSHOT_MAX_AGE_HOURS,
+      snapshotWorkflow: "snapshot-daily",
       run: async () => {
         const payload = await fetchJson("/api/standings?season=current");
         assert(Array.isArray(payload.drivers), "standings: drivers must be array");
@@ -150,28 +179,11 @@ async function run() {
       }
 
       if (check.expectSnapshot) {
-        const source = readSource(payload);
-        if (source === null) {
-          throw new Error("response missing required string source field");
-        }
-
-        const allowedSources = new Set(["live", "jolpica", "snapshot", "degraded-live"]);
-        if (!allowedSources.has(source)) {
-          throw new Error(`response source has unexpected value: ${source}`);
-        }
+        const source = assertSnapshotFreshness(check, payload);
 
         if (source === "live" || source === "degraded-live") {
           warnings.push(`${check.name}: response source=${source} (possible snapshot miss)`);
           console.warn(`WARN ${check.name}: response source=${source} (possible snapshot miss)`);
-        }
-
-        if (source === "jolpica") {
-          const ageHours = readSnapshotAgeHours(payload);
-          if (ageHours !== null && ageHours > SNAPSHOT_MAX_AGE_HOURS) {
-            throw new Error(
-              `snapshot is ${ageHours.toFixed(1)}h stale (max ${SNAPSHOT_MAX_AGE_HOURS}h) — snapshot-daily workflow may be stuck`,
-            );
-          }
         }
       }
 
@@ -203,7 +215,9 @@ async function run() {
   console.log("\nAll smoke checks passed.");
 }
 
-run().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  run().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
+}
