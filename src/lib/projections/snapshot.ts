@@ -1,5 +1,10 @@
 import { unstable_cache, revalidateTag } from "next/cache";
-import { getDriverStandings, getSchedule, getSeasonResultsFirstPage } from "@/lib/api/jolpica";
+import {
+  getDriverStandings,
+  getConstructorStandings,
+  getSchedule,
+  getSeasonResultsFirstPage,
+} from "@/lib/api/jolpica";
 import { runProjections } from "@/lib/projections/montecarlo";
 import type { ChampionshipProjection } from "@/lib/types";
 
@@ -25,7 +30,7 @@ import type { ChampionshipProjection } from "@/lib/types";
  * algorithm changes and stored results must be invalidated.
  */
 
-const PROJECTIONS_CACHE_KEY = ["projections", "v1"] as const;
+const PROJECTIONS_CACHE_KEY = ["projections", "v2"] as const;
 export const PROJECTIONS_CACHE_TAG = "projections";
 const PROJECTIONS_REVALIDATE_SECONDS = 86400; // 24h — cron refresh interval
 
@@ -34,8 +39,9 @@ const PROJECTIONS_REVALIDATE_SECONDS = 86400; // 24h — cron refresh interval
  * Throws if upstream data is empty.
  */
 export async function computeProjections(season: string): Promise<ChampionshipProjection> {
-  const [standings, schedule, seasonRaces] = await Promise.all([
+  const [standings, constructorStandings, schedule, seasonRaces] = await Promise.all([
     getDriverStandings(season),
+    getConstructorStandings(season),
     getSchedule(season),
     getSeasonResultsFirstPage(season),
   ]);
@@ -51,7 +57,7 @@ export async function computeProjections(season: string): Promise<ChampionshipPr
   );
   const completedRound = completedRounds.size > 0 ? Math.max(...completedRounds) : 0;
 
-  return runProjections(standings, schedule, completedRound);
+  return runProjections(standings, constructorStandings, schedule, completedRound);
 }
 
 export const getCachedProjections = unstable_cache(

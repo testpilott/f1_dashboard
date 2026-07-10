@@ -1,10 +1,18 @@
-import type { DriverStanding, Race, ChampionshipProjection, DriverProjection } from "@/lib/types";
+import type {
+  DriverStanding,
+  ConstructorStanding,
+  Race,
+  ChampionshipProjection,
+  DriverProjection,
+  ConstructorProjection,
+} from "@/lib/types";
 import { POINTS_SYSTEM, SPRINT_POINTS_SYSTEM, FASTEST_LAP_POINT, getTeamColor } from "@/lib/constants";
 
 const SIMULATIONS = 10_000;
 
 interface DriverSim {
   driverId: string;
+  constructorId: string;
   driverCode: string;
   fullName: string;
   teamName: string;
@@ -63,6 +71,7 @@ function buildDriverStats(
 
     return {
       driverId,
+      constructorId: standing.Constructors[0]?.constructorId ?? "unknown",
       driverCode: standing.Driver.code,
       fullName: `${standing.Driver.givenName} ${standing.Driver.familyName}`,
       teamName: standing.Constructors[0]?.name ?? "Unknown",
@@ -143,6 +152,7 @@ function simulateRace(
  */
 export function runProjections(
   standings: DriverStanding[],
+  constructorStandings: ConstructorStanding[],
   schedule: Race[],
   completedRound: number
 ): ChampionshipProjection {
@@ -157,6 +167,33 @@ export function runProjections(
   const wins = new Map<string, number>();
   const podiums = new Map<string, number>();
   const top5s = new Map<string, number>();
+  const constructorPointsSum = new Map<string, number[]>();
+  const constructorChampions = new Map<string, number>();
+  const constructorTop3s = new Map<string, number>();
+  const constructorTop5s = new Map<string, number>();
+
+  const constructorsById = new Map(
+    constructorStandings.map((c) => [
+      c.Constructor.constructorId,
+      {
+        constructorId: c.Constructor.constructorId,
+        constructorName: c.Constructor.name,
+        currentPoints: parseFloat(c.points),
+      },
+    ])
+  );
+
+  // If constructor standings are unavailable/incomplete, derive a fallback
+  // roster from driver standings so projections can still be computed.
+  for (const d of driverStats) {
+    if (!constructorsById.has(d.constructorId)) {
+      constructorsById.set(d.constructorId, {
+        constructorId: d.constructorId,
+        constructorName: d.teamName,
+        currentPoints: 0,
+      });
+    }
+  }
 
   for (const d of driverStats) {
     pointsSum.set(d.driverId, []);
@@ -165,10 +202,24 @@ export function runProjections(
     top5s.set(d.driverId, 0);
   }
 
+  for (const c of constructorsById.values()) {
+    constructorPointsSum.set(c.constructorId, []);
+    constructorChampions.set(c.constructorId, 0);
+    constructorTop3s.set(c.constructorId, 0);
+    constructorTop5s.set(c.constructorId, 0);
+  }
+
+  const constructorCurrentPoints = new Map(
+    Array.from(constructorsById.values()).map((c) => [c.constructorId, c.currentPoints])
+  );
+  const driverToConstructor = new Map(driverStats.map((d) => [d.driverId, d.constructorId]));
+  const driverCurrentPoints = new Map(driverStats.map((d) => [d.driverId, d.points]));
+
   for (let sim = 0; sim < SIMULATIONS; sim++) {
     const simPoints = new Map<string, number>(
       driverStats.map((d) => [d.driverId, d.points])
     );
+    const simConstructorPoints = new Map<string, number>(constructorCurrentPoints);
 
     for (const race of remainingRaces) {
       const isSprint = Boolean(race.Sprint);
@@ -186,14 +237,31 @@ export function runProjections(
       }
     }
 
+    // Aggregate simulated driver totals into constructor totals.
+    simPoints.forEach((pts, driverId) => {
+      const constructorId = driverToConstructor.get(driverId);
+      if (!constructorId) return;
+      const base = simConstructorPoints.get(constructorId) ?? 0;
+      const driverCurrent = driverCurrentPoints.get(driverId) ?? 0;
+      simConstructorPoints.set(constructorId, base + (pts - driverCurrent));
+    });
+
     // Rank drivers by final simulated points
     const ranked = [...simPoints.entries()].sort((a, b) => b[1] - a[1]);
+    const rankedConstructors = [...simConstructorPoints.entries()].sort((a, b) => b[1] - a[1]);
 
     ranked.forEach(([dId, pts], idx) => {
       pointsSum.get(dId)!.push(pts);
       if (idx === 0) wins.set(dId, (wins.get(dId) ?? 0) + 1);
       if (idx < 3) podiums.set(dId, (podiums.get(dId) ?? 0) + 1);
       if (idx < 5) top5s.set(dId, (top5s.get(dId) ?? 0) + 1);
+    });
+
+    rankedConstructors.forEach(([constructorId, pts], idx) => {
+      constructorPointsSum.get(constructorId)!.push(pts);
+      if (idx === 0) constructorChampions.set(constructorId, (constructorChampions.get(constructorId) ?? 0) + 1);
+      if (idx < 3) constructorTop3s.set(constructorId, (constructorTop3s.get(constructorId) ?? 0) + 1);
+      if (idx < 5) constructorTop5s.set(constructorId, (constructorTop5s.get(constructorId) ?? 0) + 1);
     });
   }
 
@@ -221,11 +289,37 @@ export function runProjections(
   // Sort by win probability descending
   projectionDrivers.sort((a, b) => b.winProbability - a.winProbability);
 
+  const projectionConstructors: ConstructorProjection[] = Array.from(constructorsById.values()).map((c) => {
+    const allPoints = (constructorPointsSum.get(c.constructorId) ?? []).sort((a, b) => a - b);
+    const p10 = allPoints[Math.floor(SIMULATIONS * 0.1)] ?? c.currentPoints;
+    const p50 = allPoints[Math.floor(SIMULATIONS * 0.5)] ?? c.currentPoints;
+    const p90 = allPoints[Math.floor(SIMULATIONS * 0.9)] ?? c.currentPoints;
+
+    return {
+      constructorId: c.constructorId,
+      constructorName: c.constructorName,
+      teamColour: getTeamColor(c.constructorName),
+      currentPoints: c.currentPoints,
+      projectedPoints: { p10, p50, p90 },
+      championProbability: ((constructorChampions.get(c.constructorId) ?? 0) / SIMULATIONS) * 100,
+      top3Probability: ((constructorTop3s.get(c.constructorId) ?? 0) / SIMULATIONS) * 100,
+      top5Probability: ((constructorTop5s.get(c.constructorId) ?? 0) / SIMULATIONS) * 100,
+    };
+  });
+
+  projectionConstructors.sort((a, b) => {
+    if (b.championProbability !== a.championProbability) {
+      return b.championProbability - a.championProbability;
+    }
+    return b.projectedPoints.p50 - a.projectedPoints.p50;
+  });
+
   return {
     season: currentSeason,
     remainingRaces: remainingRaces.length,
     totalSimulations: SIMULATIONS,
     drivers: projectionDrivers,
+    constructors: projectionConstructors,
     generatedAt: new Date().toISOString(),
   };
 }

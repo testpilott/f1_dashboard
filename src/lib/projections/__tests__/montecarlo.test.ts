@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { runProjections } from "@/lib/projections/montecarlo";
-import type { DriverStanding, Race } from "@/lib/types";
-import { makeRace, makeDriverStanding, makeDriver, makeConstructor } from "@/test/fixtures";
+import type { DriverStanding, ConstructorStanding, Race } from "@/lib/types";
+import { makeRace, makeDriverStanding, makeConstructorStanding, makeDriver, makeConstructor } from "@/test/fixtures";
 
 // ─── Fixtures ─────────────────────────────────────────────────────────────────
 
@@ -23,6 +23,19 @@ const STANDINGS_2: DriverStanding[] = [
   }),
 ];
 
+const CONSTRUCTOR_STANDINGS_2: ConstructorStanding[] = [
+  makeConstructorStanding({
+    position: "1",
+    points: "300",
+    Constructor: makeConstructor({ constructorId: "red_bull", name: "Red Bull" }),
+  }),
+  makeConstructorStanding({
+    position: "2",
+    points: "50",
+    Constructor: makeConstructor({ constructorId: "ferrari", name: "Ferrari" }),
+  }),
+];
+
 // Complete schedule: 3 completed + 5 remaining races
 const SCHEDULE_8: Race[] = Array.from({ length: 8 }, (_, i) =>
   makeRace({ round: String(i + 1) })
@@ -31,7 +44,7 @@ const SCHEDULE_8: Race[] = Array.from({ length: 8 }, (_, i) =>
 // ─── Output shape ─────────────────────────────────────────────────────────────
 
 describe("runProjections() — output shape", () => {
-  const result = runProjections(STANDINGS_2, SCHEDULE_8, 3);
+  const result = runProjections(STANDINGS_2, CONSTRUCTOR_STANDINGS_2, SCHEDULE_8, 3);
 
   it("returns the correct season", () => {
     expect(result.season).toBe(2026);
@@ -49,6 +62,10 @@ describe("runProjections() — output shape", () => {
     expect(result.drivers).toHaveLength(STANDINGS_2.length);
   });
 
+  it("returns a constructor entry for each constructor in standings", () => {
+    expect(result.constructors).toHaveLength(CONSTRUCTOR_STANDINGS_2.length);
+  });
+
   it("includes a generatedAt ISO timestamp", () => {
     expect(() => new Date(result.generatedAt)).not.toThrow();
     expect(new Date(result.generatedAt).getTime()).toBeGreaterThan(0);
@@ -58,7 +75,7 @@ describe("runProjections() — output shape", () => {
 // ─── Driver projection fields ────────────────────────────────────────────────
 
 describe("runProjections() — driver projection fields", () => {
-  const result = runProjections(STANDINGS_2, SCHEDULE_8, 3);
+  const result = runProjections(STANDINGS_2, CONSTRUCTOR_STANDINGS_2, SCHEDULE_8, 3);
 
   it("includes all required fields per driver", () => {
     for (const d of result.drivers) {
@@ -117,7 +134,7 @@ describe("runProjections() — driver projection fields", () => {
 // ─── Statistical properties ──────────────────────────────────────────────────
 
 describe("runProjections() — statistical properties", () => {
-  const result = runProjections(STANDINGS_2, SCHEDULE_8, 3);
+  const result = runProjections(STANDINGS_2, CONSTRUCTOR_STANDINGS_2, SCHEDULE_8, 3);
 
   it("total win probability across all drivers is close to 100%", () => {
     const total = result.drivers.reduce((s, d) => s + d.winProbability, 0);
@@ -151,7 +168,7 @@ describe("runProjections() — edge cases", () => {
   it("handles zero remaining races (season already complete)", () => {
     // All 3 rounds completed, schedule only has 3 rounds
     const schedule3 = SCHEDULE_8.slice(0, 3);
-    const result = runProjections(STANDINGS_2, schedule3, 3);
+    const result = runProjections(STANDINGS_2, CONSTRUCTOR_STANDINGS_2, schedule3, 3);
     expect(result.remainingRaces).toBe(0);
     // Points should stay unchanged
     const ver = result.drivers.find((d) => d.driverId === "max")!;
@@ -167,11 +184,24 @@ describe("runProjections() — edge cases", () => {
         positionText: String(i + 1),
         points: String(100 - i * 4),
         Driver: makeDriver({ driverId: `d${i}`, code: `D${i < 10 ? "0" : ""}${i}`, givenName: "Driver", familyName: String(i) }),
-        Constructors: [makeConstructor({ constructorId: "ferrari", name: "Ferrari" })],
+        Constructors: [
+          makeConstructor({
+            constructorId: `team${Math.floor(i / 2)}`,
+            name: `Team ${Math.floor(i / 2)}`,
+          }),
+        ],
       })
     );
-    const result = runProjections(bigStandings, SCHEDULE_8, 3);
+    const bigConstructorStandings: ConstructorStanding[] = Array.from({ length: 10 }, (_, i) =>
+      makeConstructorStanding({
+        position: String(i + 1),
+        points: String(200 - i * 10),
+        Constructor: makeConstructor({ constructorId: `team${i}`, name: `Team ${i}` }),
+      })
+    );
+    const result = runProjections(bigStandings, bigConstructorStandings, SCHEDULE_8, 3);
     expect(result.drivers).toHaveLength(20);
+    expect(result.constructors).toHaveLength(10);
   });
 
   it("handles a sprint weekend in the remaining schedule", () => {
@@ -180,9 +210,27 @@ describe("runProjections() — edge cases", () => {
       makeRace({ round: "4", Sprint: { date: "2026-04-01", time: "10:00:00Z" } }), // sprint weekend
       ...SCHEDULE_8.slice(4),
     ];
-    const result = runProjections(STANDINGS_2, scheduleWithSprint, 3);
+    const result = runProjections(STANDINGS_2, CONSTRUCTOR_STANDINGS_2, scheduleWithSprint, 3);
     // Sprint weekend should not cause errors
     expect(result.remainingRaces).toBe(5);
     expect(result.drivers).toHaveLength(2);
+  });
+
+  it("constructor probabilities are bounded and sorted", () => {
+    const result = runProjections(STANDINGS_2, CONSTRUCTOR_STANDINGS_2, SCHEDULE_8, 3);
+    for (const c of result.constructors) {
+      expect(c.championProbability).toBeGreaterThanOrEqual(0);
+      expect(c.championProbability).toBeLessThanOrEqual(100);
+      expect(c.top3Probability).toBeGreaterThanOrEqual(c.championProbability);
+      expect(c.top3Probability).toBeLessThanOrEqual(100);
+      expect(c.top5Probability).toBeGreaterThanOrEqual(c.top3Probability);
+      expect(c.top5Probability).toBeLessThanOrEqual(100);
+    }
+
+    for (let i = 0; i < result.constructors.length - 1; i++) {
+      expect(result.constructors[i].championProbability).toBeGreaterThanOrEqual(
+        result.constructors[i + 1].championProbability
+      );
+    }
   });
 });

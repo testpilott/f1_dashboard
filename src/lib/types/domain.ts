@@ -54,11 +54,27 @@ export interface DriverProjection {
   top5Probability: number;
 }
 
+export interface ConstructorProjection {
+  constructorId: string;
+  constructorName: string;
+  teamColour: string;
+  currentPoints: number;
+  projectedPoints: {
+    p10: number; // 10th percentile
+    p50: number; // median
+    p90: number; // 90th percentile
+  };
+  championProbability: number;
+  top3Probability: number;
+  top5Probability: number;
+}
+
 export interface ChampionshipProjection {
   season: number;
   remainingRaces: number;
   totalSimulations: number;
   drivers: DriverProjection[];
+  constructors: ConstructorProjection[];
   generatedAt: string;
 }
 
