@@ -22,10 +22,10 @@ vi.mock("next/cache", () => ({
 import { GET } from "@/app/api/projections/route";
 import { POST as SNAPSHOT_POST, GET as SNAPSHOT_GET } from "@/app/api/projections/snapshot/route";
 import {
-  getDriverStandings,
+  getDriverStandingsSnapshot,
   getConstructorStandings,
+  getLastRaceInSeason,
   getSchedule,
-  getSeasonResultsFirstPage,
 } from "@/lib/api/jolpica";
 import { runProjections } from "@/lib/projections/montecarlo";
 import { makeApiRequest } from "@/test/api";
@@ -54,12 +54,13 @@ describe("GET /api/projections", () => {
   });
 
   it("serves projection from the shared cache on every request (no instance-warm gate)", async () => {
-    vi.mocked(getDriverStandings).mockResolvedValue([{ Driver: { driverId: "ver" } }] as never);
+    vi.mocked(getDriverStandingsSnapshot).mockResolvedValue({
+      standings: [{ Driver: { driverId: "ver" } }],
+      round: 5,
+    } as never);
     vi.mocked(getConstructorStandings).mockResolvedValue([{ Constructor: { constructorId: "red_bull", name: "Red Bull" }, points: "100" }] as never);
     vi.mocked(getSchedule).mockResolvedValue([{ round: "1" }, { round: "2" }] as never);
-    vi.mocked(getSeasonResultsFirstPage).mockResolvedValue([
-      { round: "1", Results: [{ position: "1" }] },
-    ] as never);
+    vi.mocked(getLastRaceInSeason).mockResolvedValue({ round: "5" } as never);
     vi.mocked(runProjections).mockReturnValue({
       drivers: [{ id: "ver", winProbability: 0.7 }],
       constructors: [{ id: "red_bull", championProbability: 0.7 }],
@@ -74,21 +75,22 @@ describe("GET /api/projections", () => {
   });
 
   it("returns 500 when the pipeline throws", async () => {
-    vi.mocked(getDriverStandings).mockRejectedValue(new Error("upstream"));
+    vi.mocked(getDriverStandingsSnapshot).mockRejectedValue(new Error("upstream"));
     vi.mocked(getConstructorStandings).mockResolvedValue([] as never);
     vi.mocked(getSchedule).mockResolvedValue([] as never);
-    vi.mocked(getSeasonResultsFirstPage).mockResolvedValue([] as never);
+    vi.mocked(getLastRaceInSeason).mockResolvedValue(null as never);
     const res = await GET(makeApiRequest("/api/projections", { season: "2026" }));
     expect(res.status).toBe(500);
   });
 
   it("serves cached projection after snapshot has been warmed by the cron", async () => {
-    vi.mocked(getDriverStandings).mockResolvedValue([{ Driver: { driverId: "ver" } }] as never);
+    vi.mocked(getDriverStandingsSnapshot).mockResolvedValue({
+      standings: [{ Driver: { driverId: "ver" } }],
+      round: 5,
+    } as never);
     vi.mocked(getConstructorStandings).mockResolvedValue([{ Constructor: { constructorId: "red_bull", name: "Red Bull" }, points: "100" }] as never);
     vi.mocked(getSchedule).mockResolvedValue([{ round: "1" }, { round: "2" }] as never);
-    vi.mocked(getSeasonResultsFirstPage).mockResolvedValue([
-      { round: "1", Results: [{ position: "1" }] },
-    ] as never);
+    vi.mocked(getLastRaceInSeason).mockResolvedValue({ round: "5" } as never);
     vi.mocked(runProjections).mockReturnValue({
       drivers: [{ id: "ver", winProbability: 0.7 }],
       constructors: [{ id: "red_bull", championProbability: 0.7 }],
@@ -130,10 +132,13 @@ describe("POST /api/projections/snapshot", () => {
   });
 
   it("returns 200 and warms cache on success", async () => {
-    vi.mocked(getDriverStandings).mockResolvedValue([{ Driver: { driverId: "ver" } }] as never);
+    vi.mocked(getDriverStandingsSnapshot).mockResolvedValue({
+      standings: [{ Driver: { driverId: "ver" } }],
+      round: 1,
+    } as never);
     vi.mocked(getConstructorStandings).mockResolvedValue([{ Constructor: { constructorId: "red_bull", name: "Red Bull" }, points: "100" }] as never);
     vi.mocked(getSchedule).mockResolvedValue([{ round: "1" }] as never);
-    vi.mocked(getSeasonResultsFirstPage).mockResolvedValue([] as never);
+    vi.mocked(getLastRaceInSeason).mockResolvedValue({ round: "1" } as never);
     vi.mocked(runProjections).mockReturnValue({
       drivers: [{ id: "ver" }, { id: "lec" }],
       constructors: [{ id: "red_bull" }],
@@ -147,10 +152,10 @@ describe("POST /api/projections/snapshot", () => {
   });
 
   it("returns 500 when pipeline throws", async () => {
-    vi.mocked(getDriverStandings).mockRejectedValue(new Error("upstream"));
+    vi.mocked(getDriverStandingsSnapshot).mockRejectedValue(new Error("upstream"));
     vi.mocked(getConstructorStandings).mockResolvedValue([] as never);
     vi.mocked(getSchedule).mockResolvedValue([] as never);
-    vi.mocked(getSeasonResultsFirstPage).mockResolvedValue([] as never);
+    vi.mocked(getLastRaceInSeason).mockResolvedValue(null as never);
 
     const res = await SNAPSHOT_POST(authedRequest("/api/projections/snapshot", { season: "2026" }));
     expect(res.status).toBe(500);

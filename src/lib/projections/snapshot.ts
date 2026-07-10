@@ -1,9 +1,9 @@
 import { unstable_cache, revalidateTag } from "next/cache";
 import {
-  getDriverStandings,
+  getDriverStandingsSnapshot,
   getConstructorStandings,
+  getLastRaceInSeason,
   getSchedule,
-  getSeasonResultsFirstPage,
 } from "@/lib/api/jolpica";
 import { runProjections } from "@/lib/projections/montecarlo";
 import type { ChampionshipProjection } from "@/lib/types";
@@ -39,23 +39,24 @@ const PROJECTIONS_REVALIDATE_SECONDS = 86400; // 24h — cron refresh interval
  * Throws if upstream data is empty.
  */
 export async function computeProjections(season: string): Promise<ChampionshipProjection> {
-  const [standings, constructorStandings, schedule, seasonRaces] = await Promise.all([
-    getDriverStandings(season),
+  const [driverSnapshot, constructorStandings, schedule, lastRace] = await Promise.all([
+    getDriverStandingsSnapshot(season),
     getConstructorStandings(season),
     getSchedule(season),
-    getSeasonResultsFirstPage(season),
+    getLastRaceInSeason(season),
   ]);
+
+  const standings = driverSnapshot.standings;
 
   if (!standings.length || !schedule.length) {
     throw new Error("No data available");
   }
 
-  const completedRounds = new Set(
-    seasonRaces
-      .filter((r) => Array.isArray(r.Results) && r.Results.length > 0)
-      .map((r) => parseInt(r.round, 10)),
+  const lastRaceRound = parseInt(lastRace?.round ?? "0", 10);
+  const completedRound = Math.max(
+    driverSnapshot.round,
+    Number.isNaN(lastRaceRound) ? 0 : lastRaceRound,
   );
-  const completedRound = completedRounds.size > 0 ? Math.max(...completedRounds) : 0;
 
   return runProjections(standings, constructorStandings, schedule, completedRound);
 }

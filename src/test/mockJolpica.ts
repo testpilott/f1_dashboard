@@ -4,6 +4,7 @@ import { vi } from "vitest";
 export function createJolpicaMocks() {
   return {
     getDriverStandings: vi.fn(),
+    getDriverStandingsSnapshot: vi.fn(),
     getConstructorStandings: vi.fn(),
     getSchedule: vi.fn(),
     getRaceResults: vi.fn(),
@@ -26,5 +27,6 @@ export function createJolpicaMocks() {
     getRacePitstops: vi.fn(),
     getNextRace: vi.fn(),
     getLastRace: vi.fn(),
+    getLastRaceInSeason: vi.fn(),
   };
 }

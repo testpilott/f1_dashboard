@@ -159,6 +159,7 @@ export function runProjections(
   const currentSeason = parseInt(schedule[0]?.season ?? String(new Date().getUTCFullYear()), 10);
   const completedRaces = schedule.filter((r) => parseInt(r.round, 10) <= completedRound);
   const remainingRaces = schedule.filter((r) => parseInt(r.round, 10) > completedRound);
+  const remainingSprintWeekends = remainingRaces.filter((r) => Boolean(r.Sprint)).length;
 
   const driverStats = buildDriverStats(standings, completedRaces);
 
@@ -317,6 +318,7 @@ export function runProjections(
   return {
     season: currentSeason,
     remainingRaces: remainingRaces.length,
+    remainingSprintWeekends,
     totalSimulations: SIMULATIONS,
     drivers: projectionDrivers,
     constructors: projectionConstructors,

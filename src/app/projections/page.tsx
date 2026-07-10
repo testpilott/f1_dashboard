@@ -255,7 +255,10 @@ export default function ProjectionsPage() {
         {projection && (
           <p className="text-muted-foreground text-sm mt-1">
             {projection.totalSimulations.toLocaleString()} Monte Carlo simulations ·{" "}
-            {projection.remainingRaces} races remaining · generated{" "}
+            {projection.remainingRaces} race weekends remaining
+            {typeof projection.remainingSprintWeekends === "number"
+              ? ` (${projection.remainingSprintWeekends} sprint weekends)`
+              : ""} · generated{" "}
             {new Date(projection.generatedAt).toLocaleTimeString()}
           </p>
         )}

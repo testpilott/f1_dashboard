@@ -72,6 +72,7 @@ export interface ConstructorProjection {
 export interface ChampionshipProjection {
   season: number;
   remainingRaces: number;
+  remainingSprintWeekends?: number;
   totalSimulations: number;
   drivers: DriverProjection[];
   constructors: ConstructorProjection[];
