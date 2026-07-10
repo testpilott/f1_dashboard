@@ -30,7 +30,7 @@ import type { ChampionshipProjection } from "@/lib/types";
  * algorithm changes and stored results must be invalidated.
  */
 
-const PROJECTIONS_CACHE_KEY = ["projections", "v2"] as const;
+const PROJECTIONS_CACHE_KEY = ["projections", "v3"] as const;
 export const PROJECTIONS_CACHE_TAG = "projections";
 const PROJECTIONS_REVALIDATE_SECONDS = 86400; // 24h — cron refresh interval
 

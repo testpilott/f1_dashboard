@@ -72,6 +72,37 @@ describe("GET /api/projections", () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.drivers[0].id).toBe("ver");
+    expect(runProjections).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      5,
+    );
+  });
+
+  it("uses standings round when it is newer than last-race round", async () => {
+    vi.mocked(getDriverStandingsSnapshot).mockResolvedValue({
+      standings: [{ Driver: { driverId: "ver" } }],
+      round: 9,
+    } as never);
+    vi.mocked(getConstructorStandings).mockResolvedValue([
+      { Constructor: { constructorId: "red_bull", name: "Red Bull" }, points: "100" },
+    ] as never);
+    vi.mocked(getSchedule).mockResolvedValue([{ round: "1" }, { round: "2" }] as never);
+    vi.mocked(getLastRaceInSeason).mockResolvedValue({ round: "5" } as never);
+    vi.mocked(runProjections).mockReturnValue({
+      drivers: [{ id: "ver", winProbability: 0.7 }],
+      constructors: [{ id: "red_bull", championProbability: 0.7 }],
+    } as never);
+
+    const res = await GET(makeApiRequest("/api/projections", { season: "2026" }));
+    expect(res.status).toBe(200);
+    expect(runProjections).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      9,
+    );
   });
 
   it("returns 500 when the pipeline throws", async () => {
