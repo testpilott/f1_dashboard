@@ -3,7 +3,7 @@
   "career": {
     "wins": 9,
     "podiums": 28,
-    "starts": 80,
+    "starts": 81,
     "fastestLaps": 9,
     "championships": 0
   },
@@ -13,6 +13,6 @@
     2025,
     2026
   ],
-  "snapshotAt": "2026-07-20T06:30:49.615Z",
+  "snapshotAt": "2026-07-27T06:38:57.877Z",
   "source": "jolpica"
 }
