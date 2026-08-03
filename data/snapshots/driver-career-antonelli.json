@@ -1,10 +1,10 @@
 {
   "driverId": "antonelli",
   "career": {
-    "wins": 5,
-    "podiums": 9,
-    "starts": 31,
-    "fastestLaps": 7,
+    "wins": 6,
+    "podiums": 12,
+    "starts": 35,
+    "fastestLaps": 9,
     "championships": 0
   },
   "seasons": [
@@ -12,6 +12,6 @@
     2025,
     2026
   ],
-  "snapshotAt": "2026-06-15T07:15:41.553Z",
+  "snapshotAt": "2026-08-03T06:36:13.283Z",
   "source": "jolpica"
 }
