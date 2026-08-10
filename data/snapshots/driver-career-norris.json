@@ -1,10 +1,10 @@
 {
   "driverId": "norris",
   "career": {
-    "wins": 11,
-    "podiums": 46,
-    "starts": 159,
-    "fastestLaps": 19,
+    "wins": 12,
+    "podiums": 47,
+    "starts": 163,
+    "fastestLaps": 20,
     "championships": 1
   },
   "seasons": [
@@ -17,6 +17,6 @@
     2025,
     2026
   ],
-  "snapshotAt": "2026-06-15T07:15:44.819Z",
+  "snapshotAt": "2026-08-10T05:58:10.228Z",
   "source": "jolpica"
 }

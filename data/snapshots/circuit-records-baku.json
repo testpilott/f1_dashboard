@@ -1,0 +1,24 @@
+{
+  "circuitId": "baku",
+  "records": {
+    "mostWins": {
+      "driverId": "max_verstappen|perez",
+      "name": "Max Verstappen / Sergio Pérez",
+      "count": 2
+    },
+    "mostPoles": {
+      "driverId": "leclerc",
+      "name": "Charles Leclerc",
+      "count": 4
+    },
+    "fastestLap": {
+      "driverId": "leclerc",
+      "name": "Charles Leclerc",
+      "time": "1:43.009",
+      "year": 2019
+    }
+  },
+  "raceCount": 9,
+  "snapshotAt": "2026-08-10T05:59:59.675Z",
+  "source": "jolpica"
+}

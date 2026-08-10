@@ -1,0 +1,16 @@
+{
+  "driverId": "arvid_lindblad",
+  "career": {
+    "wins": 0,
+    "podiums": 0,
+    "starts": 11,
+    "fastestLaps": 0,
+    "championships": 0
+  },
+  "seasons": [
+    2025,
+    2026
+  ],
+  "snapshotAt": "2026-08-10T05:58:23.128Z",
+  "source": "jolpica"
+}

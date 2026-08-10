@@ -1,0 +1,24 @@
+{
+  "circuitId": "marina_bay",
+  "records": {
+    "mostWins": {
+      "driverId": "vettel",
+      "name": "Sebastian Vettel",
+      "count": 5
+    },
+    "mostPoles": {
+      "driverId": "hamilton|vettel",
+      "name": "Lewis Hamilton / Sebastian Vettel",
+      "count": 4
+    },
+    "fastestLap": {
+      "driverId": "hamilton",
+      "name": "Lewis Hamilton",
+      "time": "1:33.808",
+      "year": 2025
+    }
+  },
+  "raceCount": 16,
+  "snapshotAt": "2026-08-10T06:00:13.201Z",
+  "source": "jolpica"
+}

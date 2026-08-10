@@ -1,0 +1,24 @@
+{
+  "circuitId": "americas",
+  "records": {
+    "mostWins": {
+      "driverId": "hamilton",
+      "name": "Lewis Hamilton",
+      "count": 5
+    },
+    "mostPoles": {
+      "driverId": "hamilton",
+      "name": "Lewis Hamilton",
+      "count": 3
+    },
+    "fastestLap": {
+      "driverId": "leclerc",
+      "name": "Charles Leclerc",
+      "time": "1:36.169",
+      "year": 2019
+    }
+  },
+  "raceCount": 13,
+  "snapshotAt": "2026-08-10T06:00:21.185Z",
+  "source": "jolpica"
+}
