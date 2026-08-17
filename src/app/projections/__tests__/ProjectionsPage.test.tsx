@@ -42,6 +42,7 @@ const mockProjection: ChampionshipProjection = {
       projectedPoints: { p10: 380, p50: 430, p90: 470 },
     },
   ],
+  season: 2026,
   totalSimulations: 10000,
   remainingRaces: 10,
   generatedAt: "2026-05-21T00:00:00Z",

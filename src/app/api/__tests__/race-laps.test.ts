@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { NextResponse } from "next/server";
 vi.mock("@/lib/api/withRateLimit", () => ({
   rateLimited: vi.fn(),
 }));
@@ -27,7 +28,7 @@ describe("GET /api/race-laps", () => {
 
   it("returns 429 when rate limited", async () => {
     vi.mocked(rateLimited).mockReturnValue(
-      new Response(JSON.stringify({ error: "Too many requests" }), { status: 429 })
+      NextResponse.json({ error: "Too many requests" }, { status: 429 })
     );
 
     const res = await GET(makeApiRequest("/api/race-laps", { year: "2010", round: "1" }));

@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { NextResponse } from "next/server";
 
 vi.mock("@/lib/api/withRateLimit", () => ({
   rateLimited: vi.fn(),
@@ -69,7 +70,7 @@ describe("GET /api/sessions (legacy shim)", () => {
 
   it("returns rate-limit response when blocked", async () => {
     vi.mocked(rateLimited).mockReturnValue(
-      new Response(JSON.stringify({ error: "rl" }), { status: 429 }),
+      NextResponse.json({ error: "rl" }, { status: 429 }),
     );
     const res = await legacyGET(makeApiRequest("/api/sessions", { endpoint: "laps" }));
     expect(res.status).toBe(429);

@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { NextResponse } from "next/server";
 
 vi.mock("next/cache", () => ({
   unstable_cache: (fn: unknown) => fn,
@@ -26,7 +27,7 @@ describe("GET /api/driver-photos", () => {
 
   it("returns rate-limit response when blocked", async () => {
     vi.mocked(rateLimited).mockReturnValue(
-      new Response(JSON.stringify({ error: "Too many requests" }), { status: 429 }),
+      NextResponse.json({ error: "Too many requests" }, { status: 429 }),
     );
 
     const res = await GET(makeApiRequest("/api/driver-photos"));

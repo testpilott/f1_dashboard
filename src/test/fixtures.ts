@@ -31,18 +31,24 @@ export function makeConstructor(overrides: Partial<Constructor> = {}): Construct
   };
 }
 
-export function makeRaceResult(overrides: Partial<RaceResult> = {}): RaceResult {
+type RaceResultOverrides = Partial<Omit<RaceResult, "Driver" | "Constructor">> & {
+  Driver?: Partial<Driver>;
+  Constructor?: Partial<Constructor>;
+};
+
+export function makeRaceResult(overrides: RaceResultOverrides = {}): RaceResult {
+  const { Driver: driverOverrides, Constructor: constructorOverrides, ...rest } = overrides;
   return {
     number: "99",
     position: "99",
     positionText: "99",
     points: "0",
-    Driver: makeDriver(),
-    Constructor: makeConstructor(),
+    Driver: makeDriver(driverOverrides),
+    Constructor: makeConstructor(constructorOverrides),
     grid: "0",
     laps: "0",
     status: "Finished",
-    ...overrides,
+    ...rest,
   } as RaceResult;
 }
 

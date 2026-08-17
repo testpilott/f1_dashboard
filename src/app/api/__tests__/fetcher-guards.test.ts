@@ -20,7 +20,7 @@
  *      - src/lib/api/rss.ts → rss.items
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 
 // ─── 1. Array.isArray guard ───────────────────────────────────────────────────
 //

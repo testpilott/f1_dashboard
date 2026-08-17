@@ -7,7 +7,7 @@ describe("<DriverNewsSection />", () => {
     render(
       <DriverNewsSection
         newsLoading={false}
-        news={[{ title: "Driver wins again", link: "https://example.com/news", pubDate: "2026-01-01T00:00:00Z" }]}
+        news={[{ title: "Driver wins again", link: "https://example.com/news", source: "Autosport", pubDate: "2026-01-01T00:00:00Z" }]}
       />,
     );
 
