@@ -159,8 +159,9 @@ async function readWeeklyDependencies(outDir: string): Promise<WeeklyDependencie
   }
 
   return {
-    standings: standings as StandingsSnapshot,
-    schedule: schedule as ScheduleSnapshot,
+    // Narrowed to Record<string, unknown> above; runtime checks already validated required shape.
+    standings: standings as unknown as StandingsSnapshot,
+    schedule: schedule as unknown as ScheduleSnapshot,
   };
 }
 
