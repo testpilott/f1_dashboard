@@ -144,12 +144,11 @@ async function main(): Promise<void> {
   const results = await runDailySnapshot();
 
   const failed = results.filter((r) => !r.ok);
-  if (failed.length === results.length) {
-    console.error("All snapshot jobs failed — exiting non-zero");
-    process.exit(1);
-  }
   if (failed.length > 0) {
-    console.warn(`${failed.length} of ${results.length} jobs failed; partial snapshot committed`);
+    console.error(
+      `${failed.length} of ${results.length} snapshot jobs failed — exiting non-zero to avoid committing partial snapshots`,
+    );
+    process.exit(1);
   }
 }
 

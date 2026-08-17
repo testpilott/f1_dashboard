@@ -177,6 +177,8 @@ describe("snapshot-weekly writer", () => {
     const emptyDir = path.join(os.tmpdir(), `snapshot-weekly-empty-${Date.now()}`);
     await mkdir(emptyDir, { recursive: true });
 
-    await expect(runWeeklySnapshot(emptyDir)).rejects.toThrow(/ENOENT|no such file/i);
+    await expect(runWeeklySnapshot(emptyDir)).rejects.toThrow(
+      /Missing required daily snapshot standings-current\.json/i,
+    );
   });
 });

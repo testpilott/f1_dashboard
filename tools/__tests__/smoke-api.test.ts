@@ -40,4 +40,19 @@ describe("smoke-api snapshot freshness", () => {
       ),
     ).toThrow(/103\.4h stale \(max 48h\) — snapshot-daily workflow may be stuck/);
   });
+
+  it("also enforces staleness when the response source is snapshot", () => {
+    expect(() =>
+      assertSnapshotFreshness(
+        {
+          snapshotMaxAgeHours: 48,
+          snapshotWorkflow: "snapshot-daily",
+        },
+        {
+          snapshotAt: "2026-07-06T06:54:33.396Z",
+          source: "snapshot",
+        },
+      ),
+    ).toThrow(/103\.4h stale \(max 48h\) — snapshot-daily workflow may be stuck/);
+  });
 });

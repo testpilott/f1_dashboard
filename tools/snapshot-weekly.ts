@@ -99,6 +99,71 @@ async function snapshotCircuitRecords(circuitId: string): Promise<void> {
   await atomicWriteJson(path.join(OUT_DIR, `circuit-records-${circuitId}.json`), payload);
 }
 
+function isObject(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === "object";
+}
+
+interface WeeklyDependencies {
+  standings: StandingsSnapshot;
+  schedule: ScheduleSnapshot;
+}
+
+async function readWeeklyDependencies(outDir: string): Promise<WeeklyDependencies> {
+  const standingsPath = path.join(outDir, "standings-current.json");
+  const schedulePath = path.join(outDir, "schedule-current.json");
+
+  let standingsRaw: string;
+  let scheduleRaw: string;
+
+  try {
+    standingsRaw = await readFile(standingsPath, "utf8");
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    throw new Error(
+      `Missing required daily snapshot standings-current.json (${standingsPath}). Run snapshot-daily first. Cause: ${msg}`,
+    );
+  }
+
+  try {
+    scheduleRaw = await readFile(schedulePath, "utf8");
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    throw new Error(
+      `Missing required daily snapshot schedule-current.json (${schedulePath}). Run snapshot-daily first. Cause: ${msg}`,
+    );
+  }
+
+  let standings: unknown;
+  let schedule: unknown;
+
+  try {
+    standings = JSON.parse(standingsRaw);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    throw new Error(`Invalid JSON in standings-current.json: ${msg}`);
+  }
+
+  try {
+    schedule = JSON.parse(scheduleRaw);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    throw new Error(`Invalid JSON in schedule-current.json: ${msg}`);
+  }
+
+  if (!isObject(standings) || !Array.isArray(standings.drivers) || standings.drivers.length === 0) {
+    throw new Error("Invalid standings-current.json: expected non-empty drivers array");
+  }
+
+  if (!isObject(schedule) || !Array.isArray(schedule.races) || schedule.races.length === 0) {
+    throw new Error("Invalid schedule-current.json: expected non-empty races array");
+  }
+
+  return {
+    standings: standings as StandingsSnapshot,
+    schedule: schedule as ScheduleSnapshot,
+  };
+}
+
 export interface WeeklySnapshotResult {
   driverErrors: string[];
   circuitErrors: string[];
@@ -111,10 +176,7 @@ export interface WeeklySnapshotResult {
  * lists, then fans out career and circuit-records snapshots.
  */
 export async function runWeeklySnapshot(outDir = OUT_DIR): Promise<WeeklySnapshotResult> {
-  const standingsRaw = await readFile(path.join(outDir, "standings-current.json"), "utf8");
-  const scheduleRaw = await readFile(path.join(outDir, "schedule-current.json"), "utf8");
-  const standings = JSON.parse(standingsRaw) as StandingsSnapshot;
-  const schedule = JSON.parse(scheduleRaw) as ScheduleSnapshot;
+  const { standings, schedule } = await readWeeklyDependencies(outDir);
 
   const driverIds = [
     ...new Set([...REQUIRED_DRIVER_IDS, ...standings.drivers.map((d) => d.Driver.driverId)]),

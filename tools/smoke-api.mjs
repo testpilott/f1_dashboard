@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 import { pathToFileURL } from "node:url";
 
 const baseUrl = (process.env.SMOKE_BASE_URL ?? "http://127.0.0.1:3000").replace(/\/$/, "");
@@ -47,7 +45,7 @@ export function assertSnapshotFreshness(check, payload) {
     throw new Error(`response source has unexpected value: ${source}`);
   }
 
-  if (source === "jolpica") {
+  if (source === "jolpica" || source === "snapshot") {
     const ageHours = readSnapshotAgeHours(payload);
     if (ageHours !== null && ageHours > check.snapshotMaxAgeHours) {
       throw new Error(
