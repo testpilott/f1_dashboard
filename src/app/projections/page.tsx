@@ -8,7 +8,7 @@ import { fetchJson } from "@/lib/api/clientFetch";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
+import { ProjectedPointsBar, ProbabilityGrid, useRevealOnMount } from "@/components/projections/ProjectionBars";
 
 type ProjectionsUnavailable = { available: false; reason?: string };
 type ProjectionsResponse = ChampionshipProjection | ProjectionsUnavailable;
@@ -27,16 +27,7 @@ async function fetchProjections(): Promise<ProjectionsResponse> {
 }
 
 function ProjectionRow({ driver, maxWinProb }: { driver: DriverProjection; maxWinProb: number }) {
-  // Animate bars from 0 → actual width on first render
-  const [ready, setReady] = useState(false);
-  useEffect(() => {
-    const id = requestAnimationFrame(() => setReady(true));
-    return () => cancelAnimationFrame(id);
-  }, []);
-
-  // Guard against division-by-zero when all drivers have p90 = 0 or
-  // when the season just started and no projections exist yet.
-  const p90Scaled = Math.max(driver.projectedPoints.p90 * 1.1, 1);
+  const ready = useRevealOnMount();
 
   return (
     <div className="rounded-lg bg-surface-2 border border-border p-4 space-y-3 hover:bg-accent/10 transition-colors">
@@ -59,55 +50,22 @@ function ProjectionRow({ driver, maxWinProb }: { driver: DriverProjection; maxWi
         </div>
       </div>
 
-      {/* Point range bar */}
-      <div
-        className="relative h-2 rounded bg-surface-3 overflow-hidden cursor-help"
-        title={`P10: ${Math.round(driver.projectedPoints.p10)} pts · P50: ${Math.round(driver.projectedPoints.p50)} pts · P90: ${Math.round(driver.projectedPoints.p90)} pts`}
-      >
-            {/* p10–p90 range */}
-            <div
-              className="absolute top-0 bottom-0 rounded opacity-30"
-              style={{
-                left: `${(driver.projectedPoints.p10 / p90Scaled) * 100}%`,
-                right: `${100 - (driver.projectedPoints.p90 / p90Scaled) * 100}%`,
-                backgroundColor: driver.teamColour,
-              }}
-            />
-            {/* p50 marker */}
-            <div
-              className="absolute top-0 bottom-0 w-0.5 rounded"
-              style={{
-                left: `${(driver.projectedPoints.p50 / p90Scaled) * 100}%`,
-                backgroundColor: driver.teamColour,
-              }}
-            />
-        </div>
+      <ProjectedPointsBar
+        p10={driver.projectedPoints.p10}
+        p50={driver.projectedPoints.p50}
+        p90={driver.projectedPoints.p90}
+        color={driver.teamColour}
+      />
 
-      {/* Probabilities */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        {[
+      <ProbabilityGrid
+        color={driver.teamColour}
+        ready={ready}
+        items={[
           { label: "Win title", value: Math.min((driver.winProbability / maxWinProb) * 100, 100), display: `${driver.winProbability.toFixed(1)}%` },
           { label: "Podium finish", value: Math.min(driver.podiumProbability, 100), display: `${driver.podiumProbability.toFixed(1)}%` },
           { label: "Top 5", value: Math.min(driver.top5Probability, 100), display: `${driver.top5Probability.toFixed(1)}%` },
-        ].map(({ label, value, display }) => (
-          <div key={label}>
-            <div className="flex justify-between text-[10px] mb-1">
-              <span className="text-muted-foreground">{label}</span>
-              <span className="font-mono">{display}</span>
-            </div>
-            <div className="relative h-1.5 rounded-full bg-surface-3 overflow-hidden">
-              <div
-                className="absolute inset-y-0 left-0 rounded-full"
-                style={{
-                  width: ready ? `${value}%` : "0%",
-                  backgroundColor: driver.teamColour,
-                  transition: "width 0.7s ease-out",
-                }}
-              />
-            </div>
-          </div>
-        ))}
-      </div>
+        ]}
+      />
     </div>
   );
 }
@@ -119,14 +77,7 @@ function ConstructorProjectionRow({
   constructor: ConstructorProjection;
   maxChampionProb: number;
 }) {
-  const [ready, setReady] = useState(false);
-
-  useEffect(() => {
-    const id = requestAnimationFrame(() => setReady(true));
-    return () => cancelAnimationFrame(id);
-  }, []);
-
-  const p90Scaled = Math.max(constructor.projectedPoints.p90 * 1.1, 1);
+  const ready = useRevealOnMount();
 
   return (
     <div className="rounded-lg bg-surface-2 border border-border p-4 space-y-3 hover:bg-accent/10 transition-colors">
@@ -146,29 +97,17 @@ function ConstructorProjectionRow({
         </div>
       </div>
 
-      <div
-        className="relative h-2 rounded bg-surface-3 overflow-hidden cursor-help"
-        title={`P10: ${Math.round(constructor.projectedPoints.p10)} pts · P50: ${Math.round(constructor.projectedPoints.p50)} pts · P90: ${Math.round(constructor.projectedPoints.p90)} pts`}
-      >
-        <div
-          className="absolute top-0 bottom-0 rounded opacity-30"
-          style={{
-            left: `${(constructor.projectedPoints.p10 / p90Scaled) * 100}%`,
-            right: `${100 - (constructor.projectedPoints.p90 / p90Scaled) * 100}%`,
-            backgroundColor: constructor.teamColour,
-          }}
-        />
-        <div
-          className="absolute top-0 bottom-0 w-0.5 rounded"
-          style={{
-            left: `${(constructor.projectedPoints.p50 / p90Scaled) * 100}%`,
-            backgroundColor: constructor.teamColour,
-          }}
-        />
-      </div>
+      <ProjectedPointsBar
+        p10={constructor.projectedPoints.p10}
+        p50={constructor.projectedPoints.p50}
+        p90={constructor.projectedPoints.p90}
+        color={constructor.teamColour}
+      />
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        {[
+      <ProbabilityGrid
+        color={constructor.teamColour}
+        ready={ready}
+        items={[
           {
             label: "Win title",
             value: Math.min((constructor.championProbability / maxChampionProb) * 100, 100),
@@ -184,25 +123,8 @@ function ConstructorProjectionRow({
             value: Math.min(constructor.top5Probability, 100),
             display: `${constructor.top5Probability.toFixed(1)}%`,
           },
-        ].map(({ label, value, display }) => (
-          <div key={label}>
-            <div className="flex justify-between text-[10px] mb-1">
-              <span className="text-muted-foreground">{label}</span>
-              <span className="font-mono">{display}</span>
-            </div>
-            <div className="relative h-1.5 rounded-full bg-surface-3 overflow-hidden">
-              <div
-                className="absolute inset-y-0 left-0 rounded-full"
-                style={{
-                  width: ready ? `${value}%` : "0%",
-                  backgroundColor: constructor.teamColour,
-                  transition: "width 0.7s ease-out",
-                }}
-              />
-            </div>
-          </div>
-        ))}
-      </div>
+        ]}
+      />
     </div>
   );
 }

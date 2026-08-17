@@ -123,15 +123,21 @@ export async function getSeasonResultsFirstPage(season: string): Promise<Race[]>
 }
 
 /**
- * Full-season race results (all rounds). Uses Ergast's max page size so the
- * whole season is returned — unlike getSeasonResultsFirstPage (LIMIT_FULL_GRID) which is left
- * unchanged to avoid altering projections' behaviour.
+ * Full-season race results (all rounds). Jolpica caps `results.json` at 100
+ * rows server-side regardless of the requested limit, so a season past ~5
+ * races needs real pagination — unlike getSeasonResultsFirstPage
+ * (LIMIT_FULL_GRID) which is left unchanged to avoid altering projections'
+ * behaviour.
  */
 export async function getSeasonResultsAllPages(season: string): Promise<Race[]> {
-  const data = await jolpicaFetch<{
-    MRData: { RaceTable: { Races: Race[] } };
-  }>(`/${season}/results.json?limit=${LIMIT_MAX}`, "historicalResults");
-  return data.MRData.RaceTable.Races ?? [];
+  return paginateMRData(
+    async (offset: number) =>
+      jolpicaFetch<{
+        MRData: { total: string; offset: string; limit: string; RaceTable: { Races: Race[] } };
+      }>(`/${season}/results.json?limit=${LIMIT_PAGE}&offset=${offset}`, "historicalResults"),
+    (page) => page.MRData.RaceTable.Races ?? [],
+    LIMIT_PAGE,
+  );
 }
 
 // ─── Next race helper ─────────────────────────────────────────────────────────
