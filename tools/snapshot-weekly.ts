@@ -1,6 +1,7 @@
 #!/usr/bin/env tsx
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 import { createConcurrencyLimiter } from "@/lib/api/concurrencyLimiter";
 import { atomicWriteJson } from "@/lib/snapshots/atomicWriteJson";
 import {
@@ -29,13 +30,22 @@ import type {
 const OUT_DIR = path.join(process.cwd(), "data", "snapshots");
 const REQUIRED_DRIVER_IDS = ["hamilton", "piastri", "max_verstappen"] as const;
 
-// Cap to 2 concurrent. createApiFetcher's internal limiter is 2; this keeps
-// the writer well below the 4 rps burst even with retries.
-const limiter = createConcurrencyLimiter(2);
+// Keep the background batch below Jolpica's burst and sustained limits.
+const limiter = createConcurrencyLimiter(1);
+const MIN_REQUEST_INTERVAL_MS = 1000;
+let nextRequestAt = 0;
+
+async function paceRequest(): Promise<void> {
+  const intervalMs = Number(process.env.SNAPSHOT_REQUEST_INTERVAL_MS ?? MIN_REQUEST_INTERVAL_MS);
+  const waitMs = Math.max(0, nextRequestAt - Date.now());
+  if (waitMs > 0) await new Promise((resolve) => setTimeout(resolve, waitMs));
+  nextRequestAt = Date.now() + Math.max(0, intervalMs);
+}
 
 async function withLimit<T>(fn: () => Promise<T>): Promise<T> {
   await limiter.acquire();
   try {
+    await paceRequest();
     return await fn();
   } finally {
     limiter.release();
@@ -230,11 +240,17 @@ export async function runWeeklySnapshot(outDir = OUT_DIR): Promise<WeeklySnapsho
 }
 
 async function main(): Promise<void> {
-  await runWeeklySnapshot();
+  const result = await runWeeklySnapshot();
+  if (result.driverErrors.length > 0 || result.circuitErrors.length > 0) {
+    throw new Error(
+      `Weekly snapshot incomplete: ${result.driverErrors.length} driver failures, ` +
+        `${result.circuitErrors.length} circuit failures`,
+    );
+  }
 }
 
 // Only run when executed directly (not imported by tests)
-if (process.argv[1] && import.meta.url.endsWith(process.argv[1].replace(/\.ts$/, ".ts"))) {
+if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
   main().catch((err) => {
     console.error("Fatal:", err);
     process.exit(1);

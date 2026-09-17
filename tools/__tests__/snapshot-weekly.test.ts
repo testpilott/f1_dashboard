@@ -50,6 +50,8 @@ import { writeFile, mkdir } from "node:fs/promises";
 import { runWeeklySnapshot } from "../snapshot-weekly";
 import type { DriverCareerSnapshot, DriverSeasonSnapshot } from "@/lib/snapshots/types";
 
+process.env.SNAPSHOT_REQUEST_INTERVAL_MS = "0";
+
 const standings = {
   drivers: [
     { Driver: { driverId: "verstappen" } },

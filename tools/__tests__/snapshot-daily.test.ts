@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import path from "node:path";
 
+process.env.SNAPSHOT_REQUEST_INTERVAL_MS = "0";
+
 // Mock atomicWriteJson to capture what would be written
 const { mockAtomicWriteJson } = vi.hoisted(() => ({
   mockAtomicWriteJson: vi.fn(),
