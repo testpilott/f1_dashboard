@@ -116,6 +116,7 @@ describe("snapshot-weekly writer", () => {
     expect(result.circuitCount).toBe(2); // deduplicated
     expect(result.driverErrors).toHaveLength(0);
     expect(result.circuitErrors).toHaveLength(0);
+    expect(result.requiredDriverErrors).toHaveLength(0);
 
     // 2 writes per driver (career + season summary) + 1 per circuit
     expect(mockAtomicWriteJson).toHaveBeenCalledTimes(5 * 2 + 2);
@@ -167,6 +168,7 @@ describe("snapshot-weekly writer", () => {
 
     expect(result.driverErrors).toHaveLength(1);
     expect(result.driverErrors[0]).toBeTruthy();
+    expect(result.requiredDriverErrors).toHaveLength(1);
     // Other drivers still processed
     const writtenPaths = mockAtomicWriteJson.mock.calls.map((call) => String(call[0]));
     expect(writtenPaths.some((p) => p.includes("driver-career-norris"))).toBe(true);

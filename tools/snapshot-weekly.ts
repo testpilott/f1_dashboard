@@ -178,6 +178,7 @@ async function readWeeklyDependencies(outDir: string): Promise<WeeklyDependencie
 export interface WeeklySnapshotResult {
   driverErrors: string[];
   circuitErrors: string[];
+  requiredDriverErrors: string[];
   driverCount: number;
   circuitCount: number;
 }
@@ -196,6 +197,7 @@ export async function runWeeklySnapshot(outDir = OUT_DIR): Promise<WeeklySnapsho
 
   const driverErrors: string[] = [];
   const circuitErrors: string[] = [];
+  const requiredDriverErrors: string[] = [];
 
   // Fetch the full current-season race results once and reuse it to compute
   // every driver's per-season summary. A null result (fetch failed) signals
@@ -218,6 +220,9 @@ export async function runWeeklySnapshot(outDir = OUT_DIR): Promise<WeeklySnapsho
     } catch (err) {
       console.error(`✘ driver ${driverId}:`, err instanceof Error ? err.message : err);
       driverErrors.push(driverId);
+      if ((REQUIRED_DRIVER_IDS as readonly string[]).includes(driverId)) {
+        requiredDriverErrors.push(driverId);
+      }
     }
   }
 
@@ -236,14 +241,26 @@ export async function runWeeklySnapshot(outDir = OUT_DIR): Promise<WeeklySnapsho
       `${circuitIds.length - circuitErrors.length}/${circuitIds.length} circuits`,
   );
 
-  return { driverErrors, circuitErrors, driverCount: driverIds.length, circuitCount: circuitIds.length };
+  return {
+    driverErrors,
+    circuitErrors,
+    requiredDriverErrors,
+    driverCount: driverIds.length,
+    circuitCount: circuitIds.length,
+  };
 }
 
 async function main(): Promise<void> {
   const result = await runWeeklySnapshot();
-  if (result.driverErrors.length > 0 || result.circuitErrors.length > 0) {
+  if (result.requiredDriverErrors.length > 0) {
     throw new Error(
-      `Weekly snapshot incomplete: ${result.driverErrors.length} driver failures, ` +
+      `Weekly snapshot missing smoke-critical drivers: ${result.requiredDriverErrors.join(", ")}`,
+    );
+  }
+
+  if (result.driverErrors.length > 0 || result.circuitErrors.length > 0) {
+    console.warn(
+      `Weekly snapshot published with ${result.driverErrors.length} driver and ` +
         `${result.circuitErrors.length} circuit failures`,
     );
   }
