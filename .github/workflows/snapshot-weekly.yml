@@ -29,7 +29,9 @@ jobs:
           node-version: "22"
           cache: "npm"
       - run: npm ci
-      - run: npm run snapshot:weekly
+      - id: refresh
+        continue-on-error: true
+        run: npm run snapshot:weekly
         env:
           # Background batch job: allow large payloads / slow upstream without
           # aborting on the 8 s user-request default.
@@ -48,3 +50,6 @@ jobs:
           git fetch origin main
           git pull --rebase origin main
           git push origin HEAD:main
+      - name: fail if snapshot refresh had errors
+        if: steps.refresh.outcome == 'failure'
+        run: exit 1
