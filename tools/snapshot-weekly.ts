@@ -30,9 +30,9 @@ import type {
 const OUT_DIR = path.join(process.cwd(), "data", "snapshots");
 const REQUIRED_DRIVER_IDS = ["hamilton", "piastri", "max_verstappen"] as const;
 
-// Keep the background batch below Jolpica's burst and sustained limits.
+// Leave a conservative gap between batch requests to avoid Jolpica 429s.
 const limiter = createConcurrencyLimiter(1);
-const MIN_REQUEST_INTERVAL_MS = 1000;
+const MIN_REQUEST_INTERVAL_MS = 3000;
 let nextRequestAt = 0;
 
 async function paceRequest(): Promise<void> {
