@@ -1,11 +1,24 @@
 {
   "circuitId": "madring",
   "records": {
-    "mostWins": null,
-    "mostPoles": null,
-    "fastestLap": null
+    "mostWins": {
+      "driverId": "antonelli",
+      "name": "Andrea Kimi Antonelli",
+      "count": 1
+    },
+    "mostPoles": {
+      "driverId": "norris",
+      "name": "Lando Norris",
+      "count": 1
+    },
+    "fastestLap": {
+      "driverId": "russell",
+      "name": "George Russell",
+      "time": "1:35.587",
+      "year": 2026
+    }
   },
-  "raceCount": 0,
-  "snapshotAt": "2026-08-10T05:59:54.257Z",
+  "raceCount": 1,
+  "snapshotAt": "2026-09-21T05:44:40.846Z",
   "source": "jolpica"
 }

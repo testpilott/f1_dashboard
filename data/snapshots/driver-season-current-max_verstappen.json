@@ -13,19 +13,136 @@
         "points": 8,
         "status": "Finished",
         "fastestLap": true
+      },
+      {
+        "round": 2,
+        "raceName": "Chinese Grand Prix",
+        "grid": 8,
+        "finish": 16,
+        "points": 0,
+        "status": "Retired",
+        "fastestLap": false
+      },
+      {
+        "round": 3,
+        "raceName": "Japanese Grand Prix",
+        "grid": 11,
+        "finish": 8,
+        "points": 4,
+        "status": "Finished",
+        "fastestLap": false
+      },
+      {
+        "round": 4,
+        "raceName": "Miami Grand Prix",
+        "grid": 2,
+        "finish": 5,
+        "points": 10,
+        "status": "Finished",
+        "fastestLap": false
+      },
+      {
+        "round": 5,
+        "raceName": "Canadian Grand Prix",
+        "grid": 6,
+        "finish": 3,
+        "points": 15,
+        "status": "Finished",
+        "fastestLap": false
+      },
+      {
+        "round": 6,
+        "raceName": "Monaco Grand Prix",
+        "grid": 2,
+        "finish": 22,
+        "points": 0,
+        "status": "Retired",
+        "fastestLap": false
+      },
+      {
+        "round": 7,
+        "raceName": "Barcelona Grand Prix",
+        "grid": 5,
+        "finish": 4,
+        "points": 12,
+        "status": "Finished",
+        "fastestLap": false
+      },
+      {
+        "round": 8,
+        "raceName": "Austrian Grand Prix",
+        "grid": 5,
+        "finish": 2,
+        "points": 18,
+        "status": "Finished",
+        "fastestLap": false
+      },
+      {
+        "round": 9,
+        "raceName": "British Grand Prix",
+        "grid": 7,
+        "finish": 20,
+        "points": 0,
+        "status": "Retired",
+        "fastestLap": false
+      },
+      {
+        "round": 10,
+        "raceName": "Belgian Grand Prix",
+        "grid": 2,
+        "finish": 3,
+        "points": 15,
+        "status": "Finished",
+        "fastestLap": false
+      },
+      {
+        "round": 11,
+        "raceName": "Hungarian Grand Prix",
+        "grid": 4,
+        "finish": 2,
+        "points": 18,
+        "status": "Finished",
+        "fastestLap": false
+      },
+      {
+        "round": 12,
+        "raceName": "Dutch Grand Prix",
+        "grid": 7,
+        "finish": 22,
+        "points": 0,
+        "status": "Retired",
+        "fastestLap": false
+      },
+      {
+        "round": 13,
+        "raceName": "Italian Grand Prix",
+        "grid": 5,
+        "finish": 3,
+        "points": 15,
+        "status": "Finished",
+        "fastestLap": false
+      },
+      {
+        "round": 14,
+        "raceName": "Spanish Grand Prix",
+        "grid": 3,
+        "finish": 2,
+        "points": 18,
+        "status": "Finished",
+        "fastestLap": false
       }
     ],
     "aggregates": {
-      "races": 1,
+      "races": 14,
       "wins": 0,
-      "podiums": 0,
-      "points": 8,
-      "dnfs": 0,
+      "podiums": 6,
+      "points": 133,
+      "dnfs": 4,
       "fastestLaps": 1,
-      "avgFinish": 6,
-      "avgGrid": 20
+      "avgFinish": 6.2,
+      "avgGrid": 6.2
     }
   },
-  "snapshotAt": "2026-09-21T05:05:12.001Z",
+  "snapshotAt": "2026-09-21T05:36:30.998Z",
   "source": "jolpica"
 }

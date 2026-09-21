@@ -1,0 +1,27 @@
+{
+  "driverId": "bottas",
+  "career": {
+    "wins": 10,
+    "podiums": 67,
+    "starts": 261,
+    "fastestLaps": 19,
+    "championships": 0
+  },
+  "seasons": [
+    2013,
+    2014,
+    2015,
+    2016,
+    2017,
+    2018,
+    2019,
+    2020,
+    2021,
+    2022,
+    2023,
+    2024,
+    2026
+  ],
+  "snapshotAt": "2026-09-21T05:43:13.219Z",
+  "source": "jolpica"
+}

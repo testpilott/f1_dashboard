@@ -1,13 +1,15 @@
 {
-  "driverId": "russell",
+  "driverId": "stroll",
   "career": {
-    "wins": 7,
-    "podiums": 31,
-    "starts": 166,
-    "fastestLaps": 12,
+    "wins": 0,
+    "podiums": 3,
+    "starts": 205,
+    "fastestLaps": 0,
     "championships": 0
   },
   "seasons": [
+    2017,
+    2018,
     2019,
     2020,
     2021,
@@ -17,6 +19,6 @@
     2025,
     2026
   ],
-  "snapshotAt": "2026-09-21T05:37:13.380Z",
+  "snapshotAt": "2026-09-21T05:42:51.978Z",
   "source": "jolpica"
 }

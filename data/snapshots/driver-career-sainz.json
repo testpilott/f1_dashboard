@@ -1,11 +1,11 @@
 {
-  "driverId": "max_verstappen",
+  "driverId": "sainz",
   "career": {
-    "wins": 71,
-    "podiums": 133,
-    "starts": 247,
-    "fastestLaps": 37,
-    "championships": 4
+    "wins": 4,
+    "podiums": 29,
+    "starts": 246,
+    "fastestLaps": 4,
+    "championships": 0
   },
   "seasons": [
     2015,
@@ -21,6 +21,6 @@
     2025,
     2026
   ],
-  "snapshotAt": "2026-09-21T05:36:30.996Z",
+  "snapshotAt": "2026-09-21T05:41:04.504Z",
   "source": "jolpica"
 }

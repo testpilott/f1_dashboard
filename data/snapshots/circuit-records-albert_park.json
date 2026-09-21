@@ -1,0 +1,24 @@
+{
+  "circuitId": "albert_park",
+  "records": {
+    "mostWins": {
+      "driverId": "michael_schumacher",
+      "name": "Michael Schumacher",
+      "count": 4
+    },
+    "mostPoles": {
+      "driverId": "hamilton",
+      "name": "Lewis Hamilton",
+      "count": 8
+    },
+    "fastestLap": {
+      "driverId": "leclerc",
+      "name": "Charles Leclerc",
+      "time": "1:19.813",
+      "year": 2024
+    }
+  },
+  "raceCount": 29,
+  "snapshotAt": "2026-09-21T05:43:41.346Z",
+  "source": "jolpica"
+}

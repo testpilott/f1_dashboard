@@ -1,0 +1,29 @@
+{
+  "driverId": "perez",
+  "career": {
+    "wins": 6,
+    "podiums": 39,
+    "starts": 297,
+    "fastestLaps": 12,
+    "championships": 0
+  },
+  "seasons": [
+    2011,
+    2012,
+    2013,
+    2014,
+    2015,
+    2016,
+    2017,
+    2018,
+    2019,
+    2020,
+    2021,
+    2022,
+    2023,
+    2024,
+    2026
+  ],
+  "snapshotAt": "2026-09-21T05:43:34.193Z",
+  "source": "jolpica"
+}

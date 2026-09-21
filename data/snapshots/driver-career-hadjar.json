@@ -2,8 +2,8 @@
   "driverId": "hadjar",
   "career": {
     "wins": 0,
-    "podiums": 1,
-    "starts": 31,
+    "podiums": 2,
+    "starts": 35,
     "fastestLaps": 0,
     "championships": 0
   },
@@ -11,6 +11,6 @@
     2025,
     2026
   ],
-  "snapshotAt": "2026-06-15T07:15:46.925Z",
+  "snapshotAt": "2026-09-21T05:38:16.450Z",
   "source": "jolpica"
 }

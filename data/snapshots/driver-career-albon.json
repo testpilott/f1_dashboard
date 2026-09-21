@@ -1,22 +1,21 @@
 {
-  "driverId": "russell",
+  "driverId": "albon",
   "career": {
-    "wins": 7,
-    "podiums": 31,
-    "starts": 166,
-    "fastestLaps": 12,
+    "wins": 0,
+    "podiums": 2,
+    "starts": 143,
+    "fastestLaps": 1,
     "championships": 0
   },
   "seasons": [
     2019,
     2020,
-    2021,
     2022,
     2023,
     2024,
     2025,
     2026
   ],
-  "snapshotAt": "2026-09-21T05:37:13.380Z",
+  "snapshotAt": "2026-09-21T05:41:25.500Z",
   "source": "jolpica"
 }

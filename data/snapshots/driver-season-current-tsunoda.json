@@ -4,18 +4,46 @@
   "summary": {
     "driverId": "tsunoda",
     "season": "2026",
-    "rows": [],
+    "rows": [
+      {
+        "round": 12,
+        "raceName": "Dutch Grand Prix",
+        "grid": 12,
+        "finish": 11,
+        "points": 0,
+        "status": "Lapped",
+        "fastestLap": false
+      },
+      {
+        "round": 13,
+        "raceName": "Italian Grand Prix",
+        "grid": 15,
+        "finish": 10,
+        "points": 1,
+        "status": "Finished",
+        "fastestLap": false
+      },
+      {
+        "round": 14,
+        "raceName": "Spanish Grand Prix",
+        "grid": 15,
+        "finish": 14,
+        "points": 0,
+        "status": "Lapped",
+        "fastestLap": false
+      }
+    ],
     "aggregates": {
-      "races": 0,
+      "races": 3,
       "wins": 0,
       "podiums": 0,
-      "points": 0,
-      "dnfs": 0,
+      "points": 1,
+      "dnfs": 2,
       "fastestLaps": 0,
-      "avgFinish": 0,
-      "avgGrid": 0
+      "avgFinish": 11.7,
+      "avgGrid": 14
     }
   },
-  "snapshotAt": "2026-09-21T05:05:12.005Z",
+  "snapshotAt": "2026-09-21T05:42:31.149Z",
   "source": "jolpica"
 }

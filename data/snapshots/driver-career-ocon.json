@@ -1,15 +1,16 @@
 {
-  "driverId": "leclerc",
+  "driverId": "ocon",
   "career": {
-    "wins": 9,
-    "podiums": 54,
-    "starts": 187,
-    "fastestLaps": 13,
+    "wins": 1,
+    "podiums": 4,
+    "starts": 194,
+    "fastestLaps": 1,
     "championships": 0
   },
   "seasons": [
+    2016,
+    2017,
     2018,
-    2019,
     2020,
     2021,
     2022,
@@ -18,6 +19,6 @@
     2025,
     2026
   ],
-  "snapshotAt": "2026-09-21T05:37:55.408Z",
+  "snapshotAt": "2026-09-21T05:41:46.303Z",
   "source": "jolpica"
 }

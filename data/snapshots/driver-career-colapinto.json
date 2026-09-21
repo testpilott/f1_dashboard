@@ -1,16 +1,17 @@
 {
-  "driverId": "arvid_lindblad",
+  "driverId": "colapinto",
   "career": {
     "wins": 0,
     "podiums": 0,
-    "starts": 14,
+    "starts": 41,
     "fastestLaps": 0,
     "championships": 0
   },
   "seasons": [
+    2024,
     2025,
     2026
   ],
-  "snapshotAt": "2026-09-21T05:39:19.428Z",
+  "snapshotAt": "2026-09-21T05:39:40.478Z",
   "source": "jolpica"
 }
