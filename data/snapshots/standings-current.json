@@ -3,7 +3,7 @@
     {
       "position": "1",
       "positionText": "1",
-      "points": "302",
+      "points": "320",
       "wins": "8",
       "Driver": {
         "driverId": "antonelli",
@@ -51,7 +51,7 @@
     {
       "position": "3",
       "positionText": "3",
-      "points": "199",
+      "points": "214",
       "wins": "1",
       "Driver": {
         "driverId": "hamilton",
@@ -75,31 +75,7 @@
     {
       "position": "4",
       "positionText": "4",
-      "points": "186",
-      "wins": "2",
-      "Driver": {
-        "driverId": "norris",
-        "permanentNumber": "1",
-        "code": "NOR",
-        "url": "http://en.wikipedia.org/wiki/Lando_Norris",
-        "givenName": "Lando",
-        "familyName": "Norris",
-        "dateOfBirth": "1999-11-13",
-        "nationality": "British"
-      },
-      "Constructors": [
-        {
-          "constructorId": "mclaren",
-          "url": "https://en.wikipedia.org/wiki/McLaren",
-          "name": "McLaren",
-          "nationality": "British"
-        }
-      ]
-    },
-    {
-      "position": "5",
-      "positionText": "5",
-      "points": "179",
+      "points": "191",
       "wins": "1",
       "Driver": {
         "driverId": "leclerc",
@@ -121,10 +97,34 @@
       ]
     },
     {
+      "position": "5",
+      "positionText": "5",
+      "points": "188",
+      "wins": "2",
+      "Driver": {
+        "driverId": "norris",
+        "permanentNumber": "1",
+        "code": "NOR",
+        "url": "http://en.wikipedia.org/wiki/Lando_Norris",
+        "givenName": "Lando",
+        "familyName": "Norris",
+        "dateOfBirth": "1999-11-13",
+        "nationality": "British"
+      },
+      "Constructors": [
+        {
+          "constructorId": "mclaren",
+          "url": "https://en.wikipedia.org/wiki/McLaren",
+          "name": "McLaren",
+          "nationality": "British"
+        }
+      ]
+    },
+    {
       "position": "6",
       "positionText": "6",
-      "points": "163",
-      "wins": "0",
+      "points": "188",
+      "wins": "1",
       "Driver": {
         "driverId": "max_verstappen",
         "permanentNumber": "3",
@@ -147,7 +147,7 @@
     {
       "position": "7",
       "positionText": "7",
-      "points": "120",
+      "points": "128",
       "wins": "0",
       "Driver": {
         "driverId": "piastri",
@@ -171,7 +171,7 @@
     {
       "position": "8",
       "positionText": "8",
-      "points": "86",
+      "points": "96",
       "wins": "0",
       "Driver": {
         "driverId": "hadjar",
@@ -195,7 +195,7 @@
     {
       "position": "9",
       "positionText": "9",
-      "points": "59",
+      "points": "65",
       "wins": "0",
       "Driver": {
         "driverId": "lawson",
@@ -249,7 +249,7 @@
     {
       "position": "11",
       "positionText": "11",
-      "points": "37",
+      "points": "38",
       "wins": "0",
       "Driver": {
         "driverId": "arvid_lindblad",
@@ -396,6 +396,30 @@
       "points": "7",
       "wins": "0",
       "Driver": {
+        "driverId": "alonso",
+        "permanentNumber": "14",
+        "code": "ALO",
+        "url": "http://en.wikipedia.org/wiki/Fernando_Alonso",
+        "givenName": "Fernando",
+        "familyName": "Alonso",
+        "dateOfBirth": "1981-07-29",
+        "nationality": "Spanish"
+      },
+      "Constructors": [
+        {
+          "constructorId": "aston_martin",
+          "url": "https://en.wikipedia.org/wiki/Aston_Martin_in_Formula_One",
+          "name": "Aston Martin",
+          "nationality": "British"
+        }
+      ]
+    },
+    {
+      "position": "18",
+      "positionText": "18",
+      "points": "7",
+      "wins": "0",
+      "Driver": {
         "driverId": "sainz",
         "permanentNumber": "55",
         "code": "SAI",
@@ -415,8 +439,8 @@
       ]
     },
     {
-      "position": "18",
-      "positionText": "18",
+      "position": "19",
+      "positionText": "19",
       "points": "5",
       "wins": "0",
       "Driver": {
@@ -434,30 +458,6 @@
           "constructorId": "williams",
           "url": "https://en.wikipedia.org/wiki/Williams_Racing",
           "name": "Williams",
-          "nationality": "British"
-        }
-      ]
-    },
-    {
-      "position": "19",
-      "positionText": "19",
-      "points": "3",
-      "wins": "0",
-      "Driver": {
-        "driverId": "alonso",
-        "permanentNumber": "14",
-        "code": "ALO",
-        "url": "http://en.wikipedia.org/wiki/Fernando_Alonso",
-        "givenName": "Fernando",
-        "familyName": "Alonso",
-        "dateOfBirth": "1981-07-29",
-        "nationality": "Spanish"
-      },
-      "Constructors": [
-        {
-          "constructorId": "aston_martin",
-          "url": "https://en.wikipedia.org/wiki/Aston_Martin_in_Formula_One",
-          "name": "Aston Martin",
           "nationality": "British"
         }
       ]
@@ -563,7 +563,7 @@
     {
       "position": "1",
       "positionText": "1",
-      "points": "538",
+      "points": "556",
       "wins": "11",
       "Constructor": {
         "constructorId": "mercedes",
@@ -575,7 +575,7 @@
     {
       "position": "2",
       "positionText": "2",
-      "points": "378",
+      "points": "405",
       "wins": "2",
       "Constructor": {
         "constructorId": "ferrari",
@@ -587,7 +587,7 @@
     {
       "position": "3",
       "positionText": "3",
-      "points": "306",
+      "points": "316",
       "wins": "2",
       "Constructor": {
         "constructorId": "mclaren",
@@ -599,8 +599,8 @@
     {
       "position": "4",
       "positionText": "4",
-      "points": "263",
-      "wins": "0",
+      "points": "298",
+      "wins": "1",
       "Constructor": {
         "constructorId": "red_bull",
         "url": "https://en.wikipedia.org/wiki/Red_Bull_Racing",
@@ -611,7 +611,7 @@
     {
       "position": "5",
       "positionText": "5",
-      "points": "83",
+      "points": "90",
       "wins": "0",
       "Constructor": {
         "constructorId": "rb",
@@ -671,7 +671,7 @@
     {
       "position": "10",
       "positionText": "10",
-      "points": "3",
+      "points": "7",
       "wins": "0",
       "Constructor": {
         "constructorId": "aston_martin",
@@ -704,6 +704,6 @@
       "mclaren": 1
     }
   },
-  "snapshotAt": "2026-10-04T06:51:35.219Z",
+  "snapshotAt": "2026-10-05T05:21:42.806Z",
   "source": "jolpica"
 }
