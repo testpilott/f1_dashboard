@@ -2,9 +2,9 @@
   "driverId": "leclerc",
   "career": {
     "wins": 9,
-    "podiums": 54,
-    "starts": 189,
-    "fastestLaps": 13,
+    "podiums": 55,
+    "starts": 190,
+    "fastestLaps": 14,
     "championships": 0
   },
   "seasons": [
@@ -18,6 +18,6 @@
     2025,
     2026
   ],
-  "snapshotAt": "2026-10-05T05:50:29.193Z",
+  "snapshotAt": "2026-10-12T05:47:03.331Z",
   "source": "jolpica"
 }
