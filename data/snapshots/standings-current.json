@@ -3,7 +3,7 @@
     {
       "position": "1",
       "positionText": "1",
-      "points": "325",
+      "points": "340",
       "wins": "8",
       "Driver": {
         "driverId": "antonelli",
@@ -27,7 +27,7 @@
     {
       "position": "2",
       "positionText": "2",
-      "points": "236",
+      "points": "238",
       "wins": "3",
       "Driver": {
         "driverId": "russell",
@@ -51,7 +51,7 @@
     {
       "position": "3",
       "positionText": "3",
-      "points": "221",
+      "points": "229",
       "wins": "1",
       "Driver": {
         "driverId": "hamilton",
@@ -75,7 +75,31 @@
     {
       "position": "4",
       "positionText": "4",
-      "points": "197",
+      "points": "221",
+      "wins": "2",
+      "Driver": {
+        "driverId": "max_verstappen",
+        "permanentNumber": "3",
+        "code": "VER",
+        "url": "http://en.wikipedia.org/wiki/Max_Verstappen",
+        "givenName": "Max",
+        "familyName": "Verstappen",
+        "dateOfBirth": "1997-09-30",
+        "nationality": "Dutch"
+      },
+      "Constructors": [
+        {
+          "constructorId": "red_bull",
+          "url": "https://en.wikipedia.org/wiki/Red_Bull_Racing",
+          "name": "Red Bull",
+          "nationality": "Austrian"
+        }
+      ]
+    },
+    {
+      "position": "5",
+      "positionText": "5",
+      "points": "215",
       "wins": "1",
       "Driver": {
         "driverId": "leclerc",
@@ -97,33 +121,9 @@
       ]
     },
     {
-      "position": "5",
-      "positionText": "5",
-      "points": "196",
-      "wins": "1",
-      "Driver": {
-        "driverId": "max_verstappen",
-        "permanentNumber": "3",
-        "code": "VER",
-        "url": "http://en.wikipedia.org/wiki/Max_Verstappen",
-        "givenName": "Max",
-        "familyName": "Verstappen",
-        "dateOfBirth": "1997-09-30",
-        "nationality": "Dutch"
-      },
-      "Constructors": [
-        {
-          "constructorId": "red_bull",
-          "url": "https://en.wikipedia.org/wiki/Red_Bull_Racing",
-          "name": "Red Bull",
-          "nationality": "Austrian"
-        }
-      ]
-    },
-    {
       "position": "6",
       "positionText": "6",
-      "points": "189",
+      "points": "201",
       "wins": "2",
       "Driver": {
         "driverId": "norris",
@@ -147,7 +147,7 @@
     {
       "position": "7",
       "positionText": "7",
-      "points": "128",
+      "points": "138",
       "wins": "0",
       "Driver": {
         "driverId": "piastri",
@@ -171,7 +171,7 @@
     {
       "position": "8",
       "positionText": "8",
-      "points": "96",
+      "points": "97",
       "wins": "0",
       "Driver": {
         "driverId": "hadjar",
@@ -195,7 +195,7 @@
     {
       "position": "9",
       "positionText": "9",
-      "points": "69",
+      "points": "75",
       "wins": "0",
       "Driver": {
         "driverId": "lawson",
@@ -321,17 +321,17 @@
     {
       "position": "14",
       "positionText": "14",
-      "points": "10",
+      "points": "13",
       "wins": "0",
       "Driver": {
-        "driverId": "bortoleto",
-        "permanentNumber": "5",
-        "code": "BOR",
-        "url": "https://en.wikipedia.org/wiki/Gabriel_Bortoleto",
-        "givenName": "Gabriel",
-        "familyName": "Bortoleto",
-        "dateOfBirth": "2004-10-14",
-        "nationality": "Brazilian"
+        "driverId": "hulkenberg",
+        "permanentNumber": "27",
+        "code": "HUL",
+        "url": "http://en.wikipedia.org/wiki/Nico_H%C3%BClkenberg",
+        "givenName": "Nico",
+        "familyName": "Hülkenberg",
+        "dateOfBirth": "1987-08-19",
+        "nationality": "German"
       },
       "Constructors": [
         {
@@ -345,17 +345,17 @@
     {
       "position": "15",
       "positionText": "15",
-      "points": "9",
+      "points": "10",
       "wins": "0",
       "Driver": {
-        "driverId": "hulkenberg",
-        "permanentNumber": "27",
-        "code": "HUL",
-        "url": "http://en.wikipedia.org/wiki/Nico_H%C3%BClkenberg",
-        "givenName": "Nico",
-        "familyName": "Hülkenberg",
-        "dateOfBirth": "1987-08-19",
-        "nationality": "German"
+        "driverId": "bortoleto",
+        "permanentNumber": "5",
+        "code": "BOR",
+        "url": "https://en.wikipedia.org/wiki/Gabriel_Bortoleto",
+        "givenName": "Gabriel",
+        "familyName": "Bortoleto",
+        "dateOfBirth": "2004-10-14",
+        "nationality": "Brazilian"
       },
       "Constructors": [
         {
@@ -563,7 +563,7 @@
     {
       "position": "1",
       "positionText": "1",
-      "points": "561",
+      "points": "578",
       "wins": "11",
       "Constructor": {
         "constructorId": "mercedes",
@@ -575,7 +575,7 @@
     {
       "position": "2",
       "positionText": "2",
-      "points": "418",
+      "points": "444",
       "wins": "2",
       "Constructor": {
         "constructorId": "ferrari",
@@ -587,7 +587,7 @@
     {
       "position": "3",
       "positionText": "3",
-      "points": "317",
+      "points": "339",
       "wins": "2",
       "Constructor": {
         "constructorId": "mclaren",
@@ -599,8 +599,8 @@
     {
       "position": "4",
       "positionText": "4",
-      "points": "306",
-      "wins": "1",
+      "points": "332",
+      "wins": "2",
       "Constructor": {
         "constructorId": "red_bull",
         "url": "https://en.wikipedia.org/wiki/Red_Bull_Racing",
@@ -611,7 +611,7 @@
     {
       "position": "5",
       "positionText": "5",
-      "points": "94",
+      "points": "100",
       "wins": "0",
       "Constructor": {
         "constructorId": "rb",
@@ -647,7 +647,7 @@
     {
       "position": "8",
       "positionText": "8",
-      "points": "19",
+      "points": "23",
       "wins": "0",
       "Constructor": {
         "constructorId": "audi",
@@ -704,6 +704,6 @@
       "mclaren": 1
     }
   },
-  "snapshotAt": "2026-10-11T05:05:07.398Z",
+  "snapshotAt": "2026-10-12T05:12:11.148Z",
   "source": "jolpica"
 }
