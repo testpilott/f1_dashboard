@@ -557,6 +557,25 @@
           "nationality": "American"
         }
       ]
+    },
+    {
+      "position": "24",
+      "positionText": "24",
+      "points": "0",
+      "wins": "0",
+      "Driver": {
+        "driverId": "ryo_hirakawa",
+        "givenName": "Ryo",
+        "familyName": "Hirakawa"
+      },
+      "Constructors": [
+        {
+          "constructorId": "haas",
+          "url": "https://en.wikipedia.org/wiki/Haas_F1_Team",
+          "name": "Haas F1 Team",
+          "nationality": "American"
+        }
+      ]
     }
   ],
   "constructors": [
@@ -704,6 +723,6 @@
       "mclaren": 1
     }
   },
-  "snapshotAt": "2026-10-31T05:03:56.103Z",
+  "snapshotAt": "2026-11-01T05:04:06.950Z",
   "source": "jolpica"
 }
