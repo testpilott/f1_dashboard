@@ -1,0 +1,21 @@
+{
+  "season": "current",
+  "driverId": "rafael_camara",
+  "summary": {
+    "driverId": "rafael_camara",
+    "season": "2026",
+    "rows": [],
+    "aggregates": {
+      "races": 0,
+      "wins": 0,
+      "podiums": 0,
+      "points": 0,
+      "dnfs": 0,
+      "fastestLaps": 0,
+      "avgFinish": 0,
+      "avgGrid": 0
+    }
+  },
+  "snapshotAt": "2026-11-08T05:03:53.218Z",
+  "source": "jolpica"
+}

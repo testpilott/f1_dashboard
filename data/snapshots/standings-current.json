@@ -581,6 +581,25 @@
           "nationality": "American"
         }
       ]
+    },
+    {
+      "position": "25",
+      "positionText": "25",
+      "points": "0",
+      "wins": "0",
+      "Driver": {
+        "driverId": "rafael_camara",
+        "givenName": "Rafael",
+        "familyName": "Camara"
+      },
+      "Constructors": [
+        {
+          "constructorId": "haas",
+          "url": "https://en.wikipedia.org/wiki/Haas_F1_Team",
+          "name": "Haas F1 Team",
+          "nationality": "American"
+        }
+      ]
     }
   ],
   "constructors": [
@@ -728,6 +747,6 @@
       "mclaren": 1
     }
   },
-  "snapshotAt": "2026-11-07T05:03:49.538Z",
+  "snapshotAt": "2026-11-08T05:03:49.491Z",
   "source": "jolpica"
 }
