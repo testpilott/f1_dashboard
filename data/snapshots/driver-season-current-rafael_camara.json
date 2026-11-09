@@ -4,18 +4,28 @@
   "summary": {
     "driverId": "rafael_camara",
     "season": "2026",
-    "rows": [],
+    "rows": [
+      {
+        "round": 20,
+        "raceName": "Brazilian Grand Prix",
+        "grid": 11,
+        "finish": 20,
+        "points": 0,
+        "status": "Lapped",
+        "fastestLap": false
+      }
+    ],
     "aggregates": {
-      "races": 0,
+      "races": 1,
       "wins": 0,
       "podiums": 0,
       "points": 0,
-      "dnfs": 0,
+      "dnfs": 1,
       "fastestLaps": 0,
-      "avgFinish": 0,
-      "avgGrid": 0
+      "avgFinish": 20,
+      "avgGrid": 11
     }
   },
-  "snapshotAt": "2026-11-09T05:04:08.132Z",
+  "snapshotAt": "2026-11-09T05:40:51.361Z",
   "source": "jolpica"
 }

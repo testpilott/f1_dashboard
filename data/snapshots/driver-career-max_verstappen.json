@@ -2,8 +2,8 @@
   "driverId": "max_verstappen",
   "career": {
     "wins": 74,
-    "podiums": 138,
-    "starts": 252,
+    "podiums": 139,
+    "starts": 253,
     "fastestLaps": 38,
     "championships": 4
   },
@@ -21,6 +21,6 @@
     2025,
     2026
   ],
-  "snapshotAt": "2026-11-02T05:33:01.805Z",
+  "snapshotAt": "2026-11-09T05:33:03.541Z",
   "source": "jolpica"
 }

@@ -1,0 +1,15 @@
+{
+  "driverId": "rafael_camara",
+  "career": {
+    "wins": 0,
+    "podiums": 0,
+    "starts": 1,
+    "fastestLaps": 0,
+    "championships": 0
+  },
+  "seasons": [
+    2026
+  ],
+  "snapshotAt": "2026-11-09T05:40:51.361Z",
+  "source": "jolpica"
+}

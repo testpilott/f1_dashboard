@@ -1,0 +1,24 @@
+{
+  "circuitId": "yas_marina",
+  "records": {
+    "mostWins": {
+      "driverId": "hamilton|max_verstappen",
+      "name": "Lewis Hamilton / Max Verstappen",
+      "count": 5
+    },
+    "mostPoles": {
+      "driverId": "hamilton|max_verstappen",
+      "name": "Lewis Hamilton / Max Verstappen",
+      "count": 5
+    },
+    "fastestLap": {
+      "driverId": "kevin_magnussen",
+      "name": "Kevin Magnussen",
+      "time": "1:25.637",
+      "year": 2024
+    }
+  },
+  "raceCount": 17,
+  "snapshotAt": "2026-11-09T05:42:40.392Z",
+  "source": "jolpica"
+}
