@@ -4,28 +4,18 @@
   "summary": {
     "driverId": "ryo_hirakawa",
     "season": "2026",
-    "rows": [
-      {
-        "round": 19,
-        "raceName": "Mexico City Grand Prix",
-        "grid": 18,
-        "finish": 10,
-        "points": 1,
-        "status": "Finished",
-        "fastestLap": false
-      }
-    ],
+    "rows": [],
     "aggregates": {
-      "races": 1,
+      "races": 0,
       "wins": 0,
       "podiums": 0,
-      "points": 1,
+      "points": 0,
       "dnfs": 0,
       "fastestLaps": 0,
-      "avgFinish": 10,
-      "avgGrid": 18
+      "avgFinish": 0,
+      "avgGrid": 0
     }
   },
-  "snapshotAt": "2026-11-09T05:39:27.289Z",
+  "snapshotAt": "2026-11-10T05:04:05.609Z",
   "source": "jolpica"
 }
