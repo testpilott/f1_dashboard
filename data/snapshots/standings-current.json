@@ -589,8 +589,13 @@
       "wins": "0",
       "Driver": {
         "driverId": "rafael_camara",
+        "permanentNumber": "51",
+        "code": "CAM",
+        "url": "https://en.wikipedia.org/wiki/Rafael_C%C3%A2mara",
         "givenName": "Rafael",
-        "familyName": "Camara"
+        "familyName": "Camara",
+        "dateOfBirth": "2005-05-05",
+        "nationality": "Brazilian"
       },
       "Constructors": [
         {
@@ -747,6 +752,6 @@
       "mclaren": 1
     }
   },
-  "snapshotAt": "2026-11-10T05:04:02.148Z",
+  "snapshotAt": "2026-11-11T05:03:42.798Z",
   "source": "jolpica"
 }
