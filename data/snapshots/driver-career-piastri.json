@@ -2,8 +2,8 @@
   "driverId": "piastri",
   "career": {
     "wins": 9,
-    "podiums": 28,
-    "starts": 81,
+    "podiums": 29,
+    "starts": 91,
     "fastestLaps": 9,
     "championships": 0
   },
@@ -13,6 +13,6 @@
     2025,
     2026
   ],
-  "snapshotAt": "2026-08-03T06:36:06.435Z",
+  "snapshotAt": "2026-11-23T05:32:45.460Z",
   "source": "jolpica"
 }

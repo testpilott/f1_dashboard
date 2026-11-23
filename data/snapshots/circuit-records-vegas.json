@@ -4,11 +4,11 @@
     "mostWins": {
       "driverId": "max_verstappen",
       "name": "Max Verstappen",
-      "count": 2
+      "count": 3
     },
     "mostPoles": {
-      "driverId": "leclerc|russell|norris",
-      "name": "Charles Leclerc / George Russell / Lando Norris",
+      "driverId": "leclerc|russell|norris|max_verstappen",
+      "name": "Charles Leclerc / George Russell / Lando Norris / Max Verstappen",
       "count": 1
     },
     "fastestLap": {
@@ -18,7 +18,7 @@
       "year": 2025
     }
   },
-  "raceCount": 3,
-  "snapshotAt": "2026-11-16T05:42:33.181Z",
+  "raceCount": 4,
+  "snapshotAt": "2026-11-23T05:43:22.349Z",
   "source": "jolpica"
 }
